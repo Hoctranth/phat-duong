@@ -89,6 +89,38 @@
     TUTIEN_IMAGES[key] = img;
   });
 
+  // Preload bộ Sprite Tiên Nghịch: Tiên Nghịch Vấn Đạo (Mẫu 8 - Vương Lâm) - 8 Cấp Pháp Y (Phàm Nhân -> Đạp Thiên)
+  const TIENNGHICH_SPRITE_URLS = {
+    1: '/assets/sprites/tiennghich_tier1.png?v=tn1',
+    2: '/assets/sprites/tiennghich_tier2.png?v=tn1',
+    3: '/assets/sprites/tiennghich_tier3.png?v=tn1',
+    4: '/assets/sprites/tiennghich_tier4.png?v=tn1',
+    5: '/assets/sprites/tiennghich_tier5.png?v=tn1',
+    6: '/assets/sprites/tiennghich_tier6.png?v=tn1',
+    7: '/assets/sprites/tiennghich_tier7.png?v=tn1',
+    8: '/assets/sprites/tiennghich_tier8.png?v=tn1'
+  };
+  const TIENNGHICH_IMAGES = {};
+  Object.entries(TIENNGHICH_SPRITE_URLS).forEach(([key, url]) => {
+    const img = new Image();
+    img.onload = () => {
+      lastLodSignature = '';
+      if (lastState && currentThemeId === 8) {
+        renderMassiveCrowdBackdropCanvas(getEffectiveCrowdCount(lastState));
+      }
+    };
+    img.src = url;
+    TIENNGHICH_IMAGES[key] = img;
+  });
+
+  function isCultivationMode(themeId = currentThemeId) {
+    return Number(themeId) === 7 || Number(themeId) === 8;
+  }
+
+  function getCultivationSpriteUrls(themeId = currentThemeId) {
+    return Number(themeId) === 8 ? TIENNGHICH_SPRITE_URLS : TUTIEN_SPRITE_URLS;
+  }
+
   function getSpriteSetForPerson(person, fallbackIdx = 0) {
     if (person && (person.skin === 'nu' || person.skin === 'ni')) {
       return SPRITE_SETS.nu;
@@ -135,11 +167,11 @@
   function getEffectiveCrowdCount(stateObj = lastState) {
     if (!stateObj) return 0;
     const conn = stateObj.connection;
-    if (Number.isFinite(Number(stateObj.totalCrowdCount)) && Number(stateObj.totalCrowdCount) > 0) {
-      return Number(stateObj.totalCrowdCount);
-    }
     if (conn && conn.status === 'connected' && Number.isFinite(Number(conn.viewerCount))) {
-      return Number(conn.viewerCount);
+      return Math.max(0, Number(conn.viewerCount));
+    }
+    if (Number.isFinite(Number(stateObj.totalCrowdCount))) {
+      return Math.max(0, Number(stateObj.totalCrowdCount));
     }
     return Array.isArray(stateObj.meditators) ? stateObj.meditators.length : 0;
   }
@@ -149,6 +181,13 @@
    */
   function renderMassiveCrowdBackdropCanvas(_totalCrowdCount = 0) {
     if (!crowdLodCtx || !crowdLodCanvas) return;
+
+    const _cultivationImageBank =
+      currentThemeId === 8
+        ? TIENNGHICH_IMAGES
+        : currentThemeId === 7
+          ? TUTIEN_IMAGES
+          : null;
 
     if (crowdLodSummaryPill) {
       crowdLodSummaryPill.style.display = 'none';
@@ -643,8 +682,12 @@
     const cleanText = rawText.replace(/^[«"\s]+|[»"\s]+$/g, '').trim();
 
     if (opts.active && cleanText) {
-      const isTempleMode = currentThemeId !== 7;
-      const defaultTag = isTempleMode ? '🙏 ĐANG LÊN KHẤN PHẬT' : '🔊 XƯỚNG DANH TU TIÊN';
+      const isTempleMode = !isCultivationMode(currentThemeId);
+      const defaultTag = isTempleMode
+        ? '🙏 ĐANG LÊN KHẤN PHẬT'
+        : currentThemeId === 8
+          ? '🩸 XƯỚNG DANH TIÊN NGHỊCH'
+          : '🔊 XƯỚNG DANH TU TIÊN';
       if (tagTextEl) {
         tagTextEl.textContent = opts.tag || defaultTag;
       }
@@ -697,7 +740,7 @@
   }
 
   function syncActivePrayerQuoteUI() {
-    if (currentThemeId === 7 || !currentActivePrayerItem) {
+    if (isCultivationMode(currentThemeId) || !currentActivePrayerItem) {
       return;
     }
     const quoteInfo = buildPrayerQuoteForItem(currentActivePrayerItem);
@@ -757,7 +800,7 @@
       .forEach((el) => el.remove());
 
     if (
-      currentThemeId === 7 ||
+      isCultivationMode(currentThemeId) ||
       currentThemeId === 2 ||
       currentThemeId === 4 ||
       currentThemeId === 5 ||
@@ -2311,7 +2354,7 @@
   }
 
   function processNextFreeRoamUserAction() {
-    if (!currentSettings.freeRoamEnabled || currentThemeId === 7 || freeRoamActionQueue.length === 0) {
+    if (!currentSettings.freeRoamEnabled || isCultivationMode(currentThemeId) || freeRoamActionQueue.length === 0) {
       isProcessingFreeRoamAction = false;
       freeRoamActionQueue.length = 0;
       return;
@@ -2460,7 +2503,7 @@
     const cur = detail.current || detail;
     const text = String(cur?.text || '').trim();
     if (detail.active && text) {
-      const isTempleMode = currentThemeId !== 7;
+      const isTempleMode = !isCultivationMode(currentThemeId);
       const activeQ = isTempleMode ? getActiveTemplePrayerQueue() : [];
       const qLen = isTempleMode
         ? Math.max(Number(detail.queueLength) || 0, activeQ.length)
@@ -2478,11 +2521,17 @@
         active: true,
         text,
         author: cur.author || '',
-        tag: cur.tag || (isTempleMode ? '🙏 ĐANG LÊN KHẤN PHẬT' : '🔊 XƯỚNG DANH TU TIÊN'),
+        tag:
+          cur.tag ||
+          (isTempleMode
+            ? '🙏 ĐANG LÊN KHẤN PHẬT'
+            : currentThemeId === 8
+              ? '🩸 XƯỚNG DANH TIÊN NGHỊCH'
+              : '🔊 XƯỚNG DANH TU TIÊN'),
         queueLength: qLen,
         queuePreview: qPreview
       });
-    } else if (currentThemeId !== 7 && currentActivePrayerItem) {
+    } else if (!isCultivationMode(currentThemeId) && currentActivePrayerItem) {
       // Nếu TTS vừa đọc xong câu ngắn nhưng trên sân vẫn đang có tín chủ hành lễ khấn Phật -> giữ nguyên Quote khấn
       const quoteInfo = buildPrayerQuoteForItem(currentActivePrayerItem);
       const activeQ = getActiveTemplePrayerQueue();
@@ -2521,10 +2570,19 @@
     const payload = skyRideQueue.shift();
     const user = payload.user || {};
     const rInfo = getRealmInfoForPerson(user);
-    const spriteUrl = TUTIEN_SPRITE_URLS[Math.max(4, rInfo.tier || 4)] || TUTIEN_SPRITE_URLS[8];
+    const spriteUrls = getCultivationSpriteUrls(currentThemeId);
+    const spriteUrl = spriteUrls[Math.max(4, rInfo.tier || 4)] || spriteUrls[8];
     const nickUpper = shortenName(user.nickname || 'Đạo Hữu', 14).toUpperCase();
-    const titleStr = payload.daoTitle || user.daoTitle || 'Tiêu Dao Kiếm Tiên';
-    const actionLabel = payload.reason || `「${titleStr}」 NGỰ KIẾM TUẦN THIÊN`;
+    const isTienNghich = currentThemeId === 8;
+    const titleStr =
+      payload.daoTitle ||
+      user.daoTitle ||
+      (isTienNghich ? 'Sát Lục Kiếm Tôn' : 'Tiêu Dao Kiếm Tiên');
+    const actionLabel =
+      payload.reason ||
+      (isTienNghich
+        ? `「${titleStr}」 NGỰ HUYẾT KIẾM NGHỊCH THIÊN`
+        : `「${titleStr}」 NGỰ KIẾM TUẦN THIÊN`);
     const bannerStr = actionLabel.includes(nickUpper)
       ? actionLabel
       : `🗡️ ${nickUpper} · ${actionLabel.replace(/^🗡️\s*/, '')}`;
@@ -2587,9 +2645,20 @@
     const nick = decree.user?.nickname || 'Đạo Hữu';
     const dethroned = decree.dethronedName;
     const merit = Number(decree.merit) || 0;
+    const isTienNghich = currentThemeId === 8;
     const rewardSkin =
       decree.rewardSkin ||
-      (rank === 1 ? 'Thần Y Chân Tiên' : rank === 2 ? 'Pháp Y Độ Kiếp' : 'Pháp Y Hợp Thể');
+      (isTienNghich
+        ? rank === 1
+          ? 'Áo Đạp Thiên'
+          : rank === 2
+            ? 'Giáp Cổ Thần'
+            : 'Cánh Chu Tước'
+        : rank === 1
+          ? 'Thần Y Chân Tiên'
+          : rank === 2
+            ? 'Pháp Y Độ Kiếp'
+            : 'Pháp Y Hợp Thể');
 
     tutienDecreeBannerEl.classList.remove('rank-1', 'rank-2', 'rank-3', 'active');
     void tutienDecreeBannerEl.offsetWidth;
@@ -2599,15 +2668,34 @@
     }
 
     if (tutienDecreeRibbonEl) {
-      tutienDecreeRibbonEl.textContent =
-        rank === 1
-          ? '👑 THIÊN BẢNG ĐOẠT NGÔI · TOP 1 PHÒNG RỒNG 🐉'
-          : rank === 2
-            ? '🔥 THIÊN BẢNG ĐOẠT NGÔI · TOP 2 PHÒNG PHƯỢNG 🔥'
-            : '🦄 THIÊN BẢNG ĐOẠT NGÔI · TOP 3 PHÒNG LÂN 🦄';
+      if (isTienNghich) {
+        tutienDecreeRibbonEl.textContent =
+          rank === 1
+            ? '🩸 THIÊN BẢNG ĐOẠT NGÔI · TOP 1 ĐẠP THIÊN ĐIỆN 👑'
+            : rank === 2
+              ? '👑 THIÊN BẢNG ĐOẠT NGÔI · TOP 2 CỔ THẦN ĐIỆN 👑'
+              : '🔥 THIÊN BẢNG ĐOẠT NGÔI · TOP 3 CHU TƯỚC ĐIỆN 🔥';
+      } else {
+        tutienDecreeRibbonEl.textContent =
+          rank === 1
+            ? '👑 THIÊN BẢNG ĐOẠT NGÔI · TOP 1 PHÒNG RỒNG 🐉'
+            : rank === 2
+              ? '🔥 THIÊN BẢNG ĐOẠT NGÔI · TOP 2 PHÒNG PHƯỢNG 🔥'
+              : '🦄 THIÊN BẢNG ĐOẠT NGÔI · TOP 3 PHÒNG LÂN 🦄';
+      }
     }
     if (tutienDecreeEmblemEl) {
-      tutienDecreeEmblemEl.textContent = rank === 1 ? '🐉' : rank === 2 ? '🔥' : '🦄';
+      tutienDecreeEmblemEl.textContent = isTienNghich
+        ? rank === 1
+          ? '🩸'
+          : rank === 2
+            ? '👑'
+            : '🔥'
+        : rank === 1
+          ? '🐉'
+          : rank === 2
+            ? '🔥'
+            : '🦄';
     }
     if (tutienDecreeTitleEl) {
       const actionVerb = rank === 1 ? 'ĐĂNG CƠ TOP 1!' : `ĐOẠT NGÔI TOP ${rank}!`;
@@ -2637,18 +2725,37 @@
       radius: 90,
       angle: 0,
       alpha: 0.92,
-      color: '#facc15'
+      color: isTienNghich ? '#f43f5e' : '#facc15'
     });
+    const defaultRoomLabel = isTienNghich
+      ? rank === 1
+        ? 'ĐẠP THIÊN ĐIỆN'
+        : rank === 2
+          ? 'CỔ THẦN ĐIỆN'
+          : 'CHU TƯỚC ĐIỆN'
+      : 'PHÒNG RỒNG';
     spawnFloatingTuTienText(
       seat.x,
       seat.y - 50,
-      `👑 ĐOẠT NGÔI TOP ${rank} (${decree.roomName || 'PHÒNG RỒNG'})!`,
+      `👑 ĐOẠT NGÔI TOP ${rank} (${decree.roomName || defaultRoomLabel})!`,
       '#fef08a',
       1.22
     );
 
     if (currentSettings.ttsEnabled !== false) {
-      const roomName = decree.roomName || (rank === 1 ? 'Phòng Rồng' : rank === 2 ? 'Phòng Phượng' : 'Phòng Lân');
+      const roomName =
+        decree.roomName ||
+        (isTienNghich
+          ? rank === 1
+            ? 'Đạp Thiên Điện'
+            : rank === 2
+              ? 'Cổ Thần Điện'
+              : 'Chu Tước Điện'
+          : rank === 1
+            ? 'Phòng Rồng'
+            : rank === 2
+              ? 'Phòng Phượng'
+              : 'Phòng Lân');
       const decreeQuote = `Thiên bảng chấn động! Chúc mừng đạo hữu ${nick} đăng cơ Top ${rank} ${roomName}!`;
       window.sacredAudio.speakChant(decreeQuote, {
         withWoodenFish: false,
@@ -2745,7 +2852,7 @@
       isProcessingTuTienEvent = false;
       return;
     }
-    if (currentThemeId !== 7) {
+    if (!isCultivationMode(currentThemeId)) {
       tutienEventQueue.length = 0;
       isProcessingTuTienEvent = false;
       return;
@@ -2753,6 +2860,7 @@
 
     isProcessingTuTienEvent = true;
     const payload = tutienEventQueue.shift();
+    const isTienNghich = currentThemeId === 8;
 
     const topText = payload.headline || payload.heraldTop;
     const bigText = payload.bigTitle || payload.heraldBig;
@@ -2790,24 +2898,42 @@
       spawnBreakthroughAscensionFX(
         userSeat.x,
         userSeat.y,
-        payload.newRealmName || payload.user?.realmName || bigText || 'Kim Đan',
+        payload.newRealmName || payload.user?.realmName || bigText || (isTienNghich ? 'Kết Đan' : 'Kim Đan'),
         tuViAdded
       );
     } else if (fxType === 'thunder_tribulation') {
       lastTribulationFxAt = nowFxMs;
-      spawnLightningTribulation(userSeat.x, userSeat.y, 1, 'cyan', isFastQueue ? 1 : 2);
-      spawnFloatingTuTienText(userSeat.x, userSeat.y - 35, `⚡ +${tuViAdded} Tu Vi`, '#38bdf8', 1.05);
+      spawnLightningTribulation(
+        userSeat.x,
+        userSeat.y,
+        1,
+        isTienNghich ? 'crimson' : 'cyan',
+        isFastQueue ? 1 : 2
+      );
+      spawnFloatingTuTienText(
+        userSeat.x,
+        userSeat.y - 35,
+        `⚡ +${tuViAdded} Tu Vi`,
+        isTienNghich ? '#f43f5e' : '#38bdf8',
+        1.05
+      );
     } else if (fxType === 'sword_rain' || fxType === 'sword_and_thunder') {
       lastTribulationFxAt = nowFxMs;
       spawnSwordRainFX(userSeat.x, userSeat.y, isFastQueue ? 5 : 6);
-      spawnSingleLightningWave(userSeat.x, userSeat.y, 1, 'cyan');
+      spawnSingleLightningWave(userSeat.x, userSeat.y, 1, isTienNghich ? 'purple' : 'cyan');
       spawnFloatingTuTienText(userSeat.x, userSeat.y - 35, `⚔️ +${tuViAdded} Tu Vi`, '#fde047', 1.05);
     } else if (fxType === 'blossom_rain') {
       lastTribulationFxAt = nowFxMs;
       window.sacredAudio.playTuTienJoinSound();
       spawnBlossomRainFX(isFastQueue ? 12 : 18);
-      spawnQiPillarFX(userSeat.x, userSeat.y, 'gold');
-      spawnFloatingTuTienText(userSeat.x, userSeat.y - 35, `🌸 +${tuViAdded} Tu Vi`, '#f472b6', 1.05);
+      spawnQiPillarFX(userSeat.x, userSeat.y, isTienNghich ? 'crimson' : 'gold');
+      spawnFloatingTuTienText(
+        userSeat.x,
+        userSeat.y - 35,
+        `🌸 +${tuViAdded} Tu Vi`,
+        isTienNghich ? '#f43f5e' : '#f472b6',
+        1.05
+      );
     } else if (fxType === 'duel_clash') {
       lastTribulationFxAt = nowFxMs;
       const oppSeat = (payload.opponentUserId && tutienSeatPositions.get(payload.opponentUserId)) || {
@@ -2821,8 +2947,14 @@
       // Nhánh mặc định (join_sect - comment thường): chỉ tụ cột linh khí nhẹ nhàng, không xả mưa kiếm tràn lan
       lastTribulationFxAt = nowFxMs;
       window.sacredAudio.playTuTienJoinSound();
-      spawnQiPillarFX(userSeat.x, userSeat.y, 'cyan');
-      spawnFloatingTuTienText(userSeat.x, userSeat.y - 35, `+${tuViAdded} Tu Vi`, '#38bdf8', 1.0);
+      spawnQiPillarFX(userSeat.x, userSeat.y, isTienNghich ? 'crimson' : 'cyan');
+      spawnFloatingTuTienText(
+        userSeat.x,
+        userSeat.y - 35,
+        `+${tuViAdded} Tu Vi`,
+        isTienNghich ? '#f43f5e' : '#38bdf8',
+        1.0
+      );
     }
 
     if (payload.user && msgText) {
@@ -2830,19 +2962,22 @@
     }
 
     // Đưa lời xướng danh / bình luận Tu Tiên vào Hàng Đợi Đọc (Quote Queue) tuần tự từng câu
-    if (currentThemeId === 7 && currentSettings.ttsEnabled !== false) {
+    if (isCultivationMode(currentThemeId) && currentSettings.ttsEnabled !== false) {
       const nick = payload.user?.nickname || 'Đạo Hữu';
       const ttsQLen = Array.isArray(window.sacredAudio?.speechQueue)
         ? window.sacredAudio.speechQueue.length
         : 0;
       if (isLevelUp) {
-        const newRealm = payload.newRealmName || payload.user?.realmName || bigText || 'Kim Đan';
-        const breakthroughQuote = `Chúc mừng đạo hữu ${nick} độ kiếp thành công, đột phá cảnh giới ${newRealm}!`;
+        const newRealm =
+          payload.newRealmName || payload.user?.realmName || bigText || (isTienNghich ? 'Kết Đan' : 'Kim Đan');
+        const breakthroughQuote = isTienNghich
+          ? `Nghịch thiên cải mệnh! Chúc mừng đạo hữu ${nick} đột phá cảnh giới ${newRealm}!`
+          : `Chúc mừng đạo hữu ${nick} độ kiếp thành công, đột phá cảnh giới ${newRealm}!`;
         window.sacredAudio.speakChant(breakthroughQuote, {
           withWoodenFish: false,
           priority: true,
           author: nick,
-          tag: '⚡ ĐỘT PHÁ CẢNH GIỚI'
+          tag: isTienNghich ? '🩸 NGHỊCH THIÊN ĐỘT PHÁ' : '⚡ ĐỘT PHÁ CẢNH GIỚI'
         });
       } else if (ttsQLen < 5) {
         const cleanComment = String(msgText || '').trim();
@@ -2852,10 +2987,16 @@
         if (quoteLine) {
           const eventTag =
             payload.eventKind === 'relic_break'
-              ? '🐉 ĐOẠT THÁI CỔ LONG CHÂU'
+              ? isTienNghich
+                ? '🔮 ĐOẠT THIÊN NGHỊCH CHÂU'
+                : '🐉 ĐOẠT THÁI CỔ LONG CHÂU'
               : payload.eventKind === 'title_bestow'
-                ? '👑 SẮC PHONG ĐẠO HIỆU'
-                : '📜 ĐẠO HỮU VẤN ĐẠO';
+                ? isTienNghich
+                  ? '🩸 SẮC PHONG ĐẠP THIÊN'
+                  : '👑 SẮC PHONG ĐẠO HIỆU'
+                : isTienNghich
+                  ? '🩸 ĐẠO HỮU NGHỊCH THIÊN'
+                  : '📜 ĐẠO HỮU VẤN ĐẠO';
           window.sacredAudio.speakChant(quoteLine, {
             withWoodenFish: false,
             priority: false,
@@ -2887,10 +3028,26 @@
   }, 1000);
 
   function getRealmInfoForPerson(person) {
+    const isTienNghich = Number(currentThemeId) === 8;
+    const effectiveTuVi = Math.max((Number(person?.merit) || 0) * 10, Number(person?.tuVi) || 0);
+
+    if (isTienNghich) {
+      if (effectiveTuVi >= 250000) return { name: 'Đạp Thiên', tier: 8 };
+      if (effectiveTuVi >= 100000) return { name: 'Không Niết', tier: 7 };
+      if (effectiveTuVi >= 40000) return { name: 'Toái Niết', tier: 7 };
+      if (effectiveTuVi >= 15000) return { name: 'Vấn Đỉnh', tier: 6 };
+      if (effectiveTuVi >= 6000) return { name: 'Anh Biến', tier: 5 };
+      if (effectiveTuVi >= 2500) return { name: 'Hóa Thần', tier: 4 };
+      if (effectiveTuVi >= 1000) return { name: 'Nguyên Anh', tier: 3 };
+      if (effectiveTuVi >= 400) return { name: 'Kết Đan', tier: 3 };
+      if (effectiveTuVi >= 120) return { name: 'Trúc Cơ', tier: 2 };
+      if (effectiveTuVi >= 20) return { name: 'Ngưng Khí', tier: 2 };
+      return { name: 'Phàm Nhân', tier: 1 };
+    }
+
     if (person && person.realmName && person.robeTier) {
       return { name: person.realmName, tier: Number(person.robeTier) || 1 };
     }
-    const effectiveTuVi = Math.max((Number(person?.merit) || 0) * 10, Number(person?.tuVi) || 0);
     if (effectiveTuVi >= 250000) return { name: 'Chân Tiên', tier: 8 };
     if (effectiveTuVi >= 100000) return { name: 'Độ Kiếp', tier: 7 };
     if (effectiveTuVi >= 40000) return { name: 'Đại Thừa', tier: 7 };
@@ -2904,6 +3061,95 @@
     return { name: 'Phàm Nhân', tier: 1 };
   }
 
+  function updateCultivationThemeUI(themeId = currentThemeId) {
+    if (!isCultivationMode(themeId)) return;
+    const isTienNghich = Number(themeId) === 8;
+
+    const titleEl = document.getElementById('tutien-title');
+    const subtitleEl = document.getElementById('tutien-subtitle');
+    if (titleEl) {
+      titleEl.textContent = isTienNghich ? 'Tiên Nghịch Vấn Đạo' : 'Tiên Môn Vấn Đạo';
+    }
+    if (subtitleEl) {
+      subtitleEl.textContent = isTienNghich
+        ? 'Thuận vi phàm, nghịch tắc tiên · Chat để nghịch thiên'
+        : 'Tu tiên cùng nhau · Chat để nhập môn';
+    }
+
+    const relicNameEl = document.getElementById('tutien-relic-name');
+    const relicCmdEl = document.getElementById('tutien-relic-cmd');
+    if (relicNameEl) {
+      relicNameEl.innerHTML = isTienNghich
+        ? '🔮 <strong>THÁI CỔ THIÊN NGHỊCH CHÂU</strong>'
+        : '🐉 <strong>THÁI CỔ LONG CHÂU</strong>';
+    }
+    if (relicCmdEl) {
+      relicCmdEl.innerHTML = isTienNghich
+        ? 'Chat <strong>"nghịch thiên"</strong> đoạt +800 TV'
+        : 'Chat <strong>"phá trận"</strong> đoạt +800 TV';
+    }
+
+    const weeklySubEl =
+      document.getElementById('tutien-weekly-sub') ||
+      document.querySelector('.tutien-left-panel .tutien-panel-sub');
+    if (weeklySubEl) {
+      weeklySubEl.textContent = isTienNghich
+        ? 'Top 1-2-3 vào Đạp Thiên · Cổ Thần · Chu Tước'
+        : 'Top 1-2-3 vào phòng Rồng · Phượng · Lân';
+    }
+
+    const realmTableEl =
+      document.getElementById('tutien-realm-table') ||
+      document.querySelector('.tutien-realm-table');
+    if (realmTableEl) {
+      const realmRows = isTienNghich
+        ? [
+            ['1. Ngưng Khí', '2 🌹'],
+            ['2. Trúc Cơ', '12 🌹'],
+            ['3. Kết Đan', '40 💎'],
+            ['4. Nguyên Anh', '100 💎'],
+            ['5. Hóa Thần', '250 💎'],
+            ['6. Anh Biến', '600 💎'],
+            ['7. Vấn Đỉnh', '1.5k 💎'],
+            ['8. Toái Niết', '4k 💎'],
+            ['9. Không Niết', '10k 💎'],
+            ['10. Đạp Thiên', '25k 💎']
+          ]
+        : [
+            ['1. Luyện Khí', '2 🌹'],
+            ['2. Trúc Cơ', '12 🌹'],
+            ['3. Kim Đan', '40 💎'],
+            ['4. Nguyên Anh', '100 💎'],
+            ['5. Hóa Thần', '250 💎'],
+            ['6. Luyện Hư', '600 💎'],
+            ['7. Hợp Thể', '1.5k 💎'],
+            ['8. Đại Thừa', '4k 💎'],
+            ['9. Độ Kiếp', '10k 💎'],
+            ['10. Chân Tiên', '25k 💎']
+          ];
+      realmTableEl.innerHTML = realmRows
+        .map(([rName, rCost]) => `<div class="realm-row"><span>${rName}</span><span class="r-cost">${rCost}</span></div>`)
+        .join('');
+    }
+
+    const cmdHintBarEl = document.getElementById('tutien-cmd-hint-bar');
+    if (cmdHintBarEl) {
+      cmdHintBarEl.innerHTML = isTienNghich
+        ? `
+          <span>🗡️ Chat <strong>"nghịch thiên"</strong> cưỡi Huyết Kiếm</span>
+          <span>🔮 Chat <strong>"thiên nghịch"</strong> đoạt Bảo Châu</span>
+          <span>🩸 Chat <strong>"cực cảnh"</strong> / <strong>"sát lục"</strong></span>
+          <span>👑 Chat <strong>"đạo hiệu [Tên]"</strong> phong Đạp Thiên</span>
+        `
+        : `
+          <span>🗡️ Chat <strong>"ngự kiếm"</strong> cưỡi kiếm bay</span>
+          <span>🐉 Chat <strong>"phá trận"</strong> đoạt Long Châu</span>
+          <span>⚡ Chat <strong>"độ kiếp"</strong> / <strong>"đấu pháp"</strong></span>
+          <span>👑 Chat <strong>"đạo hiệu [Tên]"</strong> phong thần</span>
+        `;
+    }
+  }
+
   function formatTuViShort(val) {
     const n = Math.max(0, Number(val) || 0);
     if (n >= 10000) return `${(n / 1000).toFixed(1)}k`;
@@ -2915,10 +3161,15 @@
 
   function renderTuTienStage(meditators = []) {
     if (!tutienCloudStageEl) return;
+    const isTienNghich = Number(currentThemeId) === 8;
+    const spriteUrls = getCultivationSpriteUrls(currentThemeId);
+    updateCultivationThemeUI(currentThemeId);
+
     const tutienMeditators = meditators.slice(0, MAX_TUTIEN_SLOTS);
+    const crowdCnt = getEffectiveCrowdCount(lastState);
     const exactTotal = Math.min(
       MAX_TUTIEN_SLOTS,
-      getEffectiveCrowdCount(lastState) || tutienMeditators.length
+      crowdCnt > 0 ? crowdCnt : tutienMeditators.length
     );
     if (tutienCountEl) {
       tutienCountEl.textContent = Number(exactTotal).toLocaleString('vi-VN');
@@ -2926,15 +3177,16 @@
 
     const totalGems = meditators.reduce((sum, m) => sum + (Number(m.merit) || 0), 0);
     if (tutienGemsEl) {
-      tutienGemsEl.textContent = Math.max(2834, totalGems).toLocaleString('vi-VN');
+      tutienGemsEl.textContent = Number(totalGems).toLocaleString('vi-VN');
     }
 
-    // 0. Cập nhật Thanh Bí Cảnh Thái Cổ Long Châu
-    const relic = lastState?.tutienRelic || { progress: 68, target: 100, lastMvp: 'Chà 🌸' };
-    const pct = Math.min(100, Math.max(5, Math.round(((Number(relic.progress) || 68) / (Number(relic.target) || 100)) * 100)));
+    // 0. Cập nhật Thanh Bí Cảnh Thái Cổ Long Châu / Thiên Nghịch Châu
+    const relic = lastState?.tutienRelic || { progress: 0, target: 100, lastMvp: 'Chưa có' };
+    const rawRelicProg = Number.isFinite(Number(relic.progress)) ? Number(relic.progress) : 0;
+    const pct = Math.min(100, Math.max(0, Math.round((rawRelicProg / (Number(relic.target) || 100)) * 100)));
     if (tutienRelicFillEl) tutienRelicFillEl.style.width = `${pct}%`;
     if (tutienRelicPctEl) tutienRelicPctEl.textContent = `${pct}%`;
-    if (tutienRelicMvpEl) tutienRelicMvpEl.textContent = shortenName(relic.lastMvp || 'Chà 🌸', 12);
+    if (tutienRelicMvpEl) tutienRelicMvpEl.textContent = shortenName(relic.lastMvp || 'Chưa có', 12);
 
     // Chống giật lag 60FPS: Kiểm tra chữ ký DOM Tu Tiên (tối đa 48 slot) trước khi gán lại innerHTML
     const top48Sig = tutienMeditators
@@ -2947,7 +3199,7 @@
       .map(([k, v]) => `${k}=${v}`)
       .join(';');
     const relicSig = `${relic.progress || 0}:${relic.target || 100}:${relic.lastMvp || ''}`;
-    const fullTuTienSig = `${tutienMeditators.length}__${top48Sig}__${bubblesSig}__${relicSig}`;
+    const fullTuTienSig = `${currentThemeId}__${tutienMeditators.length}__${top48Sig}__${bubblesSig}__${relicSig}`;
     if (
       fullTuTienSig === lastTuTienSignature &&
       (tutienMeditators.length === 0 ||
@@ -2958,10 +3210,12 @@
     }
     lastTuTienSignature = fullTuTienSig;
 
-    // 1. Bảng Tuần Top 5 (Rồng · Phượng · Lân) + Biển Treo Thưởng Đua Top 1-2-3
+    // 1. Bảng Tuần Top 5 + Biển Treo Thưởng Đua Top 1-2-3
     if (tutienWeeklyListEl) {
       const top5 = tutienMeditators.slice(0, 5);
-      const beasts = ['🐉 Rồng', '🔥 Phượng', '🦄 Lân', '', ''];
+      const beasts = isTienNghich
+        ? ['🩸 Đạp Thiên', '👑 Cổ Thần', '🔥 Chu Tước', '', '']
+        : ['🐉 Rồng', '🔥 Phượng', '🦄 Lân', '', ''];
       tutienWeeklyListEl.innerHTML = top5
         .map((p, idx) => {
           const beastHtml = beasts[idx] ? `<span class="tutien-beast-tag">${beasts[idx]}</span>` : '';
@@ -2985,13 +3239,21 @@
       const m1 = (Number(tutienMeditators[0]?.merit) || 0) + 1;
       const m2 = (Number(tutienMeditators[1]?.merit) || 0) + 1;
       const m3 = (Number(tutienMeditators[2]?.merit) || 0) + 1;
-      tutienBountyBoxEl.innerHTML = `
-        <div class="bounty-head">🔥 ĐẶC QUYỀN ĐOẠT TOP 1·2·3</div>
-        <div class="bounty-row"><span>🐉 Top 1 Áo Chân Tiên</span><span class="b-need">&gt;${m1 - 1} 💎</span></div>
-        <div class="bounty-row"><span>🔥 Top 2 Áo Độ Kiếp</span><span class="b-need">&gt;${m2 - 1} 💎</span></div>
-        <div class="bounty-row"><span>🦄 Top 3 Cánh Phượng</span><span class="b-need">&gt;${m3 - 1} 💎</span></div>
-        <div class="bounty-foot">🎁 Donate soán ngôi nổ Chiếu Chỉ!</div>
-      `;
+      tutienBountyBoxEl.innerHTML = isTienNghich
+        ? `
+          <div class="bounty-head">🔥 ĐẶC QUYỀN ĐOẠT TOP 1·2·3</div>
+          <div class="bounty-row"><span>🩸 Top 1 Áo Đạp Thiên</span><span class="b-need">&gt;${m1 - 1} 💎</span></div>
+          <div class="bounty-row"><span>👑 Top 2 Giáp Cổ Thần</span><span class="b-need">&gt;${m2 - 1} 💎</span></div>
+          <div class="bounty-row"><span>🔥 Top 3 Cánh Chu Tước</span><span class="b-need">&gt;${m3 - 1} 💎</span></div>
+          <div class="bounty-foot">🎁 Donate soán ngôi nổ Chiếu Chỉ!</div>
+        `
+        : `
+          <div class="bounty-head">🔥 ĐẶC QUYỀN ĐOẠT TOP 1·2·3</div>
+          <div class="bounty-row"><span>🐉 Top 1 Áo Chân Tiên</span><span class="b-need">&gt;${m1 - 1} 💎</span></div>
+          <div class="bounty-row"><span>🔥 Top 2 Áo Độ Kiếp</span><span class="b-need">&gt;${m2 - 1} 💎</span></div>
+          <div class="bounty-row"><span>🦄 Top 3 Cánh Phượng</span><span class="b-need">&gt;${m3 - 1} 💎</span></div>
+          <div class="bounty-foot">🎁 Donate soán ngôi nổ Chiếu Chỉ!</div>
+        `;
     }
 
     // Lưu tọa độ ngồi thực tế của từng tu sĩ trên màn hình để đánh Sấm Chớp Độ Kiếp / Cột Linh Khí chuẩn xác
@@ -3005,18 +3267,21 @@
       } else {
         tutienSeatPositions.set(top1.userId, { x: 540, y: 455 });
         const bText = activeBubbles.get(top1.userId);
-        const top1Sprite = TUTIEN_SPRITE_URLS[8];
-        const tvVal = Math.max((top1.merit || 120) * 100, top1.tuVi || 0);
-        const daoTitle = top1.daoTitle || 'VẠN CỔ ĐỘC TÔN';
+        const top1RInfo = getRealmInfoForPerson(top1);
+        const top1Sprite = spriteUrls[8];
+        const tvVal = Math.max((Number(top1.merit) || 0) * 100, Number(top1.tuVi) || 0);
+        const daoTitle = top1.daoTitle || (isTienNghich ? 'NGHỊCH THIÊN ĐỘC TÔN' : 'VẠN CỔ ĐỘC TÔN');
+        const top1RealmLabel = isTienNghich ? 'Đạp Thiên' : top1RInfo.name;
+        const top1CrestLabel = isTienNghich ? '🩸 ĐẠP THIÊN ĐIỆN · TOP 1 👑' : '🐉 PHÒNG RỒNG · TOP 1 👑';
         tutienTop1ThroneEl.innerHTML = `
           ${bText ? `<div class="pilgrim-white-bubble">${escapeHtml(bText)}</div>` : ''}
           <div class="dharma-wheel-halo halo-dragon"></div>
           <img src="${top1Sprite}" class="cultivator-sprite" alt="Đệ Nhất" />
-          <div class="tutien-vip-crest crest-dragon">🐉 PHÒNG RỒNG · TOP 1 👑</div>
+          <div class="tutien-vip-crest crest-dragon">${top1CrestLabel}</div>
           <div class="tutien-throne-plaque">
             <div class="dao-title-tag">「${escapeHtml(daoTitle)}」</div>
             <div class="t-name">Đệ Nhất ${escapeHtml(shortenName(top1.nickname, 14))}</div>
-            <div class="t-realm">Chân Tiên · 💎 ${top1.merit || 0} (${formatTuViShort(tvVal)} TV)</div>
+            <div class="t-realm">${escapeHtml(top1RealmLabel)} · 💎 ${top1.merit || 0} (${formatTuViShort(tvVal)} TV)</div>
           </div>
         `;
       }
@@ -3024,21 +3289,30 @@
 
     // 3. Hàng 4 vị Trưởng Lão (Đệ Tứ - Đệ Nhị - Đệ Tam - Đệ Ngũ) kèm Pháp Luân & Đạo Hiệu
     if (tutienEldersRowEl) {
-      const elderOrder = [
-        { idx: 3, title: 'Đệ Tứ', x: 155, y: 155, throneTier: 5, throneRealm: 'Luyện Hư', defaultDao: 'LÔI ĐẾ TRUYỀN NHÂN', halo: '', crest: '' },
-        { idx: 1, title: 'Đệ Nhị', x: 405, y: 155, throneTier: 7, throneRealm: 'Độ Kiếp', defaultDao: 'CỬU THIÊN TÔN GIẢ', halo: '<div class="dharma-wheel-halo halo-phoenix"></div>', crest: '<div class="tutien-vip-crest crest-phoenix">🔥 PHÒNG PHƯỢNG · TOP 2</div>' },
-        { idx: 2, title: 'Đệ Tam', x: 675, y: 155, throneTier: 6, throneRealm: 'Hợp Thể', defaultDao: 'THÁI THƯỢNG HỘ PHÁP', halo: '<div class="dharma-wheel-halo halo-kirin"></div>', crest: '<div class="tutien-vip-crest crest-kirin">🦄 PHÒNG LÂN · TOP 3</div>' },
-        { idx: 4, title: 'Đệ Ngũ', x: 925, y: 155, throneTier: 4, throneRealm: 'Hóa Thần', defaultDao: 'KIẾM ĐẠO KỲ TÀI', halo: '', crest: '' }
-      ];
+      const elderOrder = isTienNghich
+        ? [
+            { idx: 3, title: 'Đệ Tứ', x: 155, y: 155, throneTier: 6, throneRealm: 'Vấn Đỉnh', defaultDao: 'SÁT LỤC KIẾM TÔN', halo: '', crest: '' },
+            { idx: 1, title: 'Đệ Nhị', x: 405, y: 155, throneTier: 7, throneRealm: 'Không Niết', defaultDao: 'VẠN HỒN THIÊN TÔN', halo: '<div class="dharma-wheel-halo halo-phoenix"></div>', crest: '<div class="tutien-vip-crest crest-phoenix">👑 CỔ THẦN ĐIỆN · TOP 2</div>' },
+            { idx: 2, title: 'Đệ Tam', x: 675, y: 155, throneTier: 7, throneRealm: 'Toái Niết', defaultDao: 'CHU TƯỚC THÁNH QUÂN', halo: '<div class="dharma-wheel-halo halo-kirin"></div>', crest: '<div class="tutien-vip-crest crest-kirin">🔥 CHU TƯỚC ĐIỆN · TOP 3</div>' },
+            { idx: 4, title: 'Đệ Ngũ', x: 925, y: 155, throneTier: 5, throneRealm: 'Anh Biến', defaultDao: 'CỰC CẢNH ĐẠO TỬ', halo: '', crest: '' }
+          ]
+        : [
+            { idx: 3, title: 'Đệ Tứ', x: 155, y: 155, throneTier: 5, throneRealm: 'Luyện Hư', defaultDao: 'LÔI ĐẾ TRUYỀN NHÂN', halo: '', crest: '' },
+            { idx: 1, title: 'Đệ Nhị', x: 405, y: 155, throneTier: 7, throneRealm: 'Độ Kiếp', defaultDao: 'CỬU THIÊN TÔN GIẢ', halo: '<div class="dharma-wheel-halo halo-phoenix"></div>', crest: '<div class="tutien-vip-crest crest-phoenix">🔥 PHÒNG PHƯỢNG · TOP 2</div>' },
+            { idx: 2, title: 'Đệ Tam', x: 675, y: 155, throneTier: 6, throneRealm: 'Hợp Thể', defaultDao: 'THÁI THƯỢNG HỘ PHÁP', halo: '<div class="dharma-wheel-halo halo-kirin"></div>', crest: '<div class="tutien-vip-crest crest-kirin">🦄 PHÒNG LÂN · TOP 3</div>' },
+            { idx: 4, title: 'Đệ Ngũ', x: 925, y: 155, throneTier: 4, throneRealm: 'Hóa Thần', defaultDao: 'KIẾM ĐẠO KỲ TÀI', halo: '', crest: '' }
+          ];
       tutienEldersRowEl.innerHTML = elderOrder
         .map((slot) => {
           const p = tutienMeditators[slot.idx];
           if (!p) return '';
           tutienSeatPositions.set(p.userId, { x: slot.x, y: 790 + slot.y - 75 });
           const bText = activeBubbles.get(p.userId);
-          const elderSprite = TUTIEN_SPRITE_URLS[slot.throneTier] || TUTIEN_SPRITE_URLS[4];
-          const tvVal = Math.max((p.merit || 20) * 100, p.tuVi || 0);
+          const elderRInfo = getRealmInfoForPerson(p);
+          const elderSprite = spriteUrls[slot.throneTier] || spriteUrls[4];
+          const tvVal = Math.max((Number(p.merit) || 0) * 100, Number(p.tuVi) || 0);
           const daoTitle = p.daoTitle || slot.defaultDao;
+          const elderRealmLabel = isTienNghich ? slot.throneRealm : elderRInfo.name;
           return `
             <div class="tutien-elder-node" style="left: ${slot.x}px; top: ${slot.y}px;">
               ${bText ? `<div class="pilgrim-white-bubble">${escapeHtml(bText)}</div>` : ''}
@@ -3048,7 +3322,7 @@
               <div class="tutien-throne-plaque">
                 <div class="dao-title-tag">「${escapeHtml(daoTitle)}」</div>
                 <div class="t-name">${slot.title} ${escapeHtml(shortenName(p.nickname, 11))}</div>
-                <div class="t-realm">${escapeHtml(slot.throneRealm)} · 💎 ${p.merit || 0} (${formatTuViShort(tvVal)} TV)</div>
+                <div class="t-realm">${escapeHtml(elderRealmLabel)} · 💎 ${p.merit || 0} (${formatTuViShort(tvVal)} TV)</div>
               </div>
             </div>
           `;
@@ -3105,7 +3379,7 @@
         const y = cfg.y;
         tutienSeatPositions.set(p.userId, { x, y: y - 70 });
         const rInfo = getRealmInfoForPerson(p);
-        const spriteUrl = TUTIEN_SPRITE_URLS[rInfo.tier] || TUTIEN_SPRITE_URLS[1];
+        const spriteUrl = spriteUrls[rInfo.tier] || spriteUrls[1];
         const bText = activeBubbles.get(p.userId);
         const tvText = (p.tuVi || 0) > 0 ? ` · ${formatTuViShort(p.tuVi)} TV` : '';
 
@@ -3119,7 +3393,7 @@
             <div class="tutien-disciple-tag"${tagScaleStyle}>
               ${p.daoTitle ? `<div class="dao-title-tag">「${escapeHtml(p.daoTitle)}」</div>` : ''}
               <div class="tutien-name-pill tier-${rInfo.tier}">
-                ${renderAvatarBadge(p.avatar, rInfo.tier >= 3 ? '⚡' : '☯', 'pill-avatar-dot')}
+                ${renderAvatarBadge(p.avatar, rInfo.tier >= 3 ? (isTienNghich ? '🩸' : '⚡') : '☯', 'pill-avatar-dot')}
                 <span>${escapeHtml(shortenName(p.nickname, maxDiscipleNameLen))}</span>
               </div>
               <div class="tutien-realm-sub tier-${rInfo.tier}">${escapeHtml(rInfo.name)}${escapeHtml(tvText)}</div>
@@ -3134,7 +3408,10 @@
 
   function updateLiveCounterBadge(meditators = []) {
     if (!seatCounterEl) return;
-    const exactTotal = getEffectiveCrowdCount(lastState) || meditators.length;
+    const isLiveConnected = lastState?.connection?.status === 'connected';
+    const exactTotal = isLiveConnected
+      ? getEffectiveCrowdCount(lastState)
+      : getEffectiveCrowdCount(lastState) || meditators.length;
     seatCounterEl.textContent = Number(exactTotal).toLocaleString('vi-VN');
   }
 
@@ -3158,7 +3435,7 @@
     const exactTotal = getEffectiveCrowdCount(lastState) || meditators.length;
     renderMassiveCrowdBackdropCanvas(exactTotal);
 
-    if (currentThemeId === 7) {
+    if (isCultivationMode(currentThemeId)) {
       if (wasFreeRoamEnabled) {
         wasFreeRoamEnabled = false;
         clearFreeRoamActors();
@@ -3225,15 +3502,19 @@
 
       currentThemeId = Number(state.settings.themeId) || 1;
       const modeClass =
-        currentThemeId === 7
+        isCultivationMode(currentThemeId)
           ? 'mode-tutien'
           : currentThemeId === 1 || currentThemeId === 3 || currentThemeId === 6
           ? 'mode-quybai'
           : 'mode-chuaonline';
       stageWrapper.className = `${modeClass} theme-${currentThemeId}`;
 
-      if (currentThemeId === 7) {
+      if (currentThemeId === 8) {
+        backdropImg.src = '/assets/tien_nghich_bg.jpg?v=tn1';
+        updateCultivationThemeUI(currentThemeId);
+      } else if (currentThemeId === 7) {
         backdropImg.src = '/assets/tien_mon_van_dao_bg.jpg?v=tt1';
+        updateCultivationThemeUI(currentThemeId);
       } else if (currentThemeId === 1) {
         backdropImg.src = '/assets/dai_dien_quy_bai_bg.jpg';
       } else if (currentThemeId === 3) {
@@ -3271,14 +3552,30 @@
     }
 
     if (state.altar) {
-      const prog = Number(state.altar.likeProgress) || 100;
+      const prog = Number.isFinite(Number(state.altar.likeProgress)) ? Number(state.altar.likeProgress) : 0;
       const target = Number(state.altar.likeTarget) || 300;
       const pct = Math.min(100, Math.round((prog / target) * 100));
       likeProgressFill.style.width = `${pct}%`;
       likeProgressText.textContent = `${prog}/${target}`;
     }
 
-    if (recentChatMessages.length === 0 && Array.isArray(state.chatHistory) && state.chatHistory.length > 0) {
+    const isLiveSession =
+      state.connection?.status === 'connected' || state.connection?.status === 'connecting';
+    if (isLiveSession) {
+      const hadSeeds = recentChatMessages.some((c) => c && c.isSeed);
+      if (hadSeeds) {
+        recentChatMessages = recentChatMessages.filter((c) => c && !c.isSeed);
+      }
+      if (Array.isArray(state.chatHistory) && state.chatHistory.length === 0 && recentChatMessages.length > 0 && hadSeeds) {
+        recentChatMessages = [];
+        renderQuyBaiChatList(false);
+      } else if (recentChatMessages.length === 0 && Array.isArray(state.chatHistory)) {
+        recentChatMessages = state.chatHistory.filter((c) => c && !c.isSeed).slice(0, 15);
+        renderQuyBaiChatList(false);
+      } else if (hadSeeds) {
+        renderQuyBaiChatList(false);
+      }
+    } else if (recentChatMessages.length === 0 && Array.isArray(state.chatHistory) && state.chatHistory.length > 0) {
       recentChatMessages = state.chatHistory.slice(0, 15);
       renderQuyBaiChatList(false);
     } else if (recentChatMessages.length === 0) {
@@ -3286,12 +3583,9 @@
     }
 
     if (Array.isArray(state.leaderboard)) {
-      const top3 =
-        state.leaderboard.length > 0
-          ? state.leaderboard.slice(0, 3)
-          : Array.isArray(state.meditators) && state.meditators.length > 0
-          ? state.meditators.slice(0, 3)
-          : [];
+      const top3 = state.leaderboard
+        .filter((item) => (Number(item?.merit) || 0) > 0)
+        .slice(0, 3);
 
       if (top3.length === 0) {
         tamLongListEl.innerHTML = '<div class="tam-long-row"><span class="tam-long-name">Đang chờ thí chủ hữu duyên...</span></div>';

@@ -1053,13 +1053,18 @@
       postApi('/api/simulate', { eventType: 'fill_preset', data: { count: 0 } });
     });
 
+    let autoSimInterval = null;
+    const btnAutoSim = document.getElementById('btn-auto-sim');
+
     document.getElementById('btn-connect-tiktok').addEventListener('click', async () => {
+      if (autoSimInterval) {
+        clearInterval(autoSimInterval);
+        autoSimInterval = null;
+        if (btnAutoSim) btnAutoSim.textContent = '🤖 Auto';
+      }
       const username = document.getElementById('input-tiktok-id').value.trim();
       await postApi('/api/connect', { username });
     });
-
-    let autoSimInterval = null;
-    const btnAutoSim = document.getElementById('btn-auto-sim');
     const RANDOM_NAMES = [
       'Chà 🌸', 'Trần Quân', 'Chris', 'Vânxingg❤️', 'Ông Chú U30',
       'Mèng méng', 'Bin', 'Công chúa', 'Cậu Út', 'Ngọc Trinh', 'Thỏ Yogi 🐇'
