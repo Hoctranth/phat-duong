@@ -172,7 +172,7 @@ const BASE_NAMES = [
 
 const VALID_SKINS = ['nam', 'nu', 'su', 'tieu', 'ni', 'caotang'];
 // Giới hạn tối đa số node Phật tử gửi qua WebSocket/DOM để phòng 5.000 - 50.000 người vẫn mượt 60FPS không lag
-const MAX_ACTIVE_MEDITATOR_NODES = 160;
+const MAX_ACTIVE_MEDITATOR_NODES = 300;
 
 // ============================================================================
 // HỆ THỐNG TU TIÊN: TIÊN MÔN VẤN ĐẠO (MẪU 7) - 10 CẢNH GIỚI & LINH CĂN
@@ -244,6 +244,55 @@ function detectSkinFromText(text = '') {
   if (/\bnữ\b/i.test(lower) || lower === 'nu') return 'nu';
   if (/\bnam\b/i.test(lower)) return 'nam';
   return null;
+}
+
+function formatTemplePrayerQuote(rawText = '') {
+  const cleaned = String(rawText || '').replace(/\s+/g, ' ').trim();
+  if (!cleaned) {
+    return 'Nam Mô A Di Đà Phật, nguyện cầu bình an cát tường 🙏';
+  }
+  const lower = cleaned.toLowerCase();
+  const shortKeywords = new Set([
+    'nam',
+    'nữ',
+    'nu',
+    'sư',
+    'su',
+    'sư thầy',
+    'su thay',
+    'ni',
+    'sư cô',
+    'su co',
+    'ni cô',
+    'ni co',
+    'tiểu',
+    'tieu',
+    'chú tiểu',
+    'chu tieu',
+    'cao tăng',
+    'cao tang',
+    'caotang',
+    'hộ pháp',
+    'ho phap',
+    'nam mô',
+    'nam mo',
+    'a di đà phật',
+    'a di da phat',
+    'adidaphat',
+    'nam mô a di đà phật',
+    'nam mo a di da phat',
+    'phật',
+    'phat',
+    'lạy phật',
+    'lay phat',
+    'mõ',
+    'gõ mõ',
+    'chuông'
+  ]);
+  if (shortKeywords.has(lower)) {
+    return 'Nam Mô A Di Đà Phật, nguyện cầu bình an cát tường 🙏';
+  }
+  return cleaned.slice(0, 140);
 }
 
 function generatePresetMeditators(count = 48) {
@@ -320,7 +369,8 @@ function generatePresetMeditators(count = 48) {
       hasLotusSeat,
       hasIncense,
       joinedAt: now - (count - i) * 1000,
-      lastComment: ''
+      lastComment: '',
+      isSeed: true
     });
   }
   return list;
@@ -391,7 +441,9 @@ function createInitialState() {
     leaderboardMap.set(m.userId, {
       userId: m.userId,
       nickname: m.nickname,
-      merit: m.merit
+      avatar: m.avatar || '',
+      merit: m.merit,
+      isSeed: true
     });
   });
 
@@ -439,6 +491,7 @@ function createInitialState() {
       likeProgress: 100,
       likeTarget: 300,
       totalLikes: 642,
+      totalShares: 0,
       totalMerit: 973
     },
     pondCreatures: generateInitialPondCreatures(),
@@ -452,6 +505,39 @@ function createInitialState() {
     totalCrowdCount: initialMeditators.length,
     meditators: initialMeditators,
     leaderboardMap,
+    chatHistory: [
+      {
+        id: 'seed_chat_1',
+        userId: 'seed_1',
+        nickname: 'Chà 🌸',
+        avatar: '',
+        skin: 'nu',
+        content: 'Nam Mô A Di Đà Phật, cầu gia đạo bình an 🙏',
+        timestamp: Date.now() - 18000,
+        isSeed: true
+      },
+      {
+        id: 'seed_chat_2',
+        userId: 'seed_2',
+        nickname: 'Trần Quân',
+        avatar: '',
+        skin: 'nam',
+        content: 'Chúc mọi người buổi tối an lành, tâm thanh tịnh 🪷',
+        timestamp: Date.now() - 12000,
+        isSeed: true
+      },
+      {
+        id: 'seed_chat_3',
+        userId: 'seed_3',
+        nickname: 'Chris',
+        avatar: '',
+        skin: 'nam',
+        content: 'Con xin thành tâm lễ Phật, nguyện cầu sức khỏe 🌸',
+        timestamp: Date.now() - 6000,
+        isSeed: true
+      }
+    ],
+    lastDonation: null,
     logs: [
       `[${new Date().toLocaleTimeString('vi-VN')}] ☸ Khởi tạo Chùa Online (Chế độ không giới hạn số người)`
     ]
@@ -529,7 +615,7 @@ function pushLog(text) {
 
 function getPersonPriorityBucket(person) {
   const uid = String(person?.userId || '');
-  if (uid.startsWith('seed_')) return 2;
+  if (person?.isSeed || uid.startsWith('seed_')) return 2;
   if (uid.startsWith('anon_live_')) return 1;
   return 0; // Người xem thật có tên & avatar
 }
@@ -637,8 +723,14 @@ function sortMeditatorsByMerit() {
   if (!Array.isArray(appState.meditators) || appState.meditators.length <= 1) return;
 
   const now = Date.now();
-  // Tầng 1: Top 6 vị Hộ Pháp / Trưởng Lão: Luôn xếp chuẩn xác từ cao xuống thấp theo số Kim Cương (merit 💎), sau đó tới Tu Vi
+  // Tầng 1: Top 6 vị Hộ Pháp / Trưởng Lão: Luôn ưu tiên người thật/giả lập đã phát tâm công đức (donate) đứng trước tài khoản mẫu (seed_*), sau đó xếp từ cao xuống thấp theo số Kim Cương (merit 💎) và Tu Vi
   const byMeritDesc = [...appState.meditators].sort((a, b) => {
+    const isSeedA = Boolean(a.isSeed || String(a.userId || '').startsWith('seed_'));
+    const isSeedB = Boolean(b.isSeed || String(b.userId || '').startsWith('seed_'));
+    const realDonorA = !isSeedA && (Number(a.merit) || 0) > 0 ? 1 : 0;
+    const realDonorB = !isSeedB && (Number(b.merit) || 0) > 0 ? 1 : 0;
+    if (realDonorB !== realDonorA) return realDonorB - realDonorA;
+
     const meritA = Number(a.merit) || 0;
     const meritB = Number(b.merit) || 0;
     if (meritB !== meritA) return meritB - meritA;
@@ -687,11 +779,16 @@ function sortMeditatorsByMerit() {
 
 function purgeSeedMeditators() {
   const beforeCount = appState.meditators.length;
-  appState.meditators = appState.meditators.filter((m) => !String(m.userId || '').startsWith('seed_'));
-  for (const key of Array.from(appState.leaderboardMap.keys())) {
-    if (String(key).startsWith('seed_')) {
+  appState.meditators = appState.meditators.filter(
+    (m) => !m.isSeed && !String(m.userId || '').startsWith('seed_')
+  );
+  for (const [key, entry] of Array.from(appState.leaderboardMap.entries())) {
+    if (entry?.isSeed || String(key).startsWith('seed_')) {
       appState.leaderboardMap.delete(key);
     }
+  }
+  if (Array.isArray(appState.chatHistory)) {
+    appState.chatHistory = appState.chatHistory.filter((c) => !c.isSeed);
   }
   if (beforeCount !== appState.meditators.length) {
     pushLog('🧹 Đã xóa danh sách Phật tử mẫu để hiển thị đúng số người xem thật từ phiên LIVE!');
@@ -702,53 +799,128 @@ function syncLiveViewerCount(rawCount) {
   const parsed = Number(rawCount);
   if (!Number.isFinite(parsed) || parsed < 0) return;
 
-  const exactViewerCount = Math.max(0, Math.round(parsed));
+  // Chỉ giữ lại người xem thật đã vào phòng / tương tác (bucket 0), tuyệt đối KHÔNG tạo nhân vật ảo "Phật Tử #..."
+  // để khi có người thật vào phòng (member) hoặc bình luận (chat), nhân vật của họ hiện ra rõ ràng từng người một!
+  const realNamedList = appState.meditators.filter((m) => getPersonPriorityBucket(m) === 0);
+
+  // Đảm bảo không bao giờ làm mất người thật đã tương tác dù viewerCount từ TikTok báo thấp hơn tạm thời
+  const exactViewerCount = Math.max(0, Math.round(parsed), realNamedList.length);
   appState.connection.viewerCount = exactViewerCount;
-  appState.totalCrowdCount = exactViewerCount;
+  appState.totalCrowdCount = realNamedList.length > 0 ? realNamedList.length : exactViewerCount;
 
   if (appState.connection.status !== 'connected') return;
 
-  // Khóa số lượng object DOM/WebSocket tối đa ở MAX_ACTIVE_MEDITATOR_NODES (160) để phòng 5.000+ người không bao giờ bị lag
-  const targetActiveNodes = Math.min(exactViewerCount, MAX_ACTIVE_MEDITATOR_NODES);
-
-  // Tách danh sách người xem thật đã lộ tên/avatar và các vị trí người xem ẩn danh (chưa comment)
-  const realNamedList = appState.meditators.filter((m) => getPersonPriorityBucket(m) === 0);
+  const targetActiveNodes = Math.min(Math.max(realNamedList.length, 1), MAX_ACTIVE_MEDITATOR_NODES);
   const existingAnonList = appState.meditators.filter((m) => getPersonPriorityBucket(m) === 1);
 
-  if (realNamedList.length < targetActiveNodes) {
-    // Bù đúng số người xem đang có mặt trên LIVE nhưng chưa bình luận / chưa lộ tên (tối đa tới targetActiveNodes)
-    const neededAnon = targetActiveNodes - realNamedList.length;
-    const nextAnonList = [];
-    const now = Date.now();
-    for (let i = 0; i < neededAnon; i++) {
-      if (existingAnonList[i]) {
-        nextAnonList.push(existingAnonList[i]);
-      } else {
-        nextAnonList.push({
-          userId: `anon_live_${i + 1}_${now}`,
-          nickname: `Phật Tử #${realNamedList.length + i + 1}`,
-          avatar: '',
-          skin: (realNamedList.length + i) % 2 === 1 ? 'nu' : 'nam',
-          merit: 0,
-          hasLotusSeat: false,
-          hasIncense: false,
-          joinedAt: now - i * 500,
-          lastActiveAt: now - i * 500,
-          lastComment: ''
-        });
-      }
-    }
-    appState.meditators = [...realNamedList, ...nextAnonList];
-  } else if (realNamedList.length >= targetActiveNodes) {
+  if (existingAnonList.length > 0 || appState.meditators.length > targetActiveNodes) {
     realNamedList.sort((a, b) => {
-      if (b.merit !== a.merit) return b.merit - a.merit;
+      if ((b.merit || 0) !== (a.merit || 0)) return (b.merit || 0) - (a.merit || 0);
+      const scoreA = getEffectiveRankScore(a);
+      const scoreB = getEffectiveRankScore(b);
+      if (scoreB !== scoreA) return scoreB - scoreA;
       const rankA = a.roomRank || 9999;
       const rankB = b.roomRank || 9999;
       if (rankA !== rankB) return rankA - rankB;
       return (b.lastActiveAt || b.joinedAt || 0) - (a.lastActiveAt || a.joinedAt || 0);
     });
-    appState.meditators = realNamedList.slice(0, targetActiveNodes);
+    appState.meditators = realNamedList.slice(0, MAX_ACTIVE_MEDITATOR_NODES);
   }
+}
+
+// ============================================================================
+// HÀNG ĐỢI XỬ LÝ TÁC VỤ TUẦN TỰ TỪNG USER 1 (FIFO - CHỐNG GIẬT LAG & CHỐNG SÓT NGƯỜI)
+// ============================================================================
+const userTaskQueue = [];
+let isProcessingUserQueue = false;
+let userQueueTimer = null;
+let userTaskSeq = 0;
+
+// Bộ đệm trạng thái trong cùng 1 lượt xử lý của 1 user để tránh gọi serializeState() / sort 300 người lặp lại nhiều lần
+let inUserTurn = false;
+let currentTurnState = null;
+let currentTurnStateBroadcasted = false;
+let lastTurnState = null;
+let lastTurnStateAt = 0;
+
+function getAdaptiveQueueDelayMs(taskType, remainingCount) {
+  if (remainingCount > 25) return 110;
+  if (remainingCount > 10) return 150;
+  if (remainingCount > 4) return 220;
+  if (taskType === 'gift') return 420;
+  if (
+    taskType === 'chat' ||
+    taskType === 'seat_or_skin' ||
+    taskType === 'tutien_action' ||
+    taskType === 'release_fish'
+  ) {
+    return 330;
+  }
+  return 280; // member, like, wooden_fish
+}
+
+function runInUserTurn(fn) {
+  const prevInTurn = inUserTurn;
+  inUserTurn = true;
+  currentTurnState = null;
+  currentTurnStateBroadcasted = false;
+  try {
+    return fn();
+  } finally {
+    if (currentTurnState) {
+      lastTurnState = currentTurnState;
+      lastTurnStateAt = Date.now();
+    }
+    inUserTurn = prevInTurn;
+    currentTurnState = null;
+    currentTurnStateBroadcasted = false;
+  }
+}
+
+function processNextUserTask() {
+  if (userTaskQueue.length === 0) {
+    isProcessingUserQueue = false;
+    userQueueTimer = null;
+    return;
+  }
+
+  isProcessingUserQueue = true;
+  const task = userTaskQueue.shift();
+  try {
+    runInUserTurn(() => {
+      task.execute();
+    });
+  } catch (err) {
+    console.error(`[UserTaskQueue Error (${task?.taskType})]:`, err?.message || err);
+  }
+
+  const delayMs = getAdaptiveQueueDelayMs(task?.taskType, userTaskQueue.length);
+  userQueueTimer = setTimeout(() => {
+    userQueueTimer = null;
+    processNextUserTask();
+  }, delayMs);
+}
+
+function enqueueUserTask(taskType, executeFn, meta = {}) {
+  if (typeof executeFn !== 'function') {
+    return { executedNow: false, queuedCount: userTaskQueue.length };
+  }
+
+  userTaskQueue.push({
+    id: ++userTaskSeq,
+    taskType: String(taskType || 'task'),
+    execute: executeFn,
+    meta,
+    enqueuedAt: Date.now()
+  });
+
+  // Nếu hàng đợi đang rảnh (user đầu tiên): thực thi ngay lập tức (0ms delay) rồi mới mở nhịp nghỉ cho user kế tiếp
+  if (!isProcessingUserQueue) {
+    processNextUserTask();
+    return { executedNow: true, queuedCount: userTaskQueue.length };
+  }
+
+  return { executedNow: false, queuedCount: userTaskQueue.length };
 }
 
 function serializeState() {
@@ -757,15 +929,21 @@ function serializeState() {
   }
   sortMeditatorsByMerit();
   const leaderboard = Array.from(appState.leaderboardMap.values())
-    .sort((a, b) => b.merit - a.merit)
+    .sort((a, b) => {
+      const seedA = Boolean(a.isSeed || String(a.userId || '').startsWith('seed_'));
+      const seedB = Boolean(b.isSeed || String(b.userId || '').startsWith('seed_'));
+      if (seedA !== seedB) return seedA ? 1 : -1;
+      if ((b.merit || 0) !== (a.merit || 0)) return (b.merit || 0) - (a.merit || 0);
+      return (b.lastDonatedAt || 0) - (a.lastDonatedAt || 0);
+    })
     .slice(0, 8);
 
   const totalCrowd =
     appState.connection.status === 'connected'
-      ? Number(appState.connection.viewerCount) || appState.meditators.length
-      : Number(appState.totalCrowdCount) || appState.meditators.length;
+      ? Math.max(Number(appState.connection.viewerCount) || 0, appState.meditators.length)
+      : Math.max(Number(appState.totalCrowdCount) || 0, appState.meditators.length);
 
-  return {
+  const snapshot = {
     startedAt: appState.startedAt,
     connection: appState.connection,
     settings: appState.settings,
@@ -782,17 +960,46 @@ function serializeState() {
     totalSlots: totalCrowd,
     meditators: appState.meditators,
     leaderboard,
+    chatHistory: (appState.chatHistory || []).slice(0, 10),
+    lastDonation: appState.lastDonation || null,
     logs: appState.logs.slice(0, 35)
   };
+
+  lastTurnState = snapshot;
+  lastTurnStateAt = Date.now();
+  return snapshot;
 }
 
-function broadcast(type, payload = {}) {
-  const message = JSON.stringify({
+function broadcast(type, payload = {}, options = {}) {
+  let stateToSend;
+  if (options.state !== undefined) {
+    stateToSend = options.state;
+  } else if (options.includeState === false) {
+    stateToSend = undefined;
+  } else if (inUserTurn) {
+    if (!currentTurnState) {
+      currentTurnState = serializeState();
+    }
+    if (options.auxiliary && currentTurnStateBroadcasted) {
+      stateToSend = undefined;
+    } else {
+      stateToSend = currentTurnState;
+      currentTurnStateBroadcasted = true;
+    }
+  } else {
+    stateToSend = serializeState();
+  }
+
+  const packet = {
     type,
     payload,
-    state: serializeState(),
     timestamp: Date.now()
-  });
+  };
+  if (stateToSend !== undefined) {
+    packet.state = stateToSend;
+  }
+
+  const message = JSON.stringify(packet);
 
   wss.clients.forEach((client) => {
     if (client.readyState === 1) {
@@ -822,6 +1029,14 @@ function extractImageUrl(imgObj) {
 
 function extractUserInfo(rawUser = {}) {
   const u = rawUser?.user || rawUser || {};
+  const rawNickname =
+    u.nickname ||
+    u.nickName ||
+    u.displayId ||
+    u.display_id ||
+    u.uniqueId ||
+    u.unique_id ||
+    'Phật Tử Hữu Duyên';
   const userId =
     u.displayId ||
     u.display_id ||
@@ -831,14 +1046,7 @@ function extractUserInfo(rawUser = {}) {
     u.id_str ||
     u.userId ||
     u.id ||
-    `user_${Math.random().toString(36).slice(2, 7)}`;
-  const nickname =
-    u.nickname ||
-    u.nickName ||
-    u.displayId ||
-    u.display_id ||
-    u.uniqueId ||
-    'Phật Tử Hữu Duyên';
+    (u.nickname || u.nickName ? String(u.nickname || u.nickName).trim() : `guest_fallback_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`);
   const avatar =
     extractImageUrl(u.avatarThumb) ||
     extractImageUrl(u.avatar_thumb) ||
@@ -852,17 +1060,33 @@ function extractUserInfo(rawUser = {}) {
     u.avatar ||
     '';
 
-  return { userId: String(userId), nickname: String(nickname), avatar: String(avatar) };
+  return { userId: String(userId), nickname: String(rawNickname), avatar: String(avatar) };
 }
 
-function upsertMeditator({ userId, nickname, avatar = '', preferredSkin, commentText, addMeritAmount = 0, addTuViAmount = 0 }) {
+function upsertMeditator({
+  userId,
+  nickname,
+  avatar = '',
+  preferredSkin,
+  commentText,
+  addMeritAmount = 0,
+  addTuViAmount = 0,
+  touchActive = true
+}) {
   const cleanName = String(nickname || 'Phật Tử').trim();
-  const key = String(userId || cleanName).toLowerCase();
+  const key = String(userId || cleanName).trim().toLowerCase();
+  const isRealUserKey = !key.startsWith('seed_') && !key.startsWith('anon_live_');
 
   const detectedSkin = preferredSkin || detectSkinFromText(commentText);
-  let person = appState.meditators.find(
-    (m) => String(m.userId).toLowerCase() === key || m.nickname.toLowerCase() === cleanName.toLowerCase()
-  );
+  // Ưu tiên khớp chính xác theo userId; chỉ khớp theo nickname nếu là nhân vật mẫu (seed_*) để 2 người thật trùng tên không bao giờ ghi đè làm mất nhau
+  let person = appState.meditators.find((m) => String(m.userId || '').toLowerCase() === key);
+  if (!person) {
+    person = appState.meditators.find(
+      (m) =>
+        (m.isSeed || String(m.userId || '').startsWith('seed_')) &&
+        String(m.nickname || '').trim().toLowerCase() === cleanName.toLowerCase()
+    );
+  }
 
   const now = Date.now();
   let isNewSeat = false;
@@ -872,6 +1096,15 @@ function upsertMeditator({ userId, nickname, avatar = '', preferredSkin, comment
     const anonIdx = appState.meditators.findIndex((m) => String(m.userId || '').startsWith('anon_live_'));
     if (anonIdx !== -1) {
       appState.meditators.splice(anonIdx, 1);
+    } else if (appState.meditators.length >= MAX_ACTIVE_MEDITATOR_NODES) {
+      // Nếu đã đầy 300 chỗ, thay thế 1 tài khoản mẫu (seed_*) ở cuối danh sách để không bao giờ sót người thật
+      for (let i = appState.meditators.length - 1; i >= 0; i--) {
+        const cand = appState.meditators[i];
+        if (cand && (cand.isSeed || String(cand.userId || '').startsWith('seed_'))) {
+          appState.meditators.splice(i, 1);
+          break;
+        }
+      }
     }
     const spiritRoot = pickSpiritRoot(key, commentText);
     person = {
@@ -887,16 +1120,37 @@ function upsertMeditator({ userId, nickname, avatar = '', preferredSkin, comment
       hasLotusSeat: false,
       hasIncense: false,
       joinedAt: now,
-      lastActiveAt: now,
-      lastComment: commentText || ''
+      lastActiveAt: touchActive ? now : now - 300000,
+      lastComment: commentText || '',
+      isSeed: !isRealUserKey
     };
     appState.meditators.push(person);
+    appState.totalCrowdCount = Math.max(Number(appState.totalCrowdCount) || 0, appState.meditators.length);
   } else {
+    if (
+      (person.isSeed || String(person.userId || '').startsWith('seed_')) &&
+      isRealUserKey
+    ) {
+      isNewSeat = true;
+      appState.leaderboardMap.delete(person.userId);
+      person.userId = key;
+      person.isSeed = false;
+      person.merit = 0;
+      person.tuVi = 0;
+      person.hasLotusSeat = false;
+      person.hasIncense = false;
+    } else if (isRealUserKey) {
+      person.isSeed = false;
+    }
     person.nickname = cleanName;
     if (avatar) {
       person.avatar = avatar;
     }
-    person.lastActiveAt = now;
+    if (touchActive) {
+      person.lastActiveAt = now;
+    } else if (!person.lastActiveAt) {
+      person.lastActiveAt = now - 300000;
+    }
     if (VALID_SKINS.includes(detectedSkin)) {
       person.skin = detectedSkin;
     }
@@ -915,6 +1169,9 @@ function upsertMeditator({ userId, nickname, avatar = '', preferredSkin, comment
     person.merit += addMeritAmount;
     person.tuVi = (person.tuVi || 0) + addMeritAmount * 100;
     person.hasIncense = true;
+    person.lastDonatedAt = now;
+    person.lastActiveAt = now;
+    person.isSeed = false;
     if (person.merit >= 99) {
       person.skin = 'su'; // Hộ pháp mặc áo vàng ngồi đài sen hàng đầu
       person.hasLotusSeat = true;
@@ -939,25 +1196,42 @@ function upsertMeditator({ userId, nickname, avatar = '', preferredSkin, comment
 
 function addMeritLeaderboard(user, points) {
   const key = String(user.userId || user.nickname).toLowerCase();
+  const cleanNicknameLower = String(user.nickname || '').trim().toLowerCase();
+  for (const [k, entry] of Array.from(appState.leaderboardMap.entries())) {
+    if (
+      (entry?.isSeed || String(k).startsWith('seed_')) &&
+      String(entry?.nickname || '').trim().toLowerCase() === cleanNicknameLower
+    ) {
+      appState.leaderboardMap.delete(k);
+    }
+  }
   const existing = appState.leaderboardMap.get(key) || {
     userId: key,
     nickname: user.nickname,
     avatar: user.avatar || '',
-    merit: 0
+    merit: 0,
+    isSeed: false
   };
   existing.nickname = user.nickname || existing.nickname;
   if (user.avatar) {
     existing.avatar = user.avatar;
   }
   existing.merit += points;
+  existing.isSeed = false;
+  existing.lastDonatedAt = Date.now();
   appState.leaderboardMap.set(key, existing);
   appState.altar.totalMerit += points;
 }
 
 // ============================================================================
-// XỬ LÝ SỰ KIỆN TỪ TIKTOK LIVE & GIẢ LẬP
+// XỬ LÝ SỰ KIỆN TỪ TIKTOK LIVE & GIẢ LẬP (TUẦN TỰ TỪNG USER 1 QUA userTaskQueue)
 // ============================================================================
-function handleMemberEvent(rawUser) {
+let lastMemberTuTienEventAt = 0;
+let lastTempleMemberBroadcastAt = 0;
+let lastBreakthroughSkyRideAt = 0;
+let lastLuckySwordRainAt = 0;
+
+function executeMemberEvent(rawUser) {
   const user = extractUserInfo(rawUser);
   const isTuTienTheme = Number(appState.settings.themeId) === 7;
   const { person, isNewSeat, realmUpgraded, curRealm, tuViAdded } = upsertMeditator({
@@ -966,40 +1240,82 @@ function handleMemberEvent(rawUser) {
     avatar: user.avatar,
     addTuViAmount: isTuTienTheme ? 35 : 0
   });
+  person.hasIncense = true;
 
   const monkSpeech = isTuTienTheme
     ? `Chào mừng đạo hữu ${person.nickname} ngự kiếm nhập môn tu luyện ☯`
     : `${person.nickname} đến rồi, chúc con một buổi tối an lành 🙏`;
   appState.settings.monkGreeting = monkSpeech;
 
-  if (isNewSeat) {
-    pushLog(
-      isTuTienTheme
-        ? `☯ Đạo hữu ${person.nickname} đã bước vào Tiên Môn (Cảnh giới: ${person.realmName} · Tu vi: ${person.tuVi}).`
-        : `🙏 ${person.nickname} đã vào chùa tọa thiền (Tổng: ${appState.meditators.length} người).`
-    );
+  pushLog(
+    isTuTienTheme
+      ? `☯ Đạo hữu ${person.nickname} đã bước vào Tiên Môn (Cảnh giới: ${person.realmName} · Tu vi: ${person.tuVi}).`
+      : `🙏 ${person.nickname} đã vào chùa lễ Phật & tọa thiền (Tổng: ${appState.meditators.length} người).`
+  );
+
+  let chatEntry = null;
+  if (!isTuTienTheme) {
+    if (!Array.isArray(appState.chatHistory)) appState.chatHistory = [];
+    chatEntry = {
+      id: `member_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      userId: person.userId,
+      nickname: person.nickname,
+      avatar: person.avatar || '',
+      skin: person.skin || 'nam',
+      content: 'Con xin vào chùa lễ Phật, cầu bình an 🙏',
+      timestamp: Date.now(),
+      isSeed: false
+    };
+    appState.chatHistory = appState.chatHistory.filter((c) => !c.isSeed && c.id !== chatEntry.id);
+    appState.chatHistory.unshift(chatEntry);
+    if (appState.chatHistory.length > 20) {
+      appState.chatHistory.length = 20;
+    }
   }
+
+  let sentTuTienEvent = false;
   if (isTuTienTheme) {
-    const sRoot = person.spiritRoot || { name: 'Hỏa linh căn', mult: 1.1, isProdigy: false };
-    broadcast('tutien_event', {
-      user: person,
-      eventKind: realmUpgraded ? 'breakthrough' : 'join_sect',
-      fxType: realmUpgraded ? 'breakthrough_thunder' : 'sword_rain',
-      realmUpgraded,
-      tuViAdded,
-      totalTuVi: person.tuVi,
-      headline: realmUpgraded ? '⚡ ĐỘT PHÁ CẢNH GIỚI ⚡' : '☯ ĐẠO HỮU NHẬP MÔN ☯',
-      bigTitle: realmUpgraded && curRealm ? curRealm.name : sRoot.name,
-      subLine: `${person.nickname} nhập môn · +${tuViAdded} Tu Vi (${person.realmName})`,
-      pillLine: `☯ ${person.nickname} nhập môn · ${sRoot.name} (+${tuViAdded} Tu Vi)`,
-      commentText: 'Đạo hữu xin nhập môn ☯'
-    });
+    const now = Date.now();
+    if (realmUpgraded || now - lastMemberTuTienEventAt >= 1500) {
+      lastMemberTuTienEventAt = now;
+      const sRoot = person.spiritRoot || { name: 'Hỏa linh căn', mult: 1.1, isProdigy: false };
+      broadcast('tutien_event', {
+        user: person,
+        eventKind: realmUpgraded ? 'breakthrough' : 'join_sect',
+        fxType: realmUpgraded ? 'breakthrough_thunder' : 'join_sect',
+        realmUpgraded,
+        tuViAdded,
+        totalTuVi: person.tuVi,
+        headline: realmUpgraded ? '⚡ ĐỘT PHÁ CẢNH GIỚI ⚡' : '☯ ĐẠO HỮU NHẬP MÔN ☯',
+        bigTitle: realmUpgraded && curRealm ? curRealm.name : sRoot.name,
+        subLine: `${person.nickname} nhập môn · +${tuViAdded} Tu Vi (${person.realmName})`,
+        pillLine: `☯ ${person.nickname} nhập môn · ${sRoot.name} (+${tuViAdded} Tu Vi)`,
+        commentText: 'Đạo hữu xin nhập môn ☯'
+      });
+      sentTuTienEvent = true;
+    }
+  } else {
+    const now = Date.now();
+    if (now - lastTempleMemberBroadcastAt < 1000) {
+      return;
+    }
+    lastTempleMemberBroadcastAt = now;
   }
-  broadcast('member', {
-    user: person,
-    isNewSeat,
-    monkSpeech
-  });
+  broadcast(
+    'member',
+    {
+      user: person,
+      isNewSeat,
+      monkSpeech,
+      chatEntry,
+      walkUpBow: true
+    },
+    { auxiliary: sentTuTienEvent }
+  );
+}
+
+function handleMemberEvent(rawUser) {
+  return enqueueUserTask('member', () => executeMemberEvent(rawUser));
 }
 
 function advanceTuTienRelic(person, delta = 12) {
@@ -1034,18 +1350,17 @@ function advanceTuTienRelic(person, delta = 12) {
     pushLog(
       `🐉 [BÍ CẢNH KHAI MỞ] ${person.nickname} đã phá vỡ phong ấn Thái Cổ Long Châu (Tầng ${relic.stageLevel - 1}) -> Nhận +800 Tu Vi & Đạo Hiệu 「Long Châu Chi Chủ」!`
     );
-    broadcast('sky_ride', {
+    return {
       user: person,
       daoTitle: person.daoTitle || 'Long Châu Chi Chủ',
       reason: `🐉 PHÁ ẤN THÁI CỔ LONG CHÂU (+800 TU VI)`,
       force: true
-    });
-    return true;
+    };
   }
-  return false;
+  return null;
 }
 
-function handleChatEvent(rawUser, content, forcedSkin) {
+function executeChatEvent(rawUser, content, forcedSkin) {
   const text = String(content || '').trim();
   const lower = text.toLowerCase();
   const user = extractUserInfo(rawUser);
@@ -1102,10 +1417,10 @@ function handleChatEvent(rawUser, content, forcedSkin) {
     lower === 'pk' ||
     lower.includes(' pk ');
 
-  // Tăng mạnh Tu Vi khi comment để khán giả comment vài câu là Đột Phá Cảnh Giới & Đổi Tiên Y Mới ngay!
-  // Đồng thời có 45% tỉ lệ "Đốn Ngộ Tiên Duyên" bạo kích x2.2 Tu Vi!
-  const isLuckyEnlightenment = Math.random() < 0.45;
-  let baseTuVi = 120 + Math.floor(Math.random() * 75); // Mặc định 120..195 Tu Vi mỗi comment
+  // Cộng Tu Vi vừa phải khi comment để nhịp độ Đột Phá Cảnh Giới tự nhiên, không bị nổ sấm sét dồn dập
+  // Đồng thời có 22% tỉ lệ "Đốn Ngộ Tiên Duyên" bạo kích x2.2 Tu Vi!
+  const isLuckyEnlightenment = Math.random() < 0.22;
+  let baseTuVi = 65 + Math.floor(Math.random() * 46); // Mặc định 65..110 Tu Vi mỗi comment
   if (isRelicSlashCmd) baseTuVi = 350 + Math.floor(Math.random() * 110);
   else if (isSkyRideCmd) baseTuVi = 290 + Math.floor(Math.random() * 100);
   else if (isDuelCmd) baseTuVi = 320 + Math.floor(Math.random() * 120);
@@ -1127,37 +1442,61 @@ function handleChatEvent(rawUser, content, forcedSkin) {
     person.customDaoTitle = true;
     person.daoTitle = customDaoTitle;
   }
-  const relicBroken = advanceTuTienRelic(person, isRelicSlashCmd ? 24 : 7);
-  if (isSkyRideCmd && !relicBroken) {
-    broadcast('sky_ride', {
+
+  let skyRidePayload = advanceTuTienRelic(person, isRelicSlashCmd ? 24 : 7);
+  if (!skyRidePayload && isSkyRideCmd) {
+    skyRidePayload = {
       user: person,
       daoTitle: person.daoTitle || 'Tiêu Dao Kiếm Tiên',
       reason: `🗡️ NGỰ KIẾM TUẦN THIÊN · ${person.realmName.toUpperCase()}`,
       force: true
-    });
-  } else if (realmUpgraded && !relicBroken) {
-    broadcast('sky_ride', {
+    };
+  } else if (!skyRidePayload && realmUpgraded && Date.now() - lastBreakthroughSkyRideAt >= 4500) {
+    lastBreakthroughSkyRideAt = Date.now();
+    skyRidePayload = {
       user: person,
       daoTitle: person.daoTitle || 'Thiên Đạo Kỳ Tài',
       reason: `⚡ ĐỘT PHÁ ${person.realmName.toUpperCase()} · NGỰ KIẾM PHI HÀNH`
-    });
+    };
   }
+
   const top3Decree = evaluateTop3Decree(person, 0, prevTop3Snapshot);
   if (top3Decree) {
     pushLog(
       `👑 [TOP ${top3Decree.rank} ${top3Decree.roomName}] ${person.nickname} đoạt ngôi ${top3Decree.rankTitle} (${top3Decree.rewardSkin})!`
     );
-    broadcast('top3_decree', top3Decree);
   }
 
   const isPondTheme = Number(appState.settings.themeId) === 6;
   const isTuTienTheme = Number(appState.settings.themeId) === 7;
+  const isFishKeyword =
+    lower.includes('phóng sanh') ||
+    lower.includes('phong sanh') ||
+    lower.includes('thả cá') ||
+    lower.includes('tha ca') ||
+    lower.includes('cá chép') ||
+    lower.includes('ca chep') ||
+    lower.includes('cá koi') ||
+    lower.includes('ca koi') ||
+    lower.includes('rùa vàng') ||
+    lower.includes('rua vang');
+  const prayerQuote = !isTuTienTheme ? formatTemplePrayerQuote(text) : undefined;
+  const prayerTag = !isTuTienTheme
+    ? isPondTheme || isFishKeyword
+      ? '🐟 KHẤN NGUYỆN PHÓNG SANH'
+      : '🙏 ĐANG LÊN KHẤN NGUYỆN'
+    : undefined;
+
+  if (!isTuTienTheme) {
+    person.lastPrayerQuote = prayerQuote;
+    person.lastPrayerTag = prayerTag;
+  }
 
   const monkSpeech = isTuTienTheme
     ? realmUpgraded
       ? `Chúc mừng đạo hữu ${person.nickname} đốn ngộ chân kinh, đột phá cảnh giới ${person.realmName}!`
       : `Đạo hữu ${person.nickname} thổ nạp linh khí, tăng ${tuViAdded} tu vi!`
-    : `${person.nickname} thành tâm khấn nguyện: "${text}"`;
+    : `${person.nickname} thành tâm khấn nguyện: "${prayerQuote || text}"`;
   appState.settings.monkGreeting = monkSpeech;
 
   if (skinChanged && !isTuTienTheme) {
@@ -1166,195 +1505,233 @@ function handleChatEvent(rawUser, content, forcedSkin) {
     pushLog(`💬 ${person.nickname}: "${text}"`);
   }
 
-  // Hỗ trợ tương tác hoàn toàn bằng COMMENT trên LIVE:
-  let walkUpBow = true;
-  const isFishKeyword =
-    lower.includes('thả cá') ||
-    lower.includes('tha ca') ||
-    lower.includes('phóng sanh') ||
-    lower.includes('phong sanh') ||
-    lower.includes('phóng sinh') ||
-    lower.includes('rùa') ||
-    lower.includes('koi') ||
-    lower.includes('cá chép') ||
-    lower.includes('cá vàng');
-  const isFeedFishKeyword =
-    lower.includes('cho cá ăn') ||
-    lower.includes('cho ăn') ||
-    lower.includes('rải mồi') ||
-    lower.includes('thả thính');
-
-  if (!isTuTienTheme && lower.includes('chuông')) {
-    broadcast('bell_strike', {});
-  }
-  if (!isTuTienTheme && (lower.includes('gõ mõ') || lower === 'mõ')) {
-    broadcast('wooden_fish_strike', {});
+  // Cập nhật chatHistory trước khi broadcast để serializeState() luôn chứa bình luận mới nhất
+  let chatEntry = null;
+  if (text) {
+    if (!Array.isArray(appState.chatHistory)) appState.chatHistory = [];
+    chatEntry = {
+      id: `chat_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      userId: person.userId,
+      nickname: person.nickname,
+      avatar: person.avatar || '',
+      skin: person.skin || 'nam',
+      content: text,
+      ...(prayerQuote ? { prayerQuote, prayerTag } : {}),
+      timestamp: Date.now(),
+      isSeed: false
+    };
+    appState.chatHistory = appState.chatHistory.filter((c) => !c.isSeed && c.id !== chatEntry.id);
+    appState.chatHistory.unshift(chatEntry);
+    if (appState.chatHistory.length > 20) {
+      appState.chatHistory.length = 20;
+    }
   }
 
-  if (isTuTienTheme || isThunderCmd || isSwordCmd || isDuelCmd || isBlossomCmd) {
+  // Hỗ trợ tương tác hoàn toàn bằng COMMENT trên LIVE (Ở Mẫu 6 Hồ Sen: comment chỉ hiện lời khấn nguyện, chỉ khi donate mới thả cá):
+  let walkUpBow = !isPondTheme;
+
+  let mainEvent = null;
+  if (isTuTienTheme || (!isPondTheme && (isThunderCmd || isSwordCmd || isDuelCmd || isBlossomCmd))) {
     if (isTuTienTheme) {
       walkUpBow = false;
     }
     const sRoot = person.spiritRoot || { name: 'Hỏa linh căn', mult: 1.1, isProdigy: false };
 
-    // Nếu người xem LÊN CẤP (realmUpgraded) nhờ comment -> Luôn ưu tiên nổ đại lễ ĐỘT PHÁ CẢNH GIỚI kèm Sấm Sét + Kiếm Bay!
     if (realmUpgraded && curRealm) {
       pushLog(
         `⚡ [THĂNG CẤP] ${person.nickname} bình luận "${text}" (+${tuViAdded} Tu Vi) -> Đột phá [${prevRealm} ➔ ${curRealm.name}] (Tổng: ${person.tuVi} TV)!`
       );
-      broadcast('tutien_event', {
-        user: person,
-        eventKind: 'breakthrough',
-        fxType: 'breakthrough_thunder',
-        realmUpgraded: true,
-        prevRealmName: prevRealm,
-        newRealmName: curRealm.name,
-        tuViAdded,
-        totalTuVi: person.tuVi,
-        headline: '⚡ ĐỘT PHÁ CẢNH GIỚI ⚡',
-        bigTitle: curRealm.name,
-        subLine: `${person.nickname} thăng cấp ${curRealm.name} · +${tuViAdded} Tu Vi (Đổi Tiên Y Mới)`,
-        pillLine: `⬆️ ${person.nickname} đột phá ${curRealm.name} · +${tuViAdded} Tu Vi (Tổng: ${person.tuVi} TV)`,
-        commentText: text
-      });
+      mainEvent = {
+        type: 'tutien_event',
+        payload: {
+          user: person,
+          eventKind: 'breakthrough',
+          fxType: 'breakthrough_thunder',
+          realmUpgraded: true,
+          prevRealmName: prevRealm,
+          newRealmName: curRealm.name,
+          tuViAdded,
+          totalTuVi: person.tuVi,
+          headline: '⚡ ĐỘT PHÁ CẢNH GIỚI ⚡',
+          bigTitle: curRealm.name,
+          subLine: `${person.nickname} thăng cấp ${curRealm.name} · +${tuViAdded} Tu Vi (Đổi Tiên Y Mới)`,
+          pillLine: `⬆️ ${person.nickname} đột phá ${curRealm.name} · +${tuViAdded} Tu Vi (Tổng: ${person.tuVi} TV)`,
+          commentText: text
+        }
+      };
     } else if (isDuelCmd) {
-      const others = appState.meditators.filter((m) => m.userId !== person.userId);
+      const others = appState.meditators.slice(0, 48).filter((m) => m.userId !== person.userId);
       const opponent = others.length > 0 ? others[Math.floor(Math.random() * Math.min(20, others.length))] : null;
       pushLog(`🔥 ${person.nickname} luận kiếm tỷ thí cùng ${opponent ? opponent.nickname : 'Tiên Môn'} (+${tuViAdded} Tu Vi)!`);
-      broadcast('tutien_event', {
-        user: person,
-        opponentUserId: opponent ? opponent.userId : null,
-        opponentName: opponent ? opponent.nickname : 'Chưởng Môn',
-        eventKind: 'duel',
-        fxType: 'duel_clash',
-        realmUpgraded: false,
-        tuViAdded,
-        totalTuVi: person.tuVi,
-        headline: '🔥 LUẬN KIẾM TRANH HÙNG 🔥',
-        bigTitle: 'Đấu Pháp Đỉnh Cao',
-        subLine: `${person.nickname} ⚔️ ${opponent ? opponent.nickname : 'Tiên Môn'} · +${tuViAdded} Tu Vi (${person.realmName})`,
-        pillLine: `⚔️ ${person.nickname} thắng tỷ thí · +${tuViAdded} Tu Vi (Tổng: ${person.tuVi} TV)`,
-        commentText: text
-      });
+      mainEvent = {
+        type: 'tutien_event',
+        payload: {
+          user: person,
+          opponentUserId: opponent ? opponent.userId : null,
+          opponentName: opponent ? opponent.nickname : 'Chưởng Môn',
+          eventKind: 'duel',
+          fxType: 'duel_clash',
+          realmUpgraded: false,
+          tuViAdded,
+          totalTuVi: person.tuVi,
+          headline: '🔥 LUẬN KIẾM TRANH HÙNG 🔥',
+          bigTitle: 'Đấu Pháp Đỉnh Cao',
+          subLine: `${person.nickname} ⚔️ ${opponent ? opponent.nickname : 'Tiên Môn'} · +${tuViAdded} Tu Vi (${person.realmName})`,
+          pillLine: `⚔️ ${person.nickname} thắng tỷ thí · +${tuViAdded} Tu Vi (Tổng: ${person.tuVi} TV)`,
+          commentText: text
+        }
+      };
     } else if (isThunderCmd) {
       pushLog(`⚡ ${person.nickname} gọi Cửu Thiên Thần Lôi độ kiếp (+${tuViAdded} Tu Vi -> ${person.realmName})!`);
-      broadcast('tutien_event', {
-        user: person,
-        eventKind: 'thunder',
-        fxType: 'thunder_tribulation',
-        realmUpgraded: false,
-        tuViAdded,
-        totalTuVi: person.tuVi,
-        headline: '⚡ THIÊN LÔI ĐỘ KIẾP ⚡',
-        bigTitle: 'Cửu Thiên Thần Lôi',
-        subLine: `${person.nickname} dẫn Lôi Kiếp rèn thể · +${tuViAdded} Tu Vi (${person.realmName})`,
-        pillLine: `⚡ ${person.nickname} gọi Thiên Lôi · +${tuViAdded} Tu Vi (Tổng: ${person.tuVi} TV)`,
-        commentText: text
-      });
+      mainEvent = {
+        type: 'tutien_event',
+        payload: {
+          user: person,
+          eventKind: 'thunder',
+          fxType: 'thunder_tribulation',
+          realmUpgraded: false,
+          tuViAdded,
+          totalTuVi: person.tuVi,
+          headline: '⚡ THIÊN LÔI ĐỘ KIẾP ⚡',
+          bigTitle: 'Cửu Thiên Thần Lôi',
+          subLine: `${person.nickname} dẫn Lôi Kiếp rèn thể · +${tuViAdded} Tu Vi (${person.realmName})`,
+          pillLine: `⚡ ${person.nickname} gọi Thiên Lôi · +${tuViAdded} Tu Vi (Tổng: ${person.tuVi} TV)`,
+          commentText: text
+        }
+      };
     } else if (isSwordCmd) {
       pushLog(`⚔️ ${person.nickname} triệu hồi Vạn Kiếm Quy Tông (+${tuViAdded} Tu Vi)!`);
-      broadcast('tutien_event', {
-        user: person,
-        eventKind: 'sword',
-        fxType: 'sword_rain',
-        realmUpgraded: false,
-        tuViAdded,
-        totalTuVi: person.tuVi,
-        headline: '⚔️ VẠN KIẾM QUY TÔNG ⚔️',
-        bigTitle: 'Kiếm Ý Thông Thiên',
-        subLine: `${person.nickname} ngự Vạn Kiếm · +${tuViAdded} Tu Vi (${person.realmName})`,
-        pillLine: `🗡️ ${person.nickname} ngự Vạn Kiếm · +${tuViAdded} Tu Vi (Tổng: ${person.tuVi} TV)`,
-        commentText: text
-      });
+      mainEvent = {
+        type: 'tutien_event',
+        payload: {
+          user: person,
+          eventKind: 'sword',
+          fxType: 'sword_rain',
+          realmUpgraded: false,
+          tuViAdded,
+          totalTuVi: person.tuVi,
+          headline: '⚔️ VẠN KIẾM QUY TÔNG ⚔️',
+          bigTitle: 'Kiếm Ý Thông Thiên',
+          subLine: `${person.nickname} ngự Vạn Kiếm · +${tuViAdded} Tu Vi (${person.realmName})`,
+          pillLine: `🗡️ ${person.nickname} ngự Vạn Kiếm · +${tuViAdded} Tu Vi (Tổng: ${person.tuVi} TV)`,
+          commentText: text
+        }
+      };
     } else if (isBlossomCmd) {
       pushLog(`🌸 ${person.nickname} triệu hồi Mưa Hoa Đào Tiên Giới (+${tuViAdded} Tu Vi)!`);
-      broadcast('tutien_event', {
-        user: person,
-        eventKind: 'blossom',
-        fxType: 'blossom_rain',
-        realmUpgraded: false,
-        tuViAdded,
-        totalTuVi: person.tuVi,
-        headline: '🌸 TIÊN GIỚI GIÁNG HOA 🌸',
-        bigTitle: 'Mưa Hoa Đào',
-        subLine: `${person.nickname} rải Đào Hoa chúc phúc · +${tuViAdded} Tu Vi`,
-        pillLine: `🌸 ${person.nickname} triệu hồi Mưa Hoa Đào · +${tuViAdded} Tu Vi`,
-        commentText: text
-      });
+      mainEvent = {
+        type: 'tutien_event',
+        payload: {
+          user: person,
+          eventKind: 'blossom',
+          fxType: 'blossom_rain',
+          realmUpgraded: false,
+          tuViAdded,
+          totalTuVi: person.tuVi,
+          headline: '🌸 TIÊN GIỚI GIÁNG HOA 🌸',
+          bigTitle: 'Mưa Hoa Đào',
+          subLine: `${person.nickname} rải Đào Hoa chúc phúc · +${tuViAdded} Tu Vi`,
+          pillLine: `🌸 ${person.nickname} triệu hồi Mưa Hoa Đào · +${tuViAdded} Tu Vi`,
+          commentText: text
+        }
+      };
     } else {
       pushLog(`☯ ${person.nickname} tu luyện [${sRoot.name} x${sRoot.mult}]: "${text}" (+${tuViAdded} Tu Vi -> ${person.tuVi} TV)`);
-      // Mọi comment thông thường cũng luôn gọi Kiếm Bay hoặc Sấm Sét để màn hình cực kỳ sống động!
-      const defaultFx = Math.random() < 0.5 ? 'sword_and_thunder' : 'thunder_tribulation';
-      broadcast('tutien_event', {
-        user: person,
-        eventKind: isLuckyEnlightenment ? 'prodigy' : 'join_sect',
-        fxType: defaultFx,
-        realmUpgraded: false,
-        tuViAdded,
-        totalTuVi: person.tuVi,
-        headline: isLuckyEnlightenment ? '✨ ĐỐN NGỘ TIÊN DUYÊN ✨' : sRoot.isProdigy ? 'KỲ TÀI XUẤT THẾ' : 'LINH KHÍ QUÁN ĐỈNH',
-        bigTitle: sRoot.name,
-        subLine: `${person.nickname} hấp thu linh khí · +${tuViAdded} Tu Vi (${person.realmName})`,
-        pillLine: `☯ ${person.nickname} +${tuViAdded} Tu Vi · ${sRoot.name} (Tổng: ${person.tuVi} TV)`,
-        commentText: text
-      });
+      const now = Date.now();
+      let defaultFx = 'join_sect';
+      if (isLuckyEnlightenment && now - lastLuckySwordRainAt >= 2500) {
+        defaultFx = 'sword_rain';
+        lastLuckySwordRainAt = now;
+      }
+      mainEvent = {
+        type: 'tutien_event',
+        payload: {
+          user: person,
+          eventKind: isLuckyEnlightenment ? 'prodigy' : 'join_sect',
+          fxType: defaultFx,
+          realmUpgraded: false,
+          tuViAdded,
+          totalTuVi: person.tuVi,
+          headline: isLuckyEnlightenment ? '✨ ĐỐN NGỘ TIÊN DUYÊN ✨' : sRoot.isProdigy ? 'KỲ TÀI XUẤT THẾ' : 'LINH KHÍ QUÁN ĐỈNH',
+          bigTitle: sRoot.name,
+          subLine: `${person.nickname} hấp thu linh khí · +${tuViAdded} Tu Vi (${person.realmName})`,
+          pillLine: `☯ ${person.nickname} +${tuViAdded} Tu Vi · ${sRoot.name} (Tổng: ${person.tuVi} TV)`,
+          commentText: text
+        }
+      };
     }
-  } else if (isFeedFishKeyword) {
+  } else if (isPondTheme) {
+    person.hasIncense = true;
     walkUpBow = false;
-    pushLog(`🌾 ${person.nickname} bình luận "${text}" -> Rải thức ăn vàng xuống Hồ Sen cho đàn cá & rùa vàng!`);
-    broadcast('feed_fish', {
-      user: person,
-      content: text
-    });
-  } else if (isPondTheme || isFishKeyword) {
-    walkUpBow = false;
-    let cType = 'carp_red';
-    let cLabel = 'Cá Chép Đỏ Bình An';
-    if (lower.includes('rùa') || lower.includes('linh quy')) {
-      cType = 'turtle_gold';
-      cLabel = 'Rùa Vàng Linh Quy';
-    } else if (lower.includes('koi') || lower.includes('ngũ sắc')) {
-      cType = 'koi_calico';
-      cLabel = 'Cá Koi Ngũ Sắc';
-    } else if (lower.includes('cá vàng') || lower.includes('hoàng kim')) {
-      cType = 'koi_gold';
-      cLabel = 'Cá Koi Hoàng Kim';
-    }
-    const spawned = spawnPondCreatures(cType, 1);
-    pushLog(`🐟 ${person.nickname} bình luận "${text}" -> Bước ra bến phóng sanh thả ${cLabel} xuống Hồ Sen.`);
-    broadcast('fish_released', {
-      user: person,
-      creatures: spawned,
-      creatureType: cType,
-      creatureLabel: cLabel,
-      count: spawned.length,
-      commentText: text,
-      dedicationText: `${person.nickname} khấn nguyện: "${text}" • Phóng sanh ${cLabel} xuống Hồ Sen 🙏`
-    });
   } else {
     person.hasIncense = true;
     walkUpBow = true;
   }
 
-  broadcast('chat', {
-    user: person,
-    content: text,
-    isNewSeat,
-    skinChanged,
-    monkSpeech,
-    walkUpBow
-  });
+  // Phát các sự kiện sau khi toàn bộ state của lượt user đã cập nhật xong (chỉ tính serializeState đúng 1 lần)
+  if (mainEvent) {
+    broadcast(mainEvent.type, mainEvent.payload);
+  }
+  if (!isTuTienTheme) {
+    broadcast(
+      'chat',
+      {
+        user: person,
+        content: text,
+        prayerQuote,
+        prayerTag,
+        chatEntry,
+        isNewSeat,
+        skinChanged,
+        monkSpeech,
+        walkUpBow
+      },
+      { auxiliary: Boolean(mainEvent) }
+    );
+  }
+  if (skyRidePayload) {
+    broadcast('sky_ride', skyRidePayload, { auxiliary: true });
+  }
+  if (top3Decree) {
+    broadcast('top3_decree', top3Decree, { auxiliary: true });
+  }
+  if (!isTuTienTheme && lower.includes('chuông')) {
+    broadcast('bell_strike', {}, { auxiliary: true });
+  }
+  if (!isTuTienTheme && (lower.includes('gõ mõ') || lower === 'mõ')) {
+    broadcast('wooden_fish_strike', {}, { auxiliary: true });
+  }
 }
 
-function handleGiftEvent({ rawUser, giftName = 'Hoa Hồng', giftIconUrl = '', diamondCount = 1, repeatCount = 1 }) {
+function handleChatEvent(rawUser, content, forcedSkin) {
+  return enqueueUserTask(forcedSkin ? 'seat_or_skin' : 'chat', () =>
+    executeChatEvent(rawUser, content, forcedSkin)
+  );
+}
+
+function executeGiftEvent({ rawUser, giftName = 'Hoa Hồng', giftIconUrl = '', diamondCount = 1, repeatCount = 1 }) {
   const user = extractUserInfo(rawUser);
   const count = Math.max(1, Number(repeatCount) || 1);
   const diamonds = Math.max(1, Number(diamondCount) || 1);
   const totalCoins = diamonds * count;
   const meritAdded = totalCoins;
 
+  let resolvedGiftIconUrl = giftIconUrl || '';
+  if (!resolvedGiftIconUrl && giftName && Array.isArray(cachedTikTokGifts)) {
+    const lowerGift = String(giftName).trim().toLowerCase();
+    const matchedGift = cachedTikTokGifts.find(
+      (g) =>
+        String(g.name || '').trim().toLowerCase() === lowerGift ||
+        String(g.rawName || '').trim().toLowerCase() === lowerGift ||
+        lowerGift.includes(String(g.rawName || '').trim().toLowerCase())
+    );
+    if (matchedGift?.iconUrl) {
+      resolvedGiftIconUrl = matchedGift.iconUrl;
+    }
+  }
+
   const prevTop3Snapshot = getTop3Snapshot();
-  const { person, realmUpgraded, prevRealm, tuViAdded } = upsertMeditator({
+  const { person, prevRealm, tuViAdded } = upsertMeditator({
     userId: user.userId,
     nickname: user.nickname,
     avatar: user.avatar,
@@ -1363,20 +1740,19 @@ function handleGiftEvent({ rawUser, giftName = 'Hoa Hồng', giftIconUrl = '', d
 
   addMeritLeaderboard(user, meritAdded);
 
-  const relicBroken = advanceTuTienRelic(person, Math.min(100, Math.max(25, meritAdded * 2)));
+  let skyRidePayload = advanceTuTienRelic(person, Math.min(100, Math.max(25, meritAdded * 2)));
   const top3Decree = evaluateTop3Decree(person, meritAdded, prevTop3Snapshot);
   if (top3Decree) {
     pushLog(
       `👑 [TOP ${top3Decree.rank} ${top3Decree.roomName}] ${person.nickname} tặng ${giftName} (+${meritAdded} 💎) -> Đoạt ngôi ${top3Decree.rankTitle}!`
     );
-    broadcast('top3_decree', top3Decree);
   }
-  if (!relicBroken) {
-    broadcast('sky_ride', {
+  if (!skyRidePayload) {
+    skyRidePayload = {
       user: person,
       daoTitle: top3Decree ? top3Decree.rankTitle : person.daoTitle || 'Chân Tiên Chí Tôn',
       reason: `👑 ${person.nickname.toUpperCase()} NGỰ KIẾM TUẦN THIÊN (+${meritAdded} 💎)`
-    });
+    };
   }
 
   // Phân cấp quà tặng:
@@ -1384,10 +1760,11 @@ function handleGiftEvent({ rawUser, giftName = 'Hoa Hồng', giftIconUrl = '', d
   let tierName = 'LÊN DÂNG HƯƠNG';
   let releasedCreatures = [];
   let creatureLabel = '';
+  let tutienBreakthroughPayload = null;
 
   if (Number(appState.settings.themeId) === 7) {
     tierName = `ĐỘT PHÁ ${person.realmName.toUpperCase()}`;
-    broadcast('tutien_event', {
+    tutienBreakthroughPayload = {
       user: person,
       eventKind: 'breakthrough',
       fxType: 'breakthrough_thunder',
@@ -1400,7 +1777,7 @@ function handleGiftEvent({ rawUser, giftName = 'Hoa Hồng', giftIconUrl = '', d
       bigTitle: person.realmName,
       subLine: `${person.nickname} hấp thu ${totalCoins} 💎 · +${tuViAdded} Tu Vi (Đạt ${person.realmName})`,
       pillLine: `⬆️ ${person.nickname} đột phá ${person.realmName} · +${tuViAdded} Tu Vi (Tổng: ${person.tuVi} TV)`
-    });
+    };
   } else if (Number(appState.settings.themeId) === 6) {
     if (totalCoins >= 99) {
       tierName = 'PHÓNG SANH RÙA VÀNG LINH QUY';
@@ -1440,23 +1817,73 @@ function handleGiftEvent({ rawUser, giftName = 'Hoa Hồng', giftIconUrl = '', d
     pushLog(`🎁 ${person.nickname} tặng ${giftName} x${count} -> Đứng dậy lên lạy Phật (+${meritAdded} Công Đức)`);
   }
 
-  broadcast('gift', {
-    user: person,
+  const isTempleGiftTheme = Number(appState.settings.themeId) !== 7;
+  const giftPrayerQuote = isTempleGiftTheme ? dedicationText : undefined;
+  const giftPrayerTag = isTempleGiftTheme
+    ? Number(appState.settings.themeId) === 6
+      ? '🐟 CÔNG ĐỨC PHÓNG SANH'
+      : '🎁 DÂNG LỄ LÊN KHẤN'
+    : undefined;
+
+  if (isTempleGiftTheme) {
+    person.lastPrayerQuote = giftPrayerQuote;
+    person.lastPrayerTag = giftPrayerTag;
+  }
+
+  appState.lastDonation = {
+    id: `don_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    userId: person.userId,
+    nickname: person.nickname,
+    avatar: person.avatar || '',
     giftName,
-    giftIconUrl,
+    giftIconUrl: resolvedGiftIconUrl,
     diamondCount: diamonds,
     repeatCount: count,
     meritAdded,
     tierName,
     dedicationText,
-    releasedCreatures,
-    creatureLabel
-  });
+    ...(isTempleGiftTheme ? { prayerQuote: giftPrayerQuote, prayerTag: giftPrayerTag } : {}),
+    timestamp: Date.now()
+  };
+
+  // Phát sự kiện chính kèm serializeState() 1 lần duy nhất, các sự kiện phụ đi kèm dùng auxiliary: true
+  if (tutienBreakthroughPayload) {
+    broadcast('tutien_event', tutienBreakthroughPayload);
+  }
+  broadcast(
+    'gift',
+    {
+      id: appState.lastDonation.id,
+      user: person,
+      giftName,
+      giftIconUrl: resolvedGiftIconUrl,
+      diamondCount: diamonds,
+      repeatCount: count,
+      meritAdded,
+      totalMerit: person.merit,
+      tierName,
+      dedicationText,
+      ...(isTempleGiftTheme ? { prayerQuote: giftPrayerQuote, prayerTag: giftPrayerTag } : {}),
+      releasedCreatures,
+      creatureLabel
+    },
+    { auxiliary: Boolean(tutienBreakthroughPayload) }
+  );
+  if (top3Decree) {
+    broadcast('top3_decree', top3Decree, { auxiliary: true });
+  }
+  if (skyRidePayload) {
+    broadcast('sky_ride', skyRidePayload, { auxiliary: true });
+  }
 }
 
-function handleLikeEvent(rawUser, count = 15) {
+function handleGiftEvent(giftParams) {
+  return enqueueUserTask('gift', () => executeGiftEvent(giftParams));
+}
+
+function executeLikeEvent(rawUser, count = 15) {
   const user = extractUserInfo(rawUser);
-  if (user.userId && !String(user.userId).startsWith('user_')) {
+  if (user.userId && !String(user.userId).startsWith('guest_fallback_')) {
     upsertMeditator({
       userId: user.userId,
       nickname: user.nickname,
@@ -1481,6 +1908,114 @@ function handleLikeEvent(rawUser, count = 15) {
     likeTarget: appState.altar.likeTarget,
     lotusRainTriggered
   });
+}
+
+function handleLikeEvent(rawUser, count = 15) {
+  return enqueueUserTask('like', () => executeLikeEvent(rawUser, count));
+}
+
+const recentShareByUser = new Map();
+
+function executeShareEvent(rawUser) {
+  const user = extractUserInfo(rawUser);
+
+  const isTuTienTheme = Number(appState.settings.themeId) === 7;
+  const isPondTheme = Number(appState.settings.themeId) === 6;
+  const meritAdded = 3;
+  const tuViAdded = 80;
+
+  const { person, isNewSeat, realmUpgraded, prevRealm } = upsertMeditator({
+    userId: user.userId,
+    nickname: user.nickname,
+    avatar: user.avatar,
+    addMeritAmount: meritAdded,
+    addTuViAmount: tuViAdded
+  });
+  const oldRealmName = prevRealm;
+
+  person.hasIncense = true;
+  if (person.merit >= 10) {
+    person.hasLotusSeat = true;
+  }
+
+  addMeritLeaderboard(user, meritAdded);
+  appState.altar.totalShares = (Number(appState.altar.totalShares) || 0) + 1;
+  const relicRidePayload = advanceTuTienRelic(person, 2);
+
+  const releasedCreatures = isPondTheme ? spawnPondCreatures('koi_gold', 2) : spawnPondCreatures('koi_gold', 2);
+
+  const monkSpeech = `🙏 Tán thán công đức thí chủ ${person.nickname} đã chia sẻ lan tỏa Pháp Âm (+${meritAdded} công đức)!`;
+  const dedicationText = `${person.nickname} vừa chia sẻ phiên LIVE, gieo duyên lành lan tỏa ánh sáng từ bi (+${meritAdded} công đức).`;
+  appState.settings.monkGreeting = monkSpeech;
+
+  if (isTuTienTheme) {
+    pushLog(
+      `🌸 [TRUYỀN ĐẠO] ${person.nickname} vừa chia sẻ phiên LIVE -> +${tuViAdded} Tu Vi (${person.realmName})`
+    );
+    broadcast('tutien_event', {
+      user: person,
+      eventKind: realmUpgraded ? 'breakthrough' : 'share_sect',
+      fxType: realmUpgraded ? 'breakthrough_thunder' : 'blossom_rain',
+      realmUpgraded,
+      oldRealmName,
+      prevRealmName: oldRealmName,
+      newRealmName: person.realmName,
+      tuViAdded,
+      totalTuVi: person.tuVi,
+      headline: realmUpgraded ? '⚡ ĐỘT PHÁ CẢNH GIỚI ⚡' : '🌸 NGỌC GIẢN TRUYỀN ĐẠO 🌸',
+      bigTitle: realmUpgraded ? person.realmName : 'VẠN GIỚI TRIỀU TÔNG',
+      subLine: `${person.nickname} chia sẻ truyền đạo · +${tuViAdded} Tu Vi (${person.realmName})`,
+      pillLine: `🌸 ${person.nickname} chia sẻ LIVE · +${tuViAdded} Tu Vi (${person.realmName})`,
+      commentText: 'Đạo hữu truyền đạo khắp vạn giới 🌸'
+    });
+    if (relicRidePayload) {
+      broadcast('sky_ride', relicRidePayload, { auxiliary: true });
+    }
+  } else {
+    pushLog(`🌸 [LAN TỎA PHÁP ÂM] ${person.nickname} vừa chia sẻ phiên LIVE (+${meritAdded} công đức)`);
+  }
+
+  const sharePrayerQuote = !isTuTienTheme ? dedicationText : undefined;
+  const sharePrayerTag = !isTuTienTheme ? '🌸 LAN TỎA PHÁP ÂM' : undefined;
+  if (!isTuTienTheme) {
+    person.lastPrayerQuote = sharePrayerQuote;
+    person.lastPrayerTag = sharePrayerTag;
+  }
+
+  broadcast(
+    'share',
+    {
+      id: `share_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      user: person,
+      isNewSeat,
+      meritAdded,
+      tuViAdded,
+      totalMerit: person.merit,
+      totalTuVi: person.tuVi,
+      totalShares: appState.altar.totalShares,
+      tierName: '🌸 LAN TỎA PHÁP ÂM',
+      monkSpeech,
+      dedicationText,
+      ...(sharePrayerQuote ? { prayerQuote: sharePrayerQuote, prayerTag: sharePrayerTag } : {}),
+      releasedCreatures,
+      creatureLabel: 'Song Ngư Cát Tường (2 Cá Koi Vàng)'
+    },
+    { auxiliary: isTuTienTheme }
+  );
+}
+
+function handleShareEvent(rawUser, rawEvent = {}) {
+  const user = extractUserInfo(rawUser);
+  const now = Date.now();
+  const throttleKey = String(user.userId || user.nickname || '').toLowerCase();
+  if (throttleKey && !rawEvent?.bypassThrottle) {
+    const lastAt = recentShareByUser.get(throttleKey) || 0;
+    if (now - lastAt < 2500) {
+      return { executedNow: false, queuedCount: userTaskQueue.length };
+    }
+    recentShareByUser.set(throttleKey, now);
+  }
+  return enqueueUserTask('share', () => executeShareEvent(rawUser));
 }
 
 // ============================================================================
@@ -1521,23 +2056,29 @@ function ingestRoomContributors(contributors = []) {
     const u = extractUserInfo(entry?.user || entry);
     const coins = Number(entry?.score ?? entry?.coinCount) || 0;
     const rankNum = Number(entry?.rank) || idx + 1;
-    if (u.userId && !String(u.userId).startsWith('user_')) {
+    if (u.userId && !String(u.userId).startsWith('guest_fallback_')) {
       const { person } = upsertMeditator({
         userId: u.userId,
         nickname: u.nickname,
-        avatar: u.avatar
+        avatar: u.avatar,
+        touchActive: false
       });
       person.roomRank = rankNum;
       if (coins > person.merit) {
         person.merit = coins;
         person.hasIncense = true;
+        person.isSeed = false;
         if (coins >= 10) person.hasLotusSeat = true;
         if (coins >= 99) person.skin = 'su';
+        const curRealm = getCultivationRealm(person.merit, person.tuVi);
+        person.realmName = curRealm.name;
+        person.robeTier = curRealm.robeTier;
         appState.leaderboardMap.set(String(u.userId).toLowerCase(), {
           userId: String(u.userId).toLowerCase(),
           nickname: u.nickname,
           avatar: u.avatar,
-          merit: coins
+          merit: coins,
+          isSeed: false
         });
       }
     }
@@ -1656,6 +2197,28 @@ async function connectToTikTok(username, signApiKey) {
     handleLikeEvent(event.user || event, event.count || 5);
   });
 
+  if (WebcastEvent.SHARE) {
+    connection.on(WebcastEvent.SHARE, (event) => {
+      handleShareEvent(event.user || event, event);
+    });
+  } else {
+    connection.on('share', (event) => {
+      handleShareEvent(event.user || event, event);
+    });
+  }
+
+  const socialEventName = WebcastEvent.SOCIAL || 'social';
+  connection.on(socialEventName, (event) => {
+    if (
+      String(event?.common?.displayText?.key || event?.displayType || event?.label || '')
+        .toLowerCase()
+        .includes('share') ||
+      Number(event?.action) === 3
+    ) {
+      handleShareEvent(event.user || event, event);
+    }
+  });
+
   connection.on(WebcastEvent.ROOM_USER, (event) => {
     // 1. Nạp toàn bộ danh sách người xem thật từ ranks + seats (proto v3) và ranksList + topViewers
     const allContributors = [
@@ -1746,21 +2309,26 @@ app.post('/api/simulate', (req, res) => {
     nickname: data.nickname || 'Thiện Nhân'
   };
 
+  let queueResult = null;
+
   switch (eventType) {
     case 'seat_or_skin':
-      handleChatEvent(mockUser, data.content || 'Nam Mô A Di Đà Phật, cầu gia đình bình an', data.skin);
+      queueResult = handleChatEvent(mockUser, data.content || 'Nam Mô A Di Đà Phật, cầu gia đình bình an', data.skin);
       break;
     case 'chat':
-      handleChatEvent(mockUser, data.content || 'Nam Mô A Di Đà Phật');
+      queueResult = handleChatEvent(mockUser, data.content || 'Nam Mô A Di Đà Phật');
       break;
     case 'member':
-      handleMemberEvent(mockUser);
+      queueResult = handleMemberEvent(mockUser);
       break;
     case 'like':
-      handleLikeEvent(mockUser, Number(data.count) || 25);
+      queueResult = handleLikeEvent(mockUser, Number(data.count) || 25);
+      break;
+    case 'share':
+      queueResult = handleShareEvent(mockUser, data);
       break;
     case 'gift':
-      handleGiftEvent({
+      queueResult = handleGiftEvent({
         rawUser: mockUser,
         giftName: data.giftName || 'Hoa Hồng (Rose)',
         diamondCount: Number(data.diamondCount) || 1,
@@ -1772,6 +2340,7 @@ app.post('/api/simulate', (req, res) => {
       appState.totalCrowdCount = targetCount;
       appState.connection.viewerCount = targetCount;
       if (targetCount === 0) {
+        userTaskQueue.length = 0;
         appState.meditators = [];
         pushLog('🧹 Đã làm trống toàn bộ sân chùa.');
       } else {
@@ -1797,9 +2366,11 @@ app.post('/api/simulate', (req, res) => {
       break;
     }
     case 'wooden_fish': {
-      handleLikeEvent(mockUser, 15);
-      pushLog('🪵 Gõ Mõ Tụng Kinh (+15 công đức thả tim).');
-      broadcast('wooden_fish_strike', {});
+      queueResult = enqueueUserTask('like', () => {
+        executeLikeEvent(mockUser, 15);
+        pushLog('🪵 Gõ Mõ Tụng Kinh (+15 công đức thả tim).');
+        broadcast('wooden_fish_strike', {}, { auxiliary: true });
+      });
       break;
     }
     case 'free_roam_action': {
@@ -1819,67 +2390,88 @@ app.post('/api/simulate', (req, res) => {
       break;
     }
     case 'release_fish': {
-      if (data.autoSwitchTheme !== false) {
-        appState.settings.themeId = 6;
-      }
       const creatureType = data.creatureType || 'carp_red';
       const count = Math.max(1, Math.min(8, Number(data.count) || 1));
       if (creatureType === 'reset_pond') {
+        if (data.autoSwitchTheme !== false) {
+          appState.settings.themeId = 6;
+        }
         appState.pondCreatures = generateInitialPondCreatures();
         appState.altar.fishReleasedCount = appState.pondCreatures.length;
         pushLog('🌊 Đã làm mới Hồ Sen Phóng Sanh về trạng thái ban đầu.');
         broadcast('pond_updated', { pondCreatures: appState.pondCreatures });
         break;
       }
-      const { person } = upsertMeditator({
-        userId: mockUser.displayId,
-        nickname: mockUser.nickname,
-        preferredSkin: data.skin
-      });
-      const labelMap = {
-        carp_red: 'Cá Chép Đỏ Bình An',
-        koi_calico: 'Cá Koi Ngũ Sắc',
-        koi_gold: 'Cá Koi Hoàng Kim',
-        mixed_koi: 'Đàn Cá Koi Ngũ Sắc',
-        turtle_gold: 'Rùa Vàng Linh Quy',
-        royal_turtle_pack: 'Rùa Vàng Linh Quy & Đàn Cá Koi'
-      };
-      const creatureLabel = labelMap[creatureType] || 'Cá Chép Đỏ Bình An';
-      const spawned = spawnPondCreatures(creatureType, count);
-      const speech = `${person.nickname} thành tâm bước ra bến phóng sanh thả ${creatureLabel} xuống Hồ Sen. Nguyện cầu bình an, phước báu vô lượng!`;
-      appState.settings.monkGreeting = speech;
-      pushLog(`🐟 ${person.nickname} bước ra bến thả ${creatureLabel} (x${spawned.length}) xuống Hồ Sen.`);
-      broadcast('fish_released', {
-        user: person,
-        creatures: spawned,
-        creatureType,
-        creatureLabel,
-        count: spawned.length,
-        dedicationText: speech
+      queueResult = enqueueUserTask('release_fish', () => {
+        if (data.autoSwitchTheme !== false) {
+          appState.settings.themeId = 6;
+        }
+        const { person } = upsertMeditator({
+          userId: mockUser.displayId,
+          nickname: mockUser.nickname,
+          preferredSkin: data.skin
+        });
+        const labelMap = {
+          carp_red: 'Cá Chép Đỏ Bình An',
+          koi_calico: 'Cá Koi Ngũ Sắc',
+          koi_gold: 'Cá Koi Hoàng Kim',
+          mixed_koi: 'Đàn Cá Koi Ngũ Sắc',
+          turtle_gold: 'Rùa Vàng Linh Quy',
+          royal_turtle_pack: 'Rùa Vàng Linh Quy & Đàn Cá Koi'
+        };
+        const creatureLabel = labelMap[creatureType] || 'Cá Chép Đỏ Bình An';
+        const spawned = spawnPondCreatures(creatureType, count);
+        const speech = `${person.nickname} thành tâm bước ra bến phóng sanh thả ${creatureLabel} xuống Hồ Sen. Nguyện cầu bình an, phước báu vô lượng!`;
+        const prayerQuote = data.content ? formatTemplePrayerQuote(data.content) : speech;
+        const prayerTag = '🐟 KHẤN NGUYỆN PHÓNG SANH';
+        person.lastPrayerQuote = prayerQuote;
+        person.lastPrayerTag = prayerTag;
+        appState.settings.monkGreeting = speech;
+        pushLog(`🐟 ${person.nickname} bước ra bến thả ${creatureLabel} (x${spawned.length}) xuống Hồ Sen.`);
+        broadcast('fish_released', {
+          user: person,
+          creatures: spawned,
+          creatureType,
+          creatureLabel,
+          count: spawned.length,
+          dedicationText: speech,
+          prayerQuote,
+          prayerTag
+        });
       });
       break;
     }
     case 'tutien_action': {
-      if (data.autoSwitchTheme !== false) {
-        appState.settings.themeId = 7;
-      }
-      const action = data.action || 'thunder';
-      if (action === 'thunder') {
-        handleChatEvent(mockUser, 'Triệu hồi Cửu Thiên Thần Lôi sấm chớp độ kiếp!');
-      } else if (action === 'blossom') {
-        handleChatEvent(mockUser, 'Triệu hồi Mưa Hoa Đào Tiên Giới chúc phúc!');
-      } else if (action === 'sword') {
-        handleChatEvent(mockUser, 'Vạn Kiếm Quy Tông hộ pháp Tiên Môn!');
-      } else if (action === 'duel') {
-        handleChatEvent(mockUser, 'Xin chỉ giáo! Đấu pháp luận kiếm đỉnh cao!');
-      }
+      queueResult = enqueueUserTask('tutien_action', () => {
+        if (data.autoSwitchTheme !== false) {
+          appState.settings.themeId = 7;
+        }
+        const action = data.action || 'thunder';
+        if (action === 'thunder') {
+          executeChatEvent(mockUser, 'Triệu hồi Cửu Thiên Thần Lôi sấm chớp độ kiếp!');
+        } else if (action === 'blossom') {
+          executeChatEvent(mockUser, 'Triệu hồi Mưa Hoa Đào Tiên Giới chúc phúc!');
+        } else if (action === 'sword') {
+          executeChatEvent(mockUser, 'Vạn Kiếm Quy Tông hộ pháp Tiên Môn!');
+        } else if (action === 'duel') {
+          executeChatEvent(mockUser, 'Xin chỉ giáo! Đấu pháp luận kiếm đỉnh cao!');
+        }
+      });
       break;
     }
     default:
       return res.status(400).json({ ok: false, error: `Sự kiện không hợp lệ: ${eventType}` });
   }
 
-  res.json({ ok: true, state: serializeState() });
+  const latestState =
+    lastTurnState && Date.now() - lastTurnStateAt < 50 ? lastTurnState : serializeState();
+
+  res.json({
+    ok: true,
+    queued: queueResult ? queueResult.queuedCount : userTaskQueue.length,
+    executedNow: queueResult ? queueResult.executedNow : true,
+    state: latestState
+  });
 });
 
 app.post('/api/config', (req, res) => {
