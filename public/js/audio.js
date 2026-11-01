@@ -256,6 +256,88 @@ class SacredAudioEngine {
   }
 
   /**
+   * Tiếng Sấm Chớp Thiên Lôi Độ Kiếp (Tia sét giáng + Tiếng sấm rền vang)
+   */
+  playThunderStrike() {
+    if (this.muted) return;
+    this.init();
+
+    const now = this.ctx.currentTime;
+
+    // 1. Tiếng nổ tia sét xé gió (White noise bandpass + high-freq crack)
+    const bufferSize = Math.floor(this.ctx.sampleRate * 1.45);
+    const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      const env = Math.pow(1 - i / bufferSize, 1.6);
+      data[i] = (Math.random() * 2 - 1) * env;
+    }
+
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = noiseBuffer;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1650, now);
+    filter.frequency.exponentialRampToValueAtTime(110, now + 1.35);
+
+    const noiseGain = this.ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.001, now);
+    noiseGain.gain.linearRampToValueAtTime(0.58 * this.volume, now + 0.015);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 1.4);
+
+    noise.connect(filter);
+    filter.connect(noiseGain);
+    noiseGain.connect(this.ctx.destination);
+    noise.start(now);
+    noise.stop(now + 1.45);
+
+    // 2. Tiếng sấm trầm rền dưới đáy (Sub-bass rumble)
+    const subOsc = this.ctx.createOscillator();
+    const subGain = this.ctx.createGain();
+    subOsc.type = 'sawtooth';
+    subOsc.frequency.setValueAtTime(92, now);
+    subOsc.frequency.exponentialRampToValueAtTime(34, now + 1.15);
+
+    subGain.gain.setValueAtTime(0.001, now);
+    subGain.gain.linearRampToValueAtTime(0.36 * this.volume, now + 0.03);
+    subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.25);
+
+    subOsc.connect(subGain);
+    subGain.connect(this.ctx.destination);
+    subOsc.start(now);
+    subOsc.stop(now + 1.3);
+  }
+
+  /**
+   * Tiếng Phi Kiếm Ngân Vang (Vạn Kiếm Quy Tông)
+   */
+  playSwordWhoosh() {
+    if (this.muted) return;
+    this.init();
+
+    const now = this.ctx.currentTime;
+    const freqs = [880, 1320, 1760, 2640];
+    freqs.forEach((f, idx) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      const t0 = now + idx * 0.055;
+      osc.frequency.setValueAtTime(f * 0.85, t0);
+      osc.frequency.exponentialRampToValueAtTime(f * 1.12, t0 + 0.18);
+
+      gain.gain.setValueAtTime(0.001, t0);
+      gain.gain.linearRampToValueAtTime(0.2 * this.volume, t0 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.55);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(t0);
+      osc.stop(t0 + 0.6);
+    });
+  }
+
+  /**
    * Tách câu dài thành các đoạn <= 170 ký tự để phát qua Google Vietnamese TTS chuẩn xác
    */
   splitSentences(text) {

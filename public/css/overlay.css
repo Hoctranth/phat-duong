@@ -884,6 +884,10 @@ html, body {
   z-index: 38;
 }
 
+#stage-wrapper.mode-tutien #fx-canvas {
+  z-index: 58;
+}
+
 /* =========================================================================
    BỘ SPRITE NHÂN VẬT TỪ TIKTOK-LIVE-TEMPLE-RPC
    (100% ĐẶC, KHÔNG BAO GIỜ BỊ BÓNG MỜ TRONG SUỐT HAY CHỒNG 2 HÌNH)
@@ -1316,26 +1320,32 @@ html, body {
   color: #f8fafc;
 }
 
-/* Thông báo lớn KỲ TÀI XUẤT THẾ / LÔI LINH CĂN ở giữa màn hình */
+/* Thông báo lớn KỲ TÀI XUẤT THẾ / LÔI LINH CĂN / ĐỘT PHÁ ở giữa màn hình (Tự ẩn sau 4.2s) */
 .tutien-center-herald {
   position: absolute;
-  top: 635px;
+  top: 632px;
   left: 50%;
-  transform: translateX(-50%);
-  width: 880px;
+  transform: translateX(-50%) scale(0.86);
+  width: 900px;
   text-align: center;
-  z-index: 54;
+  z-index: 62;
   pointer-events: none;
-  transition: opacity 0.35s ease, transform 0.35s ease;
+  opacity: 0;
+  transition: opacity 0.42s ease, transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tutien-center-herald.active {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
 }
 
 .tutien-center-herald.pulse {
-  animation: heraldPop 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: heraldPop 0.48s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes heraldPop {
-  0% { transform: translateX(-50%) scale(0.72); opacity: 0.2; }
-  70% { transform: translateX(-50%) scale(1.06); opacity: 1; }
+  0% { transform: translateX(-50%) scale(0.68); opacity: 0.15; }
+  68% { transform: translateX(-50%) scale(1.08); opacity: 1; }
   100% { transform: translateX(-50%) scale(1); opacity: 1; }
 }
 
@@ -1405,25 +1415,33 @@ html, body {
   font-size: 13.5px;
 }
 
-/* Pill thông báo Nhập Môn Linh Căn nổi giữa biển mây */
+/* Pill thông báo Nhập Môn Linh Căn nổi giữa biển mây (Tự ẩn sau 3.8s) */
 .tutien-join-pill {
   position: absolute;
-  top: 1062px;
+  top: 1058px;
   left: 50%;
-  transform: translateX(-50%);
-  z-index: 52;
+  transform: translateX(-50%) translateY(10px) scale(0.92);
+  z-index: 60;
   display: inline-flex;
   align-items: center;
   gap: 10px;
   padding: 10px 28px;
-  background: rgba(15, 23, 42, 0.92);
+  background: rgba(15, 23, 42, 0.94);
   border: 2px solid #eab308;
   border-radius: 999px;
   font-size: 23px;
   font-weight: 800;
   color: #fef08a;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.88), 0 0 20px rgba(234, 179, 8, 0.35);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.88), 0 0 22px rgba(234, 179, 8, 0.42);
   white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.38s ease, transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tutien-join-pill.active {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
 }
 
 .yin-yang-icon {
@@ -1514,6 +1532,36 @@ html, body {
 }
 .tutien-realm-sub.tier-4 {
   color: #4ade80;
+}
+
+.tutien-disciple-node.just-interacted-glow .cultivator-sprite {
+  filter: drop-shadow(0 0 22px #38bdf8) drop-shadow(0 0 36px #facc15);
+}
+
+/* Thanh gợi ý lệnh tương tác bằng Comment cho khán giả dưới chân màn hình */
+.tutien-cmd-hint-bar {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 55;
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  padding: 8px 24px;
+  background: linear-gradient(90deg, rgba(15, 23, 42, 0.88), rgba(30, 41, 59, 0.92), rgba(15, 23, 42, 0.88));
+  border: 1.5px solid rgba(250, 204, 21, 0.55);
+  border-radius: 999px;
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #e2e8f0;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85), 0 0 16px rgba(56, 189, 248, 0.25);
+}
+
+.tutien-cmd-hint-bar strong {
+  color: #fde047;
+  font-weight: 900;
 }
 
 

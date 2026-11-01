@@ -830,14 +830,58 @@ function handleMemberEvent(rawUser) {
 
 function handleChatEvent(rawUser, content, forcedSkin) {
   const text = String(content || '').trim();
+  const lower = text.toLowerCase();
   const user = extractUserInfo(rawUser);
+
+  // Phát hiện các lệnh tương tác Tu Tiên qua Comment để cộng thêm Tu Vi thưởng
+  const isThunderCmd =
+    lower.includes('sấm') ||
+    lower.includes('sam chop') ||
+    lower.includes('sét') ||
+    lower.includes('thiên lôi') ||
+    lower.includes('thien loi') ||
+    lower.includes('độ kiếp') ||
+    lower.includes('do kiep') ||
+    lower.includes('gọi sấm');
+  const isBlossomCmd =
+    lower.includes('mưa hoa') ||
+    lower.includes('mua hoa') ||
+    lower.includes('hoa rơi') ||
+    lower.includes('hoa roi') ||
+    lower.includes('đào hoa') ||
+    lower.includes('dao hoa') ||
+    lower.includes('hoa đào') ||
+    lower.includes('hoa sen');
+  const isSwordCmd =
+    lower.includes('vạn kiếm') ||
+    lower.includes('van kiem') ||
+    lower.includes('phi kiếm') ||
+    lower.includes('phi kiem') ||
+    lower.includes('kiếm lai') ||
+    lower.includes('kiem lai');
+  const isDuelCmd =
+    lower.includes('đấu pháp') ||
+    lower.includes('dau phap') ||
+    lower.includes('tỷ thí') ||
+    lower.includes('ty thi') ||
+    lower.includes('luận kiếm') ||
+    lower.includes('khiêu chiến') ||
+    lower === 'pk' ||
+    lower.includes(' pk ');
+
+  let bonusTuVi = 12;
+  if (isDuelCmd) bonusTuVi = 30;
+  else if (isThunderCmd) bonusTuVi = 25;
+  else if (isSwordCmd) bonusTuVi = 22;
+  else if (isBlossomCmd) bonusTuVi = 18;
+
   const { person, isNewSeat, skinChanged, realmUpgraded, curRealm } = upsertMeditator({
     userId: user.userId,
     nickname: user.nickname,
     avatar: user.avatar,
     preferredSkin: forcedSkin,
     commentText: text,
-    addTuViAmount: 10
+    addTuViAmount: bonusTuVi
   });
 
   const monkSpeech = `${person.nickname} thành tâm khấn nguyện: "${text}"`;
@@ -850,7 +894,6 @@ function handleChatEvent(rawUser, content, forcedSkin) {
   }
 
   // Hỗ trợ tương tác hoàn toàn bằng COMMENT trên LIVE:
-  const lower = text.toLowerCase();
   let walkUpBow = true;
   const isPondTheme = Number(appState.settings.themeId) === 6;
   const isTuTienTheme = Number(appState.settings.themeId) === 7;
@@ -877,15 +920,71 @@ function handleChatEvent(rawUser, content, forcedSkin) {
     broadcast('wooden_fish_strike', {});
   }
 
-  if (isTuTienTheme) {
-    walkUpBow = false;
+  if (isTuTienTheme || isThunderCmd || isSwordCmd || isDuelCmd || isBlossomCmd) {
+    if (isTuTienTheme) {
+      walkUpBow = false;
+    }
     const sRoot = person.spiritRoot || { name: 'Hỏa linh căn', mult: 1.1, isProdigy: false };
-    if (realmUpgraded && curRealm) {
+
+    if (isDuelCmd) {
+      const others = appState.meditators.filter((m) => m.userId !== person.userId);
+      const opponent = others.length > 0 ? others[Math.floor(Math.random() * Math.min(20, others.length))] : null;
+      pushLog(`🔥 ${person.nickname} luận kiếm tỷ thí cùng ${opponent ? opponent.nickname : 'Tiên Môn'} (+${bonusTuVi} Tu Vi)!`);
+      broadcast('tutien_event', {
+        user: person,
+        opponentUserId: opponent ? opponent.userId : null,
+        opponentName: opponent ? opponent.nickname : 'Chưởng Môn',
+        eventKind: 'duel',
+        fxType: 'duel_clash',
+        headline: '🔥 LUẬN KIẾM TRANH HÙNG 🔥',
+        bigTitle: realmUpgraded && curRealm ? curRealm.name : 'Đấu Pháp Đỉnh Cao',
+        subLine: `${person.nickname} ⚔️ ${opponent ? opponent.nickname : 'Tiên Môn'} · Thắng +${bonusTuVi} Tu Vi`,
+        pillLine: `⚔️ ${person.nickname} thắng tỷ thí · +${bonusTuVi} Tu Vi (${person.realmName})`,
+        commentText: text
+      });
+    } else if (isThunderCmd) {
+      pushLog(`⚡ ${person.nickname} gọi Cửu Thiên Thần Lôi độ kiếp (+${bonusTuVi} Tu Vi -> ${person.realmName})!`);
+      broadcast('tutien_event', {
+        user: person,
+        eventKind: 'thunder',
+        fxType: 'thunder_tribulation',
+        headline: realmUpgraded ? '⚡ ĐỘ KIẾP ĐỘT PHÁ ⚡' : '⚡ THIÊN LÔI ĐỘ KIẾP ⚡',
+        bigTitle: realmUpgraded && curRealm ? curRealm.name : 'Cửu Thiên Thần Lôi',
+        subLine: `${person.nickname} dẫn Lôi Kiếp rèn thể · +${bonusTuVi} Tu Vi (${person.realmName})`,
+        pillLine: `⚡ ${person.nickname} gọi Thiên Lôi · +${bonusTuVi} Tu Vi`,
+        commentText: text
+      });
+    } else if (isSwordCmd) {
+      pushLog(`⚔️ ${person.nickname} triệu hồi Vạn Kiếm Quy Tông (+${bonusTuVi} Tu Vi)!`);
+      broadcast('tutien_event', {
+        user: person,
+        eventKind: 'sword',
+        fxType: 'sword_rain',
+        headline: '⚔️ VẠN KIẾM QUY TÔNG ⚔️',
+        bigTitle: realmUpgraded && curRealm ? curRealm.name : 'Kiếm Ý Thông Thiên',
+        subLine: `${person.nickname} ngự Vạn Kiếm · +${bonusTuVi} Tu Vi (${person.realmName})`,
+        pillLine: `🗡️ ${person.nickname} ngự Vạn Kiếm · +${bonusTuVi} Tu Vi`,
+        commentText: text
+      });
+    } else if (isBlossomCmd) {
+      pushLog(`🌸 ${person.nickname} triệu hồi Mưa Hoa Đào Tiên Giới (+${bonusTuVi} Tu Vi)!`);
+      broadcast('tutien_event', {
+        user: person,
+        eventKind: 'blossom',
+        fxType: 'blossom_rain',
+        headline: '🌸 TIÊN GIỚI GIÁNG HOA 🌸',
+        bigTitle: realmUpgraded && curRealm ? curRealm.name : 'Mưa Hoa Đào',
+        subLine: `${person.nickname} rải Đào Hoa chúc phúc · +${bonusTuVi} Tu Vi`,
+        pillLine: `🌸 ${person.nickname} triệu hồi Mưa Hoa Đào · +${bonusTuVi} Tu Vi`,
+        commentText: text
+      });
+    } else if (realmUpgraded && curRealm) {
       pushLog(`⚡ ${person.nickname} đột phá cảnh giới [${curRealm.name}] nhờ chăm chỉ tu luyện!`);
       broadcast('tutien_event', {
         user: person,
         eventKind: 'breakthrough',
-        headline: 'ĐỘT PHÁ CẢNH GIỚI',
+        fxType: 'breakthrough_thunder',
+        headline: '⚡ ĐỘT PHÁ CẢNH GIỚI ⚡',
         bigTitle: curRealm.name,
         subLine: `${person.nickname} đột phá ${curRealm.name} · đổi tiên y mới`,
         pillLine: `☯ ${person.nickname} đột phá · ${curRealm.name}`,
@@ -893,9 +992,11 @@ function handleChatEvent(rawUser, content, forcedSkin) {
       });
     } else {
       pushLog(`☯ ${person.nickname} nhập môn tu luyện [${sRoot.name} x${sRoot.mult}]: "${text}"`);
+      const isLightningRoot = sRoot.name.toLowerCase().includes('lôi');
       broadcast('tutien_event', {
         user: person,
         eventKind: sRoot.isProdigy ? 'prodigy' : 'join_sect',
+        fxType: isLightningRoot ? 'thunder_tribulation' : sRoot.isProdigy ? 'qi_pillar' : 'join_sect',
         headline: sRoot.isProdigy ? 'KỲ TÀI XUẤT THẾ' : 'NHẬP MÔN VẤN ĐẠO',
         bigTitle: sRoot.name,
         subLine: `${person.nickname} nhập môn · tu luyện x${sRoot.mult}`,
@@ -977,7 +1078,8 @@ function handleGiftEvent({ rawUser, giftName = 'Hoa Hồng', giftIconUrl = '', d
     broadcast('tutien_event', {
       user: person,
       eventKind: 'breakthrough',
-      headline: totalCoins >= 100 ? 'ĐẠI NĂNG ĐỘT PHÁ' : 'ĐỘT PHÁ CẢNH GIỚI',
+      fxType: 'breakthrough_thunder',
+      headline: totalCoins >= 100 ? '⚡ ĐẠI NĂNG ĐỘ KIẾP ⚡' : '⚡ ĐỘT PHÁ CẢNH GIỚI ⚡',
       bigTitle: person.realmName,
       subLine: `${person.nickname} hấp thu ${totalCoins} 💎 · đạt ${person.realmName} (Tu vi: ${person.tuVi})`,
       pillLine: `☯ ${person.nickname} đột phá · ${person.realmName} (+${totalCoins} 💎)`
@@ -1436,6 +1538,22 @@ app.post('/api/simulate', (req, res) => {
         count: spawned.length,
         dedicationText: speech
       });
+      break;
+    }
+    case 'tutien_action': {
+      if (data.autoSwitchTheme !== false) {
+        appState.settings.themeId = 7;
+      }
+      const action = data.action || 'thunder';
+      if (action === 'thunder') {
+        handleChatEvent(mockUser, 'Triệu hồi Cửu Thiên Thần Lôi sấm chớp độ kiếp!');
+      } else if (action === 'blossom') {
+        handleChatEvent(mockUser, 'Triệu hồi Mưa Hoa Đào Tiên Giới chúc phúc!');
+      } else if (action === 'sword') {
+        handleChatEvent(mockUser, 'Vạn Kiếm Quy Tông hộ pháp Tiên Môn!');
+      } else if (action === 'duel') {
+        handleChatEvent(mockUser, 'Xin chỉ giáo! Đấu pháp luận kiếm đỉnh cao!');
+      }
       break;
     }
     default:

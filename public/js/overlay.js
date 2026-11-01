@@ -1780,7 +1780,40 @@
   const tutienHeraldTopEl = document.getElementById('tutien-herald-top');
   const tutienHeraldBigEl = document.getElementById('tutien-herald-big');
   const tutienHeraldSubEl = document.getElementById('tutien-herald-sub');
+  const tutienJoinPillEl = document.getElementById('tutien-join-pill');
   const tutienJoinPillTextEl = document.getElementById('tutien-join-pill-text');
+  const tutienSeatPositions = new Map();
+  let heraldHideTimer = null;
+  let joinPillHideTimer = null;
+
+  function showTuTienHerald(topText, bigText, subText, durationMs = 4200) {
+    const heraldEl = document.getElementById('tutien-center-herald');
+    if (!heraldEl) return;
+    if (tutienHeraldTopEl && topText) tutienHeraldTopEl.textContent = topText;
+    if (tutienHeraldBigEl && bigText) tutienHeraldBigEl.textContent = bigText;
+    if (tutienHeraldSubEl && subText) tutienHeraldSubEl.textContent = subText;
+
+    heraldEl.classList.remove('pulse');
+    void heraldEl.offsetWidth;
+    heraldEl.classList.add('active', 'pulse');
+
+    if (heraldHideTimer) clearTimeout(heraldHideTimer);
+    heraldHideTimer = setTimeout(() => {
+      heraldEl.classList.remove('active', 'pulse');
+    }, durationMs);
+  }
+
+  function showTuTienJoinPill(pillText, durationMs = 3800) {
+    if (!tutienJoinPillEl || !pillText) return;
+    if (tutienJoinPillTextEl) {
+      tutienJoinPillTextEl.textContent = String(pillText).replace(/^☯\s*/, '');
+    }
+    tutienJoinPillEl.classList.add('active');
+    if (joinPillHideTimer) clearTimeout(joinPillHideTimer);
+    joinPillHideTimer = setTimeout(() => {
+      tutienJoinPillEl.classList.remove('active');
+    }, durationMs);
+  }
 
   // Đồng hồ đếm thời gian mở sơn môn Tu Tiên
   const sectStartTime = Date.now() - (39 * 60 + 16) * 1000;
@@ -1840,12 +1873,16 @@
         .join('');
     }
 
+    // Lưu tọa độ ngồi thực tế của từng tu sĩ trên màn hình để đánh Sấm Chớp Độ Kiếp / Cột Linh Khí chuẩn xác
+    tutienSeatPositions.clear();
+
     // 2. Ngôi vị Đệ Nhất Chưởng Môn ở giữa 2 bảng (x=540, y=560)
     if (tutienTop1ThroneEl) {
       const top1 = meditators[0];
       if (!top1) {
         tutienTop1ThroneEl.innerHTML = '';
       } else {
+        tutienSeatPositions.set(top1.userId, { x: 540, y: 455 });
         const bText = activeBubbles.get(top1.userId);
         const rInfo = getRealmInfoForPerson(top1);
         tutienTop1ThroneEl.innerHTML = `
@@ -1871,6 +1908,7 @@
         .map((slot) => {
           const p = meditators[slot.idx];
           if (!p) return '';
+          tutienSeatPositions.set(p.userId, { x: slot.x, y: 790 + slot.y - 75 });
           const bText = activeBubbles.get(p.userId);
           const rInfo = getRealmInfoForPerson(p);
           return `
@@ -1908,6 +1946,7 @@
         const staggerX = r % 2 === 1 ? 14 : -14;
         const x = Math.round(cfg.xMin + tCol * (cfg.xMax - cfg.xMin) + staggerX);
         const y = cfg.y;
+        tutienSeatPositions.set(p.userId, { x, y: y - 70 });
         const rInfo = getRealmInfoForPerson(p);
         const spriteUrl = TUTIEN_SPRITE_URLS[rInfo.tier] || TUTIEN_SPRITE_URLS[1];
         const bText = activeBubbles.get(p.userId);
@@ -2420,6 +2459,369 @@
     }
   }
 
+  // =========================================================================
+  // 8B. ENGINE HIỆU ỨNG TU TIÊN 60FPS: SẤM CHỚP ĐỘ KIẾP · MƯA HOA ĐÀO · VẠN KIẾM · CỘT LINH KHÍ
+  // =========================================================================
+  const lightningBolts = []; // Tia sét Thiên Lôi Độ Kiếp
+  const tribulationRings = []; // Vòng sóng Lôi Kiếp & Pháp Trận dưới chân tu sĩ
+  const flyingSwords = []; // Phi Kiếm Vạn Kiếm Quy Tông
+  const qiPillars = []; // Cột sáng Linh Khí Đột Phá
+  let skyFlashAlpha = 0;
+  let skyFlashColor = '56, 189, 248';
+
+  function generateLightningSegments(x1, y1, x2, y2, displace = 95) {
+    const pts = [{ x: x1, y: y1 }];
+    const steps = 14;
+    for (let i = 1; i < steps; i++) {
+      const t = i / steps;
+      const bx = x1 + (x2 - x1) * t + (Math.random() - 0.5) * displace;
+      const by = y1 + (y2 - y1) * t + (Math.random() - 0.5) * 18;
+      pts.push({ x: bx, y: by });
+    }
+    pts.push({ x: x2, y: y2 });
+    return pts;
+  }
+
+  function spawnSingleLightningWave(targetX, targetY, boltCount, colorMode) {
+    skyFlashAlpha = 0.46;
+    skyFlashColor = colorMode === 'gold' ? '250, 204, 21' : colorMode === 'purple' ? '192, 132, 252' : '56, 189, 248';
+
+    for (let b = 0; b < boltCount; b++) {
+      const startX = Math.max(80, Math.min(1000, targetX + (Math.random() - 0.5) * 280));
+      const mainPts = generateLightningSegments(startX, -20, targetX + (Math.random() - 0.5) * 32, targetY, 92);
+
+      // Tạo các nhánh sét phụ (branches)
+      const branches = [];
+      for (let i = 2; i < mainPts.length - 2; i += 2) {
+        if (Math.random() < 0.8) {
+          const bp = mainPts[i];
+          const brEndX = bp.x + (Math.random() < 0.5 ? -1 : 1) * (70 + Math.random() * 125);
+          const brEndY = bp.y + 90 + Math.random() * 155;
+          branches.push(generateLightningSegments(bp.x, bp.y, brEndX, brEndY, 38));
+        }
+      }
+
+      lightningBolts.push({
+        mainPts,
+        branches,
+        alpha: 1.0,
+        decay: 0.015 + b * 0.003,
+        glowColor: colorMode === 'gold' ? '#facc15' : colorMode === 'purple' ? '#c084fc' : '#38bdf8',
+        coreColor: '#ffffff'
+      });
+    }
+
+    // Vòng sóng xung kích Lôi Kiếp dưới chân tu sĩ
+    tribulationRings.push({
+      x: targetX,
+      y: targetY + 25,
+      radius: 14,
+      maxRadius: 175,
+      alpha: 0.98,
+      color: colorMode === 'gold' ? '250, 204, 21' : '56, 189, 248'
+    });
+    tribulationRings.push({
+      x: targetX,
+      y: targetY + 25,
+      radius: 4,
+      maxRadius: 115,
+      alpha: 0.9,
+      color: '255, 255, 255'
+    });
+
+    // Tia lửa điện bắn tung tóe tại điểm sét đánh
+    for (let i = 0; i < 28; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const spd = 2.2 + Math.random() * 6.5;
+      lotusPetals.push({
+        x: targetX,
+        y: targetY,
+        vx: Math.cos(a) * spd,
+        vy: Math.sin(a) * spd - 2.0,
+        size: 5 + Math.random() * 7,
+        angle: a,
+        vAngle: 0.12,
+        alpha: 1,
+        isSparkle: true,
+        color: i % 2 === 0 ? '#38bdf8' : '#fef08a'
+      });
+    }
+  }
+
+  function spawnLightningTribulation(targetX = 540, targetY = 620, boltCount = 3, colorMode = 'cyan') {
+    window.sacredAudio.playThunderStrike();
+    const waveDelays = [0, 280, 580, 920, 1280, 1650];
+    const waveColors = [colorMode, 'purple', 'gold', colorMode, 'gold', 'purple'];
+    waveDelays.forEach((delay, idx) => {
+      setTimeout(() => {
+        if (idx === 3) {
+          window.sacredAudio.playThunderStrike();
+        }
+        spawnSingleLightningWave(
+          targetX + (Math.random() - 0.5) * 48,
+          targetY,
+          boltCount,
+          waveColors[idx % waveColors.length]
+        );
+      }, delay);
+    });
+  }
+
+  function spawnQiPillarFX(targetX = 540, targetY = 620, color = 'gold') {
+    qiPillars.push({
+      x: targetX,
+      y: targetY + 35,
+      width: 118,
+      alpha: 0.92,
+      color: color === 'cyan' ? '56, 189, 248' : '250, 204, 21'
+    });
+    tribulationRings.push({
+      x: targetX,
+      y: targetY + 30,
+      radius: 12,
+      maxRadius: 135,
+      alpha: 0.9,
+      color: color === 'cyan' ? '56, 189, 248' : '250, 204, 21'
+    });
+    spawnLotusBurst(targetX, targetY, 28);
+  }
+
+  function spawnBlossomRainFX(count = 75) {
+    window.sacredAudio.playLotusChime();
+    const palette = ['#f472b6', '#fbcfe8', '#fb7185', '#fde047', '#f9a8d4'];
+    for (let i = 0; i < count; i++) {
+      lotusPetals.push({
+        x: -40 + Math.random() * 1160,
+        y: -20 - Math.random() * 480,
+        vx: 0.8 + (Math.random() - 0.35) * 1.8,
+        vy: 1.9 + Math.random() * 2.6,
+        size: 8 + Math.random() * 11,
+        angle: Math.random() * Math.PI * 2,
+        vAngle: (Math.random() - 0.5) * 0.06,
+        alpha: 0.96,
+        color: palette[i % palette.length]
+      });
+    }
+  }
+
+  function spawnSwordRainFX(targetX = 540, targetY = 760, count = 18) {
+    window.sacredAudio.playSwordWhoosh();
+    for (let i = 0; i < count; i++) {
+      const startX = 80 + Math.random() * 920;
+      const startY = -60 - i * 38;
+      const destX = Math.max(110, Math.min(970, targetX + (Math.random() - 0.5) * 460));
+      const destY = Math.max(420, Math.min(1760, targetY + (Math.random() - 0.5) * 420));
+      const angle = Math.atan2(destY - startY, destX - startX);
+      const speed = 17 + Math.random() * 8;
+      flyingSwords.push({
+        x: startX,
+        y: startY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        destY,
+        angle,
+        alpha: 1.0,
+        impacted: false,
+        color: i % 2 === 0 ? '#38bdf8' : '#fde047'
+      });
+    }
+  }
+
+  function spawnDuelClashFX(x1, y1, x2, y2) {
+    const midX = Math.round((x1 + x2) / 2);
+    const midY = Math.round((y1 + y2) / 2 - 45);
+    spawnQiPillarFX(x1, y1, 'cyan');
+    spawnQiPillarFX(x2, y2, 'gold');
+    spawnLightningTribulation(midX, midY, 3, 'gold');
+  }
+
+  function renderTuTienCanvasLayer() {
+    // 1. Hoa đào tiên giới rơi nhẹ nhàng & Linh khí bay lên thường trực
+    if (lotusPetals.length < 28 && Math.random() < 0.32) {
+      const isRightCliff = Math.random() < 0.55;
+      lotusPetals.push({
+        x: isRightCliff ? 680 + Math.random() * 400 : Math.random() * 420,
+        y: -15,
+        vx: isRightCliff ? -0.65 - Math.random() * 0.8 : 0.55 + Math.random() * 0.8,
+        vy: 1.35 + Math.random() * 1.4,
+        size: 6.5 + Math.random() * 6.5,
+        angle: Math.random() * Math.PI * 2,
+        vAngle: (Math.random() - 0.5) * 0.045,
+        alpha: 0.88,
+        color: Math.random() < 0.72 ? '#f472b6' : '#fbcfe8'
+      });
+    }
+
+    // Hạt linh khí vàng/lam bay ngược từ biển mây lên trời
+    if (Math.random() < 0.28) {
+      lotusPetals.push({
+        x: 90 + Math.random() * 900,
+        y: 1200 + Math.random() * 680,
+        vx: (Math.random() - 0.5) * 0.6,
+        vy: -1.4 - Math.random() * 1.6,
+        size: 3.5 + Math.random() * 4.5,
+        angle: 0,
+        vAngle: 0,
+        alpha: 0.85,
+        isSparkle: true,
+        color: Math.random() < 0.55 ? '#38bdf8' : '#fde047'
+      });
+    }
+
+    // 2. Chớp sáng bầu trời khi Thiên Lôi giáng xuống
+    if (skyFlashAlpha > 0.01) {
+      ctx.save();
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, 1200);
+      skyGrad.addColorStop(0, `rgba(${skyFlashColor}, ${skyFlashAlpha.toFixed(3)})`);
+      skyGrad.addColorStop(1, `rgba(${skyFlashColor}, 0)`);
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, canvas.width, 1200);
+      ctx.restore();
+      skyFlashAlpha *= 0.84;
+    }
+
+    // 3. Vẽ Cột Sáng Linh Khí Đột Phá (Qi Pillars)
+    for (let i = qiPillars.length - 1; i >= 0; i--) {
+      const qp = qiPillars[i];
+      qp.alpha -= 0.022;
+      if (qp.alpha <= 0.01) {
+        qiPillars.splice(i, 1);
+        continue;
+      }
+      ctx.save();
+      const grad = ctx.createLinearGradient(qp.x - qp.width / 2, 0, qp.x + qp.width / 2, 0);
+      grad.addColorStop(0, `rgba(${qp.color}, 0)`);
+      grad.addColorStop(0.5, `rgba(${qp.color}, ${(qp.alpha * 0.55).toFixed(3)})`);
+      grad.addColorStop(1, `rgba(${qp.color}, 0)`);
+      ctx.fillStyle = grad;
+      ctx.fillRect(qp.x - qp.width / 2, 0, qp.width, qp.y);
+      ctx.restore();
+    }
+
+    // 4. Vẽ Vòng Sóng Lôi Kiếp & Pháp Trận dưới chân tu sĩ
+    for (let i = tribulationRings.length - 1; i >= 0; i--) {
+      const tr = tribulationRings[i];
+      tr.radius += 4.2;
+      const p = tr.radius / tr.maxRadius;
+      const curA = tr.alpha * (1 - p);
+      if (p >= 1 || curA <= 0.01) {
+        tribulationRings.splice(i, 1);
+        continue;
+      }
+      ctx.save();
+      ctx.strokeStyle = `rgba(${tr.color}, ${curA.toFixed(3)})`;
+      ctx.lineWidth = 3.5;
+      ctx.shadowColor = `rgba(${tr.color}, 0.8)`;
+      ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.ellipse(tr.x, tr.y, tr.radius, tr.radius * 0.42, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 5. Vẽ Tia Sét Thiên Lôi Độ Kiếp (Jagged Lightning Bolts)
+    const drawBoltPath = (pts) => {
+      if (!pts || pts.length < 2) return;
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let k = 1; k < pts.length; k++) {
+        ctx.lineTo(pts[k].x, pts[k].y);
+      }
+      ctx.stroke();
+    };
+
+    for (let i = lightningBolts.length - 1; i >= 0; i--) {
+      const lb = lightningBolts[i];
+      lb.alpha -= lb.decay;
+      if (lb.alpha <= 0.02) {
+        lightningBolts.splice(i, 1);
+        continue;
+      }
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, lb.alpha);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      // Lớp hào quang điện quang bên ngoài
+      ctx.strokeStyle = lb.glowColor;
+      ctx.lineWidth = 9;
+      ctx.shadowColor = lb.glowColor;
+      ctx.shadowBlur = 28;
+      drawBoltPath(lb.mainPts);
+
+      // Lõi tia sét trắng sáng rực bên trong
+      ctx.strokeStyle = lb.coreColor;
+      ctx.lineWidth = 3.2;
+      ctx.shadowBlur = 10;
+      drawBoltPath(lb.mainPts);
+
+      // Các nhánh sét phụ
+      ctx.strokeStyle = lb.glowColor;
+      ctx.lineWidth = 2.4;
+      lb.branches.forEach((br) => drawBoltPath(br));
+      ctx.restore();
+    }
+
+    // 6. Vẽ Vạn Kiếm Quy Tông (Flying Immortal Swords)
+    for (let i = flyingSwords.length - 1; i >= 0; i--) {
+      const sw = flyingSwords[i];
+      if (!sw.impacted) {
+        sw.x += sw.vx;
+        sw.y += sw.vy;
+        if (sw.y >= sw.destY) {
+          sw.impacted = true;
+          tribulationRings.push({
+            x: sw.x,
+            y: sw.y,
+            radius: 6,
+            maxRadius: 65,
+            alpha: 0.75,
+            color: sw.color === '#38bdf8' ? '56, 189, 248' : '250, 204, 21'
+          });
+        }
+      } else {
+        sw.alpha -= 0.055;
+      }
+
+      if (sw.alpha <= 0.02) {
+        flyingSwords.splice(i, 1);
+        continue;
+      }
+
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, sw.alpha);
+      ctx.translate(sw.x, sw.y);
+      ctx.rotate(sw.angle);
+      ctx.shadowColor = sw.color;
+      ctx.shadowBlur = 18;
+
+      // Đuôi kiếm khí phát sáng
+      const trailGrad = ctx.createLinearGradient(-95, 0, 18, 0);
+      trailGrad.addColorStop(0, 'rgba(255,255,255,0)');
+      trailGrad.addColorStop(1, sw.color);
+      ctx.strokeStyle = trailGrad;
+      ctx.lineWidth = 4.5;
+      ctx.beginPath();
+      ctx.moveTo(-95, 0);
+      ctx.lineTo(14, 0);
+      ctx.stroke();
+
+      // Thân thanh cổ kiếm trắng ánh kim
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(26, 0);
+      ctx.lineTo(-10, -4.5);
+      ctx.lineTo(-10, 4.5);
+      ctx.closePath();
+      ctx.fill();
+
+      // Chắn kiếm vàng kim
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(-14, -10, 4, 20);
+      ctx.restore();
+    }
+  }
+
   function renderCanvas() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -2428,9 +2830,11 @@
     // Khi đang ở Mẫu 6 (Hồ Sen Phóng Sanh): Vẽ sóng nước, đàn Cá Chép / Cá Koi / Rùa Vàng bơi vĩnh viễn dưới hồ & Lá Sen nổi
     if (currentThemeId === 6) {
       renderPondCanvasLayer(now);
+    } else if (currentThemeId === 7) {
+      renderTuTienCanvasLayer(now);
     }
 
-    if (Math.random() < 0.2) {
+    if (currentThemeId !== 7 && Math.random() < 0.2) {
       spawnSubtleSmoke();
     }
 
@@ -2606,32 +3010,48 @@
         break;
       }
       case 'tutien_event': {
-        window.sacredAudio.playLotusChime();
-        const heraldEl = document.getElementById('tutien-center-herald');
-        const heraldTopEl = document.getElementById('tutien-herald-top');
-        const heraldBigEl = document.getElementById('tutien-herald-big');
-        const heraldSubEl = document.getElementById('tutien-herald-sub');
-        const joinPillTextEl = document.getElementById('tutien-join-pill-text');
-
         const topText = payload.headline || payload.heraldTop;
         const bigText = payload.bigTitle || payload.heraldBig;
         const subText = payload.subLine || payload.heraldSub;
         const pillText = payload.pillLine || payload.joinPillText;
         const msgText = payload.commentText || payload.content;
+        const fxType = payload.fxType || 'join_sect';
 
-        if (heraldTopEl && topText) heraldTopEl.textContent = topText;
-        if (heraldBigEl && bigText) heraldBigEl.textContent = bigText;
-        if (heraldSubEl && subText) heraldSubEl.textContent = subText;
-        if (joinPillTextEl && pillText) {
-          joinPillTextEl.textContent = String(pillText).replace(/^☯\s*/, '');
+        // Hiển thị thông báo ở giữa & thanh pill rồi TỰ ĐỘNG BIẾN MẤT sau 4.2s / 3.8s
+        showTuTienHerald(topText, bigText, subText, 4200);
+        showTuTienJoinPill(pillText, 3800);
+
+        // Xác định vị trí ngồi thực tế của người vừa tương tác để giáng Sấm Chớp / Cột Linh Khí trúng người đó
+        const userSeat = (payload.user && tutienSeatPositions.get(payload.user.userId)) || {
+          x: 240 + Math.random() * 600,
+          y: 1180 + Math.random() * 420
+        };
+
+        if (fxType === 'thunder_tribulation') {
+          spawnLightningTribulation(userSeat.x, userSeat.y, 3, 'cyan');
+        } else if (fxType === 'breakthrough_thunder') {
+          spawnLightningTribulation(userSeat.x, userSeat.y, 4, 'gold');
+          spawnQiPillarFX(userSeat.x, userSeat.y, 'gold');
+          spawnBlossomRainFX(45);
+        } else if (fxType === 'sword_rain') {
+          spawnSwordRainFX(userSeat.x, userSeat.y, 20);
+        } else if (fxType === 'blossom_rain') {
+          spawnBlossomRainFX(85);
+          spawnQiPillarFX(userSeat.x, userSeat.y, 'gold');
+        } else if (fxType === 'duel_clash') {
+          const oppSeat = (payload.opponentUserId && tutienSeatPositions.get(payload.opponentUserId)) || {
+            x: 540,
+            y: 460
+          };
+          spawnDuelClashFX(userSeat.x, userSeat.y, oppSeat.x, oppSeat.y);
+        } else if (fxType === 'qi_pillar') {
+          window.sacredAudio.playLotusChime();
+          spawnQiPillarFX(userSeat.x, userSeat.y, 'cyan');
+        } else {
+          window.sacredAudio.playLotusChime();
+          spawnLotusBurst(userSeat.x, userSeat.y, 24);
         }
 
-        if (heraldEl) {
-          heraldEl.classList.remove('pulse');
-          void heraldEl.offsetWidth;
-          heraldEl.classList.add('pulse');
-        }
-        spawnLotusBurst(540, 610, 26);
         if (payload.user && msgText) {
           showBubbleForUser(payload.user.userId, msgText);
         }
