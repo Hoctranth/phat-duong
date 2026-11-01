@@ -1830,13 +1830,19 @@
     if (person && person.realmName && person.robeTier) {
       return { name: person.realmName, tier: Number(person.robeTier) || 1 };
     }
-    const merit = Number(person?.merit) || 0;
-    if (merit >= 250) return { name: 'Hóa Thần', tier: 4 };
-    if (merit >= 100) return { name: 'Nguyên Anh', tier: 3 };
-    if (merit >= 40) return { name: 'Kim Đan', tier: 3 };
-    if (merit >= 12) return { name: 'Trúc Cơ', tier: 2 };
-    if (merit >= 2) return { name: 'Luyện Khí', tier: 2 };
+    const effectiveTuVi = Math.max((Number(person?.merit) || 0) * 100, Number(person?.tuVi) || 0);
+    if (effectiveTuVi >= 2500) return { name: 'Hóa Thần', tier: 4 };
+    if (effectiveTuVi >= 1000) return { name: 'Nguyên Anh', tier: 3 };
+    if (effectiveTuVi >= 400) return { name: 'Kim Đan', tier: 3 };
+    if (effectiveTuVi >= 120) return { name: 'Trúc Cơ', tier: 2 };
+    if (effectiveTuVi >= 20) return { name: 'Luyện Khí', tier: 2 };
     return { name: 'Phàm Nhân', tier: 1 };
+  }
+
+  function formatTuViShort(val) {
+    const n = Math.max(0, Number(val) || 0);
+    if (n >= 10000) return `${(n / 1000).toFixed(1)}k`;
+    return String(n);
   }
 
   function renderTuTienStage(meditators = []) {
@@ -1859,6 +1865,7 @@
         .map((p, idx) => {
           const beastHtml = beasts[idx] ? `<span class="tutien-beast-tag">${beasts[idx]}</span>` : '';
           const crown = idx === 0 ? '👑 ' : '';
+          const scoreLabel = (p.merit || 0) > 0 ? `${p.merit} 💎` : `${formatTuViShort(p.tuVi || 0)} ⚡`;
           return `
             <div class="tutien-week-row">
               <span class="tutien-week-rank r-${idx + 1}">${idx + 1}</span>
@@ -1866,7 +1873,7 @@
                 <span class="tutien-week-name">${crown}${escapeHtml(shortenName(p.nickname, 14))}</span>
                 ${beastHtml}
               </div>
-              <span class="tutien-week-gems">${p.merit || 0} 💎</span>
+              <span class="tutien-week-gems">${scoreLabel}</span>
             </div>
           `;
         })
@@ -1885,12 +1892,13 @@
         tutienSeatPositions.set(top1.userId, { x: 540, y: 455 });
         const bText = activeBubbles.get(top1.userId);
         const rInfo = getRealmInfoForPerson(top1);
+        const tvVal = Math.max((top1.merit || 404) * 100, top1.tuVi || 0);
         tutienTop1ThroneEl.innerHTML = `
           ${bText ? `<div class="pilgrim-white-bubble">${escapeHtml(bText)}</div>` : ''}
           <img src="${TUTIEN_SPRITE_URLS[4]}" class="cultivator-sprite" alt="Đệ Nhất" />
           <div class="tutien-throne-plaque">
             <div class="t-name">Đệ Nhất ${escapeHtml(shortenName(top1.nickname, 14))}</div>
-            <div class="t-realm">${escapeHtml(rInfo.name === 'Phàm Nhân' ? 'Hóa Thần' : rInfo.name)} · 💎 ${top1.merit || 404}</div>
+            <div class="t-realm">${escapeHtml(rInfo.name === 'Phàm Nhân' ? 'Hóa Thần' : rInfo.name)} · ⚡ ${formatTuViShort(tvVal)} TV</div>
           </div>
         `;
       }
@@ -1911,13 +1919,14 @@
           tutienSeatPositions.set(p.userId, { x: slot.x, y: 790 + slot.y - 75 });
           const bText = activeBubbles.get(p.userId);
           const rInfo = getRealmInfoForPerson(p);
+          const tvVal = Math.max((p.merit || 200) * 100, p.tuVi || 0);
           return `
             <div class="tutien-elder-node" style="left: ${slot.x}px; top: ${slot.y}px;">
               ${bText ? `<div class="pilgrim-white-bubble">${escapeHtml(bText)}</div>` : ''}
               <img src="${TUTIEN_SPRITE_URLS[4]}" class="cultivator-sprite" alt="${slot.title}" />
               <div class="tutien-throne-plaque">
                 <div class="t-name">${slot.title} ${escapeHtml(shortenName(p.nickname, 11))}</div>
-                <div class="t-realm">${escapeHtml(rInfo.name === 'Phàm Nhân' ? 'Hóa Thần' : rInfo.name)} · 💎 ${p.merit || 200}</div>
+                <div class="t-realm">${escapeHtml(rInfo.name === 'Phàm Nhân' ? 'Hóa Thần' : rInfo.name)} · ⚡ ${formatTuViShort(tvVal)} TV</div>
               </div>
             </div>
           `;
@@ -1950,6 +1959,7 @@
         const rInfo = getRealmInfoForPerson(p);
         const spriteUrl = TUTIEN_SPRITE_URLS[rInfo.tier] || TUTIEN_SPRITE_URLS[1];
         const bText = activeBubbles.get(p.userId);
+        const tvText = (p.tuVi || 0) > 0 ? ` · ${formatTuViShort(p.tuVi)} TV` : '';
 
         html += `
           <div
@@ -1963,7 +1973,7 @@
                 ${renderAvatarBadge(p.avatar, rInfo.tier >= 3 ? '⚡' : '☯', 'pill-avatar-dot')}
                 <span>${escapeHtml(shortenName(p.nickname, 12))}</span>
               </div>
-              <div class="tutien-realm-sub tier-${rInfo.tier}">${escapeHtml(rInfo.name)}</div>
+              <div class="tutien-realm-sub tier-${rInfo.tier}">${escapeHtml(rInfo.name)}${escapeHtml(tvText)}</div>
             </div>
           </div>
         `;
@@ -2466,8 +2476,61 @@
   const tribulationRings = []; // Vòng sóng Lôi Kiếp & Pháp Trận dưới chân tu sĩ
   const flyingSwords = []; // Phi Kiếm Vạn Kiếm Quy Tông
   const qiPillars = []; // Cột sáng Linh Khí Đột Phá
+  const baguaArrays = []; // Pháp trận Bát Quái xoay dưới chân khi Thăng Cấp Cảnh Giới
+  const floatingTexts = []; // Chữ nổi +Tu Vi & THĂNG CẤP bay lên tại vị trí nhân vật
   let skyFlashAlpha = 0;
   let skyFlashColor = '56, 189, 248';
+
+  // 8 Thanh Phi Kiếm Hộ Pháp bay lượn tuần tra thường trực quanh Tiên Điện & Biển Mây
+  const patrolSwords = Array.from({ length: 8 }, (_, idx) => ({
+    phase: (idx * Math.PI * 2) / 8,
+    speed: 0.014 + (idx % 3) * 0.004,
+    cx: 540,
+    cy: idx < 4 ? 465 : 1120 + (idx - 4) * 145,
+    rx: idx < 4 ? 360 + idx * 35 : 430,
+    ry: idx < 4 ? 135 + idx * 18 : 85,
+    color: idx % 2 === 0 ? '#38bdf8' : '#fde047'
+  }));
+
+  function spawnFloatingTuTienText(x, y, text, color = '#fde047', scale = 1.0) {
+    floatingTexts.push({
+      x,
+      y,
+      text,
+      color,
+      scale,
+      vy: -1.85,
+      alpha: 1.0
+    });
+  }
+
+  function spawnBreakthroughAscensionFX(targetX, targetY, newRealmName = 'Kim Đan', tuViAdded = 150) {
+    // 1. Phát âm thanh Đột Phá Cảnh Giới chuẩn Tu Tiên (Cổ cầm vuốt dây + Chấn động Đan Điền + Kiếm Ngân + Sấm Rền)
+    window.sacredAudio.playBreakthroughSound();
+    spawnLightningTribulation(targetX, targetY, 4, 'gold');
+    spawnSwordRainFX(targetX, targetY, 16);
+    spawnQiPillarFX(targetX, targetY, 'gold');
+    spawnBlossomRainFX(40);
+
+    // 2. Vòng Pháp Trận Bát Quái Hoàng Kim xoay dưới chân nhân vật vừa thăng cấp
+    baguaArrays.push({
+      x: targetX,
+      y: targetY + 38,
+      radius: 92,
+      angle: 0,
+      alpha: 1.0,
+      color: '#facc15'
+    });
+
+    // 3. Chữ nổi THĂNG CẤP CẢNH GIỚI bay lên ngay trên đầu nhân vật
+    spawnFloatingTuTienText(
+      targetX,
+      targetY - 45,
+      `⬆️ ĐỘT PHÁ ${String(newRealmName).toUpperCase()}! (+${tuViAdded} TV)`,
+      '#fef08a',
+      1.22
+    );
+  }
 
   function generateLightningSegments(x1, y1, x2, y2, displace = 95) {
     const pts = [{ x: x1, y: y1 }];
@@ -2820,6 +2883,121 @@
       ctx.fillRect(-14, -10, 4, 20);
       ctx.restore();
     }
+
+    // 7. Vẽ 8 Thanh Phi Kiếm Hộ Pháp bay lượn tuần tra thường trực trên bầu trời Tiên Môn
+    patrolSwords.forEach((ps) => {
+      ps.phase += ps.speed;
+      const x = ps.cx + Math.cos(ps.phase) * ps.rx;
+      const y = ps.cy + Math.sin(ps.phase * 2) * ps.ry;
+      const dx = -Math.sin(ps.phase) * ps.rx * ps.speed;
+      const dy = Math.cos(ps.phase * 2) * 2 * ps.ry * ps.speed;
+      const angle = Math.atan2(dy, dx);
+
+      ctx.save();
+      ctx.globalAlpha = 0.86;
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+      ctx.shadowColor = ps.color;
+      ctx.shadowBlur = 16;
+
+      const trailGrad = ctx.createLinearGradient(-85, 0, 16, 0);
+      trailGrad.addColorStop(0, 'rgba(255,255,255,0)');
+      trailGrad.addColorStop(1, ps.color);
+      ctx.strokeStyle = trailGrad;
+      ctx.lineWidth = 3.8;
+      ctx.beginPath();
+      ctx.moveTo(-85, 0);
+      ctx.lineTo(12, 0);
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(22, 0);
+      ctx.lineTo(-8, -4);
+      ctx.lineTo(-8, 4);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(-11, -8, 3.5, 16);
+      ctx.restore();
+    });
+
+    // Thỉnh thoảng tự động phóng tia sét Lôi Kiếp nhỏ trên tầng mây để khung cảnh luôn sống động
+    if (lightningBolts.length === 0 && Math.random() < 0.008) {
+      const rx = 180 + Math.random() * 720;
+      const ry = 380 + Math.random() * 480;
+      const pts = generateLightningSegments(rx + (Math.random() - 0.5) * 160, -10, rx, ry, 55);
+      lightningBolts.push({
+        mainPts: pts,
+        branches: [],
+        alpha: 0.75,
+        decay: 0.028,
+        glowColor: '#38bdf8',
+        coreColor: '#ffffff'
+      });
+    }
+
+    // 8. Vẽ Vòng Pháp Trận Bát Quái xoay dưới chân tu sĩ khi Thăng Cấp (Bagua Arrays)
+    for (let i = baguaArrays.length - 1; i >= 0; i--) {
+      const bg = baguaArrays[i];
+      bg.angle += 0.045;
+      bg.alpha -= 0.011;
+      if (bg.alpha <= 0.02) {
+        baguaArrays.splice(i, 1);
+        continue;
+      }
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, bg.alpha);
+      ctx.translate(bg.x, bg.y);
+      ctx.scale(1, 0.45);
+      ctx.rotate(bg.angle);
+      ctx.strokeStyle = bg.color;
+      ctx.lineWidth = 4;
+      ctx.shadowColor = bg.color;
+      ctx.shadowBlur = 18;
+
+      ctx.beginPath();
+      ctx.arc(0, 0, bg.radius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(0, 0, bg.radius * 0.72, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Vẽ 8 cạnh Bát Quái bên trong pháp trận
+      for (let k = 0; k < 8; k++) {
+        const a = (k * Math.PI) / 4;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * bg.radius * 0.72, Math.sin(a) * bg.radius * 0.72);
+        ctx.lineTo(Math.cos(a) * bg.radius, Math.sin(a) * bg.radius);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // 9. Vẽ Chữ Nổi +Tu Vi & ĐỘT PHÁ CẢNH GIỚI bay lên tại vị trí nhân vật
+    for (let i = floatingTexts.length - 1; i >= 0; i--) {
+      const ft = floatingTexts[i];
+      ft.y += ft.vy;
+      ft.alpha -= 0.016;
+      if (ft.alpha <= 0.02) {
+        floatingTexts.splice(i, 1);
+        continue;
+      }
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, ft.alpha);
+      ctx.font = `900 ${Math.round(24 * ft.scale)}px "Plus Jakarta Sans", sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+      ctx.shadowBlur = 10;
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = '#0f172a';
+      ctx.strokeText(ft.text, ft.x, ft.y);
+      ctx.fillStyle = ft.color;
+      ctx.fillText(ft.text, ft.x, ft.y);
+      ctx.restore();
+    }
   }
 
   function renderCanvas() {
@@ -2962,6 +3140,13 @@
   function handleEvent(type, payload) {
     switch (type) {
       case 'member': {
+        if (currentThemeId === 7) {
+          window.sacredAudio.playTuTienJoinSound();
+          if (payload.user) {
+            showBubbleForUser(payload.user.userId, 'Đạo hữu xin nhập môn ☯');
+          }
+          break;
+        }
         window.sacredAudio.playWoodenFish(1);
         flashMonkCard(payload.monkSpeech, false);
         if (payload.monkSpeech && activeRunnersCount === 0 && runnerQueue.length === 0) {
@@ -2981,6 +3166,13 @@
         break;
       }
       case 'chat': {
+        if (currentThemeId === 7) {
+          // Ở chế độ Tu Tiên, mọi hiệu ứng và âm thanh đã xử lý trong case 'tutien_event' (Tuyệt đối không gõ mõ hay hiện Nam Mô!)
+          if (payload.user && payload.content) {
+            showBubbleForUser(payload.user.userId, payload.content);
+          }
+          break;
+        }
         window.sacredAudio.playWoodenFish(1);
         flashMonkCard(payload.monkSpeech, false);
         if (payload.monkSpeech && activeRunnersCount === 0 && runnerQueue.length === 0 && !payload.walkUpBow) {
@@ -3016,40 +3208,52 @@
         const pillText = payload.pillLine || payload.joinPillText;
         const msgText = payload.commentText || payload.content;
         const fxType = payload.fxType || 'join_sect';
+        const tuViAdded = Number(payload.tuViAdded) || 120;
+        const isLevelUp = Boolean(payload.realmUpgraded) || payload.eventKind === 'breakthrough';
 
         // Hiển thị thông báo ở giữa & thanh pill rồi TỰ ĐỘNG BIẾN MẤT sau 4.2s / 3.8s
         showTuTienHerald(topText, bigText, subText, 4200);
         showTuTienJoinPill(pillText, 3800);
 
-        // Xác định vị trí ngồi thực tế của người vừa tương tác để giáng Sấm Chớp / Cột Linh Khí trúng người đó
+        // Xác định vị trí ngồi thực tế của người vừa tương tác để giáng Sấm Chớp / Kiếm Bay / Thăng Cấp trúng người đó
         const userSeat = (payload.user && tutienSeatPositions.get(payload.user.userId)) || {
           x: 240 + Math.random() * 600,
           y: 1180 + Math.random() * 420
         };
 
-        if (fxType === 'thunder_tribulation') {
+        if (isLevelUp) {
+          spawnBreakthroughAscensionFX(
+            userSeat.x,
+            userSeat.y,
+            payload.newRealmName || payload.user?.realmName || bigText || 'Kim Đan',
+            tuViAdded
+          );
+        } else if (fxType === 'thunder_tribulation') {
           spawnLightningTribulation(userSeat.x, userSeat.y, 3, 'cyan');
-        } else if (fxType === 'breakthrough_thunder') {
-          spawnLightningTribulation(userSeat.x, userSeat.y, 4, 'gold');
-          spawnQiPillarFX(userSeat.x, userSeat.y, 'gold');
-          spawnBlossomRainFX(45);
-        } else if (fxType === 'sword_rain') {
-          spawnSwordRainFX(userSeat.x, userSeat.y, 20);
+          spawnSwordRainFX(userSeat.x, userSeat.y, 8);
+          spawnFloatingTuTienText(userSeat.x, userSeat.y - 35, `⚡ +${tuViAdded} Tu Vi`, '#38bdf8', 1.05);
+        } else if (fxType === 'sword_rain' || fxType === 'sword_and_thunder') {
+          spawnSwordRainFX(userSeat.x, userSeat.y, 18);
+          spawnSingleLightningWave(userSeat.x, userSeat.y, 2, 'cyan');
+          spawnFloatingTuTienText(userSeat.x, userSeat.y - 35, `⚔️ +${tuViAdded} Tu Vi`, '#fde047', 1.05);
         } else if (fxType === 'blossom_rain') {
+          window.sacredAudio.playTuTienJoinSound();
           spawnBlossomRainFX(85);
           spawnQiPillarFX(userSeat.x, userSeat.y, 'gold');
+          spawnFloatingTuTienText(userSeat.x, userSeat.y - 35, `🌸 +${tuViAdded} Tu Vi`, '#f472b6', 1.05);
         } else if (fxType === 'duel_clash') {
           const oppSeat = (payload.opponentUserId && tutienSeatPositions.get(payload.opponentUserId)) || {
             x: 540,
             y: 460
           };
           spawnDuelClashFX(userSeat.x, userSeat.y, oppSeat.x, oppSeat.y);
-        } else if (fxType === 'qi_pillar') {
-          window.sacredAudio.playLotusChime();
-          spawnQiPillarFX(userSeat.x, userSeat.y, 'cyan');
+          spawnSwordRainFX(userSeat.x, userSeat.y, 12);
+          spawnFloatingTuTienText(userSeat.x, userSeat.y - 35, `🔥 THẮNG +${tuViAdded} TV`, '#fde047', 1.12);
         } else {
-          window.sacredAudio.playLotusChime();
-          spawnLotusBurst(userSeat.x, userSeat.y, 24);
+          window.sacredAudio.playTuTienJoinSound();
+          spawnQiPillarFX(userSeat.x, userSeat.y, 'cyan');
+          spawnSwordRainFX(userSeat.x, userSeat.y, 8);
+          spawnFloatingTuTienText(userSeat.x, userSeat.y - 35, `+${tuViAdded} Tu Vi`, '#38bdf8', 1.0);
         }
 
         if (payload.user && msgText) {
@@ -3077,6 +3281,14 @@
         break;
       }
       case 'gift': {
+        if (currentThemeId === 7) {
+          const shouldSpeakGift =
+            currentSettings.giftTtsEnabled !== false && currentSettings.ttsEnabled !== false;
+          if (shouldSpeakGift && payload.dedicationText) {
+            window.sacredAudio.speakChant(payload.dedicationText, { withWoodenFish: false });
+          }
+          break;
+        }
         window.sacredAudio.playGrandBell(1);
         if (currentThemeId === 6) {
           triggerWalkOutAndReleaseFish({
@@ -3085,9 +3297,6 @@
             creatureLabel: payload.creatureLabel || 'Cá Chép Đỏ Bình An',
             giftIconUrl: payload.giftIconUrl
           });
-        } else if (currentThemeId === 7) {
-          spawnLotusBurst(540, 480, 36);
-          spawnLotusRain(28);
         } else {
           triggerRunUpAndProstrate(payload);
           enqueueBowToBuddha(payload);
@@ -3120,6 +3329,15 @@
         break;
       }
       case 'like': {
+        if (currentThemeId === 7) {
+          window.sacredAudio.playSwordWhoosh();
+          spawnSwordRainFX(540, 820, 8);
+          if (payload.lotusRainTriggered) {
+            spawnLightningTribulation(540, 620, 3, 'gold');
+            spawnBlossomRainFX(60);
+          }
+          break;
+        }
         triggerWoodenFishVisual(payload.count || 15);
         if (payload.lotusRainTriggered) {
           window.sacredAudio.playLotusChime();

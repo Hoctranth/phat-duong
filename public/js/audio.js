@@ -38,6 +38,7 @@ class SacredAudioEngine {
   }
 
   applySettings(settings = {}) {
+    if (typeof settings.themeId === 'number') this.themeId = settings.themeId;
     if (typeof settings.voicePitchHz === 'number') this.pitchHz = settings.voicePitchHz;
     if (typeof settings.voiceSpeedPct === 'number') this.speedPct = settings.voiceSpeedPct;
     if (typeof settings.reverbPct === 'number') this.reverbPct = settings.reverbPct;
@@ -338,6 +339,99 @@ class SacredAudioEngine {
   }
 
   /**
+   * Tiếng Cổ Cầm & Ngọc Bội Tu Tiên khi đệ tử Nhập Môn / Tương tác (Hoàn toàn KHÔNG có tiếng mõ chùa)
+   */
+  playTuTienJoinSound() {
+    if (this.muted) return;
+    this.init();
+
+    const now = this.ctx.currentTime;
+    // Tiếng gảy dây Cổ Cầm (Guqin/Guzheng pluck) + tiếng Ngọc Bội thanh mảnh
+    const notes = [523.25, 659.25, 783.99, 1046.5];
+    notes.forEach((freq, idx) => {
+      const t0 = now + idx * 0.065;
+      const osc = this.ctx.createOscillator();
+      const filter = this.ctx.createBiquadFilter();
+      const gain = this.ctx.createGain();
+
+      osc.type = idx < 2 ? 'triangle' : 'sine';
+      osc.frequency.setValueAtTime(freq, t0);
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(2800, t0);
+      filter.frequency.exponentialRampToValueAtTime(650, t0 + 0.75);
+
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.linearRampToValueAtTime(0.24 * this.volume, t0 + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.85);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(t0);
+      osc.stop(t0 + 0.9);
+    });
+  }
+
+  /**
+   * Âm Thanh Đột Phá Cảnh Giới / Thăng Cấp Tu Tiên Hoành Tráng
+   * (Cổ Cầm vuốt dây Ngũ Cung + Chấn động Đan Điền + Kiếm Ngân Cửu Thiên)
+   */
+  playBreakthroughSound() {
+    if (this.muted) return;
+    this.init();
+
+    const now = this.ctx.currentTime;
+
+    // 1. Chấn động Linh Khí Đan Điền (Deep Aura Boom)
+    const boomOsc = this.ctx.createOscillator();
+    const boomGain = this.ctx.createGain();
+    boomOsc.type = 'sine';
+    boomOsc.frequency.setValueAtTime(115, now);
+    boomOsc.frequency.exponentialRampToValueAtTime(38, now + 0.95);
+    boomGain.gain.setValueAtTime(0.001, now);
+    boomGain.gain.linearRampToValueAtTime(0.48 * this.volume, now + 0.03);
+    boomGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.1);
+    boomOsc.connect(boomGain);
+    boomGain.connect(this.ctx.destination);
+    boomOsc.start(now);
+    boomOsc.stop(now + 1.15);
+
+    // 2. Cổ Cầm Vuốt Dây Thăng Thiên (Ascending Pentatonic Guzheng Glissando)
+    const scale = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5, 1174.66, 1318.5, 1567.98];
+    scale.forEach((f, idx) => {
+      const t0 = now + idx * 0.048;
+      const osc = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(f, t0);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.linearRampToValueAtTime(0.22 * this.volume, t0 + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.15);
+      osc.connect(g);
+      g.connect(this.ctx.destination);
+      osc.start(t0);
+      osc.stop(t0 + 1.2);
+    });
+
+    // 3. Tiếng Tiên Kiếm Ngân Vang Ở Đỉnh Cảnh Giới
+    const swordTime = now + 0.38;
+    [1567.98, 2093.0, 2637.02].forEach((sf, i) => {
+      const sOsc = this.ctx.createOscillator();
+      const sGain = this.ctx.createGain();
+      sOsc.type = 'sine';
+      sOsc.frequency.setValueAtTime(sf, swordTime);
+      sGain.gain.setValueAtTime(0.0001, swordTime);
+      sGain.gain.linearRampToValueAtTime((0.22 / (i + 1)) * this.volume, swordTime + 0.015);
+      sGain.gain.exponentialRampToValueAtTime(0.0001, swordTime + 1.65);
+      sOsc.connect(sGain);
+      sGain.connect(this.ctx.destination);
+      sOsc.start(swordTime);
+      sOsc.stop(swordTime + 1.7);
+    });
+  }
+
+  /**
    * Tách câu dài thành các đoạn <= 170 ký tự để phát qua Google Vietnamese TTS chuẩn xác
    */
   splitSentences(text) {
@@ -381,10 +475,15 @@ class SacredAudioEngine {
       return;
     }
 
-    this.playLotusChime();
+    const isTuTien = Number(this.themeId) === 7;
+    if (isTuTien) {
+      this.playTuTienJoinSound();
+    } else {
+      this.playLotusChime();
+    }
     if (onStart) onStart();
 
-    if (withWoodenFish) {
+    if (withWoodenFish && !isTuTien) {
       const intervalMs = Math.max(680, Math.round((60 / Math.max(25, this.woodenFishBpm)) * 1000));
       this.woodenFishLoopTimer = setInterval(() => {
         if (!this.ttsCancelled && !this.muted) {

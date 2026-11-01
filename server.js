@@ -498,13 +498,19 @@ function getPersonPriorityBucket(person) {
   return 0; // Người xem thật có tên & avatar
 }
 
+function getEffectiveRankScore(person) {
+  return Math.max((Number(person?.merit) || 0) * 100, Number(person?.tuVi) || 0);
+}
+
 function sortMeditatorsByMerit() {
   if (!Array.isArray(appState.meditators) || appState.meditators.length <= 1) return;
 
   const now = Date.now();
-  // Tầng 1: Top 6 vị Hộ Pháp có công đức (merit > 0) cao nhất ngồi 6 đệm VIP hàng đầu trước Tam Bảo
+  // Tầng 1: Top 6 vị Hộ Pháp / Trưởng Lão có điểm công đức hoặc Tu Vi cao nhất ngồi hàng đầu
   const byMeritDesc = [...appState.meditators].sort((a, b) => {
-    if ((b.merit || 0) !== (a.merit || 0)) return (b.merit || 0) - (a.merit || 0);
+    const scoreA = getEffectiveRankScore(a);
+    const scoreB = getEffectiveRankScore(b);
+    if (scoreB !== scoreA) return scoreB - scoreA;
     const bucketA = getPersonPriorityBucket(a);
     const bucketB = getPersonPriorityBucket(b);
     if (bucketA !== bucketB) return bucketA - bucketB;
@@ -761,10 +767,11 @@ function upsertMeditator({ userId, nickname, avatar = '', preferredSkin, comment
   }
 
   const prevRealm = person.realmName || 'Phàm Nhân';
+  const prevTuVi = Number(person.tuVi) || 0;
 
   if (addMeritAmount > 0) {
     person.merit += addMeritAmount;
-    person.tuVi = (person.tuVi || 0) + addMeritAmount * 10;
+    person.tuVi = (person.tuVi || 0) + addMeritAmount * 100;
     person.hasIncense = true;
     if (person.merit >= 99) {
       person.skin = 'su'; // Hộ pháp mặc áo vàng ngồi đài sen hàng đầu
@@ -775,16 +782,17 @@ function upsertMeditator({ userId, nickname, avatar = '', preferredSkin, comment
   }
 
   if (addTuViAmount > 0) {
-    const mult = person.spiritRoot?.mult || 1.0;
+    const mult = person.spiritRoot?.mult || 1.1;
     person.tuVi = Math.round((person.tuVi || 0) + addTuViAmount * mult);
   }
 
+  const tuViAdded = Math.max(0, (Number(person.tuVi) || 0) - prevTuVi);
   const curRealm = getCultivationRealm(person.merit, person.tuVi);
   person.realmName = curRealm.name;
   person.robeTier = curRealm.robeTier;
   const realmUpgraded = prevRealm !== curRealm.name && curRealm.level > 0;
 
-  return { person, isNewSeat, skinChanged: Boolean(detectedSkin), realmUpgraded, curRealm };
+  return { person, isNewSeat, skinChanged: Boolean(detectedSkin), realmUpgraded, prevRealm, curRealm, tuViAdded };
 }
 
 function addMeritLeaderboard(user, points) {
@@ -809,17 +817,41 @@ function addMeritLeaderboard(user, points) {
 // ============================================================================
 function handleMemberEvent(rawUser) {
   const user = extractUserInfo(rawUser);
-  const { person, isNewSeat } = upsertMeditator({
+  const isTuTienTheme = Number(appState.settings.themeId) === 7;
+  const { person, isNewSeat, realmUpgraded, curRealm, tuViAdded } = upsertMeditator({
     userId: user.userId,
     nickname: user.nickname,
-    avatar: user.avatar
+    avatar: user.avatar,
+    addTuViAmount: isTuTienTheme ? 35 : 0
   });
 
-  const monkSpeech = `${person.nickname} đến rồi, chúc con một buổi tối an lành 🙏`;
+  const monkSpeech = isTuTienTheme
+    ? `Chào mừng đạo hữu ${person.nickname} ngự kiếm nhập môn tu luyện ☯`
+    : `${person.nickname} đến rồi, chúc con một buổi tối an lành 🙏`;
   appState.settings.monkGreeting = monkSpeech;
 
   if (isNewSeat) {
-    pushLog(`🙏 ${person.nickname} đã vào chùa tọa thiền (Tổng: ${appState.meditators.length} người).`);
+    pushLog(
+      isTuTienTheme
+        ? `☯ Đạo hữu ${person.nickname} đã bước vào Tiên Môn (Cảnh giới: ${person.realmName} · Tu vi: ${person.tuVi}).`
+        : `🙏 ${person.nickname} đã vào chùa tọa thiền (Tổng: ${appState.meditators.length} người).`
+    );
+  }
+  if (isTuTienTheme) {
+    const sRoot = person.spiritRoot || { name: 'Hỏa linh căn', mult: 1.1, isProdigy: false };
+    broadcast('tutien_event', {
+      user: person,
+      eventKind: realmUpgraded ? 'breakthrough' : 'join_sect',
+      fxType: realmUpgraded ? 'breakthrough_thunder' : 'sword_rain',
+      realmUpgraded,
+      tuViAdded,
+      totalTuVi: person.tuVi,
+      headline: realmUpgraded ? '⚡ ĐỘT PHÁ CẢNH GIỚI ⚡' : '☯ ĐẠO HỮU NHẬP MÔN ☯',
+      bigTitle: realmUpgraded && curRealm ? curRealm.name : sRoot.name,
+      subLine: `${person.nickname} nhập môn · +${tuViAdded} Tu Vi (${person.realmName})`,
+      pillLine: `☯ ${person.nickname} nhập môn · ${sRoot.name} (+${tuViAdded} Tu Vi)`,
+      commentText: 'Đạo hữu xin nhập môn ☯'
+    });
   }
   broadcast('member', {
     user: person,
@@ -833,7 +865,7 @@ function handleChatEvent(rawUser, content, forcedSkin) {
   const lower = text.toLowerCase();
   const user = extractUserInfo(rawUser);
 
-  // Phát hiện các lệnh tương tác Tu Tiên qua Comment để cộng thêm Tu Vi thưởng
+  // Phát hiện các lệnh tương tác Tu Tiên qua Comment để cộng mạnh Tu Vi & dễ dàng lên cấp
   const isThunderCmd =
     lower.includes('sấm') ||
     lower.includes('sam chop') ||
@@ -858,7 +890,8 @@ function handleChatEvent(rawUser, content, forcedSkin) {
     lower.includes('phi kiếm') ||
     lower.includes('phi kiem') ||
     lower.includes('kiếm lai') ||
-    lower.includes('kiem lai');
+    lower.includes('kiem lai') ||
+    lower.includes('kiếm');
   const isDuelCmd =
     lower.includes('đấu pháp') ||
     lower.includes('dau phap') ||
@@ -869,34 +902,43 @@ function handleChatEvent(rawUser, content, forcedSkin) {
     lower === 'pk' ||
     lower.includes(' pk ');
 
-  let bonusTuVi = 12;
-  if (isDuelCmd) bonusTuVi = 30;
-  else if (isThunderCmd) bonusTuVi = 25;
-  else if (isSwordCmd) bonusTuVi = 22;
-  else if (isBlossomCmd) bonusTuVi = 18;
+  // Tăng mạnh Tu Vi khi comment để khán giả comment vài câu là Đột Phá Cảnh Giới & Đổi Tiên Y Mới ngay!
+  // Đồng thời có 45% tỉ lệ "Đốn Ngộ Tiên Duyên" bạo kích x2.2 Tu Vi!
+  const isLuckyEnlightenment = Math.random() < 0.45;
+  let baseTuVi = 120 + Math.floor(Math.random() * 75); // Mặc định 120..195 Tu Vi mỗi comment
+  if (isDuelCmd) baseTuVi = 320 + Math.floor(Math.random() * 120);
+  else if (isThunderCmd) baseTuVi = 280 + Math.floor(Math.random() * 110);
+  else if (isSwordCmd) baseTuVi = 250 + Math.floor(Math.random() * 90);
+  else if (isBlossomCmd) baseTuVi = 210 + Math.floor(Math.random() * 80);
+  else if (isLuckyEnlightenment) baseTuVi = Math.round(baseTuVi * 2.2);
 
-  const { person, isNewSeat, skinChanged, realmUpgraded, curRealm } = upsertMeditator({
+  const { person, isNewSeat, skinChanged, realmUpgraded, prevRealm, curRealm, tuViAdded } = upsertMeditator({
     userId: user.userId,
     nickname: user.nickname,
     avatar: user.avatar,
     preferredSkin: forcedSkin,
     commentText: text,
-    addTuViAmount: bonusTuVi
+    addTuViAmount: baseTuVi
   });
 
-  const monkSpeech = `${person.nickname} thành tâm khấn nguyện: "${text}"`;
+  const isPondTheme = Number(appState.settings.themeId) === 6;
+  const isTuTienTheme = Number(appState.settings.themeId) === 7;
+
+  const monkSpeech = isTuTienTheme
+    ? realmUpgraded
+      ? `Chúc mừng đạo hữu ${person.nickname} đốn ngộ chân kinh, đột phá cảnh giới ${person.realmName}!`
+      : `Đạo hữu ${person.nickname} thổ nạp linh khí, tăng ${tuViAdded} tu vi!`
+    : `${person.nickname} thành tâm khấn nguyện: "${text}"`;
   appState.settings.monkGreeting = monkSpeech;
 
-  if (skinChanged) {
+  if (skinChanged && !isTuTienTheme) {
     pushLog(`✨ ${person.nickname} đổi hình tướng [${person.skin.toUpperCase()}]: "${text}"`);
-  } else {
+  } else if (!isTuTienTheme) {
     pushLog(`💬 ${person.nickname}: "${text}"`);
   }
 
   // Hỗ trợ tương tác hoàn toàn bằng COMMENT trên LIVE:
   let walkUpBow = true;
-  const isPondTheme = Number(appState.settings.themeId) === 6;
-  const isTuTienTheme = Number(appState.settings.themeId) === 7;
   const isFishKeyword =
     lower.includes('thả cá') ||
     lower.includes('tha ca') ||
@@ -913,10 +955,10 @@ function handleChatEvent(rawUser, content, forcedSkin) {
     lower.includes('rải mồi') ||
     lower.includes('thả thính');
 
-  if (lower.includes('chuông')) {
+  if (!isTuTienTheme && lower.includes('chuông')) {
     broadcast('bell_strike', {});
   }
-  if (lower.includes('gõ mõ') || lower === 'mõ') {
+  if (!isTuTienTheme && (lower.includes('gõ mõ') || lower === 'mõ')) {
     broadcast('wooden_fish_strike', {});
   }
 
@@ -926,81 +968,105 @@ function handleChatEvent(rawUser, content, forcedSkin) {
     }
     const sRoot = person.spiritRoot || { name: 'Hỏa linh căn', mult: 1.1, isProdigy: false };
 
-    if (isDuelCmd) {
+    // Nếu người xem LÊN CẤP (realmUpgraded) nhờ comment -> Luôn ưu tiên nổ đại lễ ĐỘT PHÁ CẢNH GIỚI kèm Sấm Sét + Kiếm Bay!
+    if (realmUpgraded && curRealm) {
+      pushLog(
+        `⚡ [THĂNG CẤP] ${person.nickname} bình luận "${text}" (+${tuViAdded} Tu Vi) -> Đột phá [${prevRealm} ➔ ${curRealm.name}] (Tổng: ${person.tuVi} TV)!`
+      );
+      broadcast('tutien_event', {
+        user: person,
+        eventKind: 'breakthrough',
+        fxType: 'breakthrough_thunder',
+        realmUpgraded: true,
+        prevRealmName: prevRealm,
+        newRealmName: curRealm.name,
+        tuViAdded,
+        totalTuVi: person.tuVi,
+        headline: '⚡ ĐỘT PHÁ CẢNH GIỚI ⚡',
+        bigTitle: curRealm.name,
+        subLine: `${person.nickname} thăng cấp ${curRealm.name} · +${tuViAdded} Tu Vi (Đổi Tiên Y Mới)`,
+        pillLine: `⬆️ ${person.nickname} đột phá ${curRealm.name} · +${tuViAdded} Tu Vi (Tổng: ${person.tuVi} TV)`,
+        commentText: text
+      });
+    } else if (isDuelCmd) {
       const others = appState.meditators.filter((m) => m.userId !== person.userId);
       const opponent = others.length > 0 ? others[Math.floor(Math.random() * Math.min(20, others.length))] : null;
-      pushLog(`🔥 ${person.nickname} luận kiếm tỷ thí cùng ${opponent ? opponent.nickname : 'Tiên Môn'} (+${bonusTuVi} Tu Vi)!`);
+      pushLog(`🔥 ${person.nickname} luận kiếm tỷ thí cùng ${opponent ? opponent.nickname : 'Tiên Môn'} (+${tuViAdded} Tu Vi)!`);
       broadcast('tutien_event', {
         user: person,
         opponentUserId: opponent ? opponent.userId : null,
         opponentName: opponent ? opponent.nickname : 'Chưởng Môn',
         eventKind: 'duel',
         fxType: 'duel_clash',
+        realmUpgraded: false,
+        tuViAdded,
+        totalTuVi: person.tuVi,
         headline: '🔥 LUẬN KIẾM TRANH HÙNG 🔥',
-        bigTitle: realmUpgraded && curRealm ? curRealm.name : 'Đấu Pháp Đỉnh Cao',
-        subLine: `${person.nickname} ⚔️ ${opponent ? opponent.nickname : 'Tiên Môn'} · Thắng +${bonusTuVi} Tu Vi`,
-        pillLine: `⚔️ ${person.nickname} thắng tỷ thí · +${bonusTuVi} Tu Vi (${person.realmName})`,
+        bigTitle: 'Đấu Pháp Đỉnh Cao',
+        subLine: `${person.nickname} ⚔️ ${opponent ? opponent.nickname : 'Tiên Môn'} · +${tuViAdded} Tu Vi (${person.realmName})`,
+        pillLine: `⚔️ ${person.nickname} thắng tỷ thí · +${tuViAdded} Tu Vi (Tổng: ${person.tuVi} TV)`,
         commentText: text
       });
     } else if (isThunderCmd) {
-      pushLog(`⚡ ${person.nickname} gọi Cửu Thiên Thần Lôi độ kiếp (+${bonusTuVi} Tu Vi -> ${person.realmName})!`);
+      pushLog(`⚡ ${person.nickname} gọi Cửu Thiên Thần Lôi độ kiếp (+${tuViAdded} Tu Vi -> ${person.realmName})!`);
       broadcast('tutien_event', {
         user: person,
         eventKind: 'thunder',
         fxType: 'thunder_tribulation',
-        headline: realmUpgraded ? '⚡ ĐỘ KIẾP ĐỘT PHÁ ⚡' : '⚡ THIÊN LÔI ĐỘ KIẾP ⚡',
-        bigTitle: realmUpgraded && curRealm ? curRealm.name : 'Cửu Thiên Thần Lôi',
-        subLine: `${person.nickname} dẫn Lôi Kiếp rèn thể · +${bonusTuVi} Tu Vi (${person.realmName})`,
-        pillLine: `⚡ ${person.nickname} gọi Thiên Lôi · +${bonusTuVi} Tu Vi`,
+        realmUpgraded: false,
+        tuViAdded,
+        totalTuVi: person.tuVi,
+        headline: '⚡ THIÊN LÔI ĐỘ KIẾP ⚡',
+        bigTitle: 'Cửu Thiên Thần Lôi',
+        subLine: `${person.nickname} dẫn Lôi Kiếp rèn thể · +${tuViAdded} Tu Vi (${person.realmName})`,
+        pillLine: `⚡ ${person.nickname} gọi Thiên Lôi · +${tuViAdded} Tu Vi (Tổng: ${person.tuVi} TV)`,
         commentText: text
       });
     } else if (isSwordCmd) {
-      pushLog(`⚔️ ${person.nickname} triệu hồi Vạn Kiếm Quy Tông (+${bonusTuVi} Tu Vi)!`);
+      pushLog(`⚔️ ${person.nickname} triệu hồi Vạn Kiếm Quy Tông (+${tuViAdded} Tu Vi)!`);
       broadcast('tutien_event', {
         user: person,
         eventKind: 'sword',
         fxType: 'sword_rain',
+        realmUpgraded: false,
+        tuViAdded,
+        totalTuVi: person.tuVi,
         headline: '⚔️ VẠN KIẾM QUY TÔNG ⚔️',
-        bigTitle: realmUpgraded && curRealm ? curRealm.name : 'Kiếm Ý Thông Thiên',
-        subLine: `${person.nickname} ngự Vạn Kiếm · +${bonusTuVi} Tu Vi (${person.realmName})`,
-        pillLine: `🗡️ ${person.nickname} ngự Vạn Kiếm · +${bonusTuVi} Tu Vi`,
+        bigTitle: 'Kiếm Ý Thông Thiên',
+        subLine: `${person.nickname} ngự Vạn Kiếm · +${tuViAdded} Tu Vi (${person.realmName})`,
+        pillLine: `🗡️ ${person.nickname} ngự Vạn Kiếm · +${tuViAdded} Tu Vi (Tổng: ${person.tuVi} TV)`,
         commentText: text
       });
     } else if (isBlossomCmd) {
-      pushLog(`🌸 ${person.nickname} triệu hồi Mưa Hoa Đào Tiên Giới (+${bonusTuVi} Tu Vi)!`);
+      pushLog(`🌸 ${person.nickname} triệu hồi Mưa Hoa Đào Tiên Giới (+${tuViAdded} Tu Vi)!`);
       broadcast('tutien_event', {
         user: person,
         eventKind: 'blossom',
         fxType: 'blossom_rain',
+        realmUpgraded: false,
+        tuViAdded,
+        totalTuVi: person.tuVi,
         headline: '🌸 TIÊN GIỚI GIÁNG HOA 🌸',
-        bigTitle: realmUpgraded && curRealm ? curRealm.name : 'Mưa Hoa Đào',
-        subLine: `${person.nickname} rải Đào Hoa chúc phúc · +${bonusTuVi} Tu Vi`,
-        pillLine: `🌸 ${person.nickname} triệu hồi Mưa Hoa Đào · +${bonusTuVi} Tu Vi`,
-        commentText: text
-      });
-    } else if (realmUpgraded && curRealm) {
-      pushLog(`⚡ ${person.nickname} đột phá cảnh giới [${curRealm.name}] nhờ chăm chỉ tu luyện!`);
-      broadcast('tutien_event', {
-        user: person,
-        eventKind: 'breakthrough',
-        fxType: 'breakthrough_thunder',
-        headline: '⚡ ĐỘT PHÁ CẢNH GIỚI ⚡',
-        bigTitle: curRealm.name,
-        subLine: `${person.nickname} đột phá ${curRealm.name} · đổi tiên y mới`,
-        pillLine: `☯ ${person.nickname} đột phá · ${curRealm.name}`,
+        bigTitle: 'Mưa Hoa Đào',
+        subLine: `${person.nickname} rải Đào Hoa chúc phúc · +${tuViAdded} Tu Vi`,
+        pillLine: `🌸 ${person.nickname} triệu hồi Mưa Hoa Đào · +${tuViAdded} Tu Vi`,
         commentText: text
       });
     } else {
-      pushLog(`☯ ${person.nickname} nhập môn tu luyện [${sRoot.name} x${sRoot.mult}]: "${text}"`);
-      const isLightningRoot = sRoot.name.toLowerCase().includes('lôi');
+      pushLog(`☯ ${person.nickname} tu luyện [${sRoot.name} x${sRoot.mult}]: "${text}" (+${tuViAdded} Tu Vi -> ${person.tuVi} TV)`);
+      // Mọi comment thông thường cũng luôn gọi Kiếm Bay hoặc Sấm Sét để màn hình cực kỳ sống động!
+      const defaultFx = Math.random() < 0.5 ? 'sword_and_thunder' : 'thunder_tribulation';
       broadcast('tutien_event', {
         user: person,
-        eventKind: sRoot.isProdigy ? 'prodigy' : 'join_sect',
-        fxType: isLightningRoot ? 'thunder_tribulation' : sRoot.isProdigy ? 'qi_pillar' : 'join_sect',
-        headline: sRoot.isProdigy ? 'KỲ TÀI XUẤT THẾ' : 'NHẬP MÔN VẤN ĐẠO',
+        eventKind: isLuckyEnlightenment ? 'prodigy' : 'join_sect',
+        fxType: defaultFx,
+        realmUpgraded: false,
+        tuViAdded,
+        totalTuVi: person.tuVi,
+        headline: isLuckyEnlightenment ? '✨ ĐỐN NGỘ TIÊN DUYÊN ✨' : sRoot.isProdigy ? 'KỲ TÀI XUẤT THẾ' : 'LINH KHÍ QUÁN ĐỈNH',
         bigTitle: sRoot.name,
-        subLine: `${person.nickname} nhập môn · tu luyện x${sRoot.mult}`,
-        pillLine: `☯ ${person.nickname} nhập môn · ${sRoot.name}`,
+        subLine: `${person.nickname} hấp thu linh khí · +${tuViAdded} Tu Vi (${person.realmName})`,
+        pillLine: `☯ ${person.nickname} +${tuViAdded} Tu Vi · ${sRoot.name} (Tổng: ${person.tuVi} TV)`,
         commentText: text
       });
     }
@@ -1058,7 +1124,7 @@ function handleGiftEvent({ rawUser, giftName = 'Hoa Hồng', giftIconUrl = '', d
   const totalCoins = diamonds * count;
   const meritAdded = totalCoins;
 
-  const { person } = upsertMeditator({
+  const { person, realmUpgraded, prevRealm, tuViAdded } = upsertMeditator({
     userId: user.userId,
     nickname: user.nickname,
     avatar: user.avatar,
@@ -1079,10 +1145,15 @@ function handleGiftEvent({ rawUser, giftName = 'Hoa Hồng', giftIconUrl = '', d
       user: person,
       eventKind: 'breakthrough',
       fxType: 'breakthrough_thunder',
+      realmUpgraded: true,
+      prevRealmName: prevRealm,
+      newRealmName: person.realmName,
+      tuViAdded,
+      totalTuVi: person.tuVi,
       headline: totalCoins >= 100 ? '⚡ ĐẠI NĂNG ĐỘ KIẾP ⚡' : '⚡ ĐỘT PHÁ CẢNH GIỚI ⚡',
       bigTitle: person.realmName,
-      subLine: `${person.nickname} hấp thu ${totalCoins} 💎 · đạt ${person.realmName} (Tu vi: ${person.tuVi})`,
-      pillLine: `☯ ${person.nickname} đột phá · ${person.realmName} (+${totalCoins} 💎)`
+      subLine: `${person.nickname} hấp thu ${totalCoins} 💎 · +${tuViAdded} Tu Vi (Đạt ${person.realmName})`,
+      pillLine: `⬆️ ${person.nickname} đột phá ${person.realmName} · +${tuViAdded} Tu Vi (Tổng: ${person.tuVi} TV)`
     });
   } else if (Number(appState.settings.themeId) === 6) {
     if (totalCoins >= 99) {
@@ -1108,7 +1179,9 @@ function handleGiftEvent({ rawUser, giftName = 'Hoa Hồng', giftIconUrl = '', d
   }
 
   const dedicationText =
-    Number(appState.settings.themeId) === 6
+    Number(appState.settings.themeId) === 7
+      ? `Chúc mừng đạo hữu ${person.nickname} luyện hóa ${giftName}, tăng ${tuViAdded} tu vi, dẫn Cửu Thiên Thần Lôi đột phá cảnh giới ${person.realmName}!`
+      : Number(appState.settings.themeId) === 6
       ? `Cảm tạ thí chủ ${person.nickname} đã phát tâm ${giftName}, phóng sanh ${creatureLabel} xuống Hồ Sen, tăng ${meritAdded} công đức. Chúc con và gia đình vạn sự bình an!`
       : `Cảm tạ thí chủ ${person.nickname} đã phát tâm ${giftName}, tăng ${meritAdded} công đức. Chúc con và gia đình vạn sự bình an, cát tường như ý!`;
   appState.settings.monkGreeting = dedicationText;
