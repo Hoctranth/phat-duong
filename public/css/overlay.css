@@ -64,6 +64,11 @@ html, body {
   transition: filter 0.45s ease;
 }
 
+#stage-wrapper.theme-1 .courtyard-backdrop-img,
+body.theme-1 .courtyard-backdrop-img {
+  filter: brightness(1.06) saturate(1.08) contrast(1.02);
+}
+
 #stage-wrapper.theme-4 .courtyard-backdrop-img {
   filter: hue-rotate(18deg) saturate(1.18) contrast(1.05);
 }
@@ -81,6 +86,144 @@ html, body {
   inset: 0;
   pointer-events: none;
   display: none;
+}
+
+/* Lớp trang trí Hoa Sen Linh Thiêng & Hào Quang Pháp Điện mở rộng không gian Mẫu 1 (60FPS Zero-Lag) */
+.quybai-floral-decor {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  overflow: hidden;
+}
+
+#stage-wrapper.theme-6 .quybai-floral-decor,
+body.theme-6 .quybai-floral-decor {
+  display: none;
+}
+
+.quybai-sunbeam-top {
+  position: absolute;
+  top: -70px;
+  left: 50%;
+  width: 1080px;
+  height: 680px;
+  transform: translate3d(-50%, 0, 0);
+  background:
+    radial-gradient(
+      ellipse 68% 58% at 50% 18%,
+      rgba(254, 240, 138, 0.28) 0%,
+      rgba(245, 158, 11, 0.16) 42%,
+      rgba(180, 83, 9, 0.06) 68%,
+      rgba(0, 0, 0, 0) 100%
+    ),
+    conic-gradient(
+      from 142deg at 50% -20px,
+      rgba(254, 240, 138, 0) 0deg,
+      rgba(254, 240, 138, 0.12) 14deg,
+      rgba(254, 240, 138, 0.02) 26deg,
+      rgba(253, 224, 71, 0.15) 38deg,
+      rgba(254, 240, 138, 0.03) 50deg,
+      rgba(254, 240, 138, 0.12) 62deg,
+      rgba(254, 240, 138, 0) 76deg
+    );
+  opacity: 0.92;
+  will-change: transform, opacity;
+  animation: quybaiSunbeamBreathe 5.4s ease-in-out infinite alternate;
+}
+
+@keyframes quybaiSunbeamBreathe {
+  0% {
+    opacity: 0.78;
+    transform: translate3d(-50%, 0, 0) scale(0.98);
+  }
+  100% {
+    opacity: 0.98;
+    transform: translate3d(-50%, 4px, 0) scale(1.03);
+  }
+}
+
+.quybai-flower-cluster,
+.quybai-carpet-lotus {
+  position: absolute;
+  pointer-events: none;
+  will-change: transform;
+  transform-origin: center bottom;
+}
+
+.quybai-flower-cluster svg,
+.quybai-carpet-lotus svg {
+  display: block;
+  overflow: visible;
+}
+
+/* Cụm hoa sen & lá Bồ Đề ở rìa trái / phải phía trên Đại Điện (x ~ 18px..95px và 985px..1062px) */
+.quybai-flower-cluster.cluster-top-left {
+  left: 18px;
+  top: 132px;
+  animation: quybaiLotusSwayLeft 4.8s ease-in-out infinite alternate;
+}
+
+.quybai-flower-cluster.cluster-top-right {
+  right: 18px;
+  top: 132px;
+  animation: quybaiLotusSwayRight 4.8s ease-in-out infinite alternate;
+}
+
+/* Cụm hoa sen hai bên bậc thềm Tam Bảo & đầu thảm xanh (x ~ 340px và 740px, y ~ 900px) */
+.quybai-flower-cluster.cluster-altar-left {
+  left: 282px;
+  top: 848px;
+  animation: quybaiLotusSwayLeft 5.2s ease-in-out -1.4s infinite alternate;
+}
+
+.quybai-flower-cluster.cluster-altar-right {
+  right: 282px;
+  top: 848px;
+  animation: quybaiLotusSwayRight 5.2s ease-in-out -1.4s infinite alternate;
+}
+
+/* Đóa sen bách diệp dọc hai bên mép thảm xanh (x ~ 340px và 740px tại y ~ 1180px, 1440px) */
+.quybai-carpet-lotus.lotus-mid-left {
+  left: 300px;
+  top: 1146px;
+  animation: quybaiLotusSwayLeft 4.4s ease-in-out -0.8s infinite alternate;
+}
+
+.quybai-carpet-lotus.lotus-mid-right {
+  right: 300px;
+  top: 1146px;
+  animation: quybaiLotusSwayRight 4.4s ease-in-out -0.8s infinite alternate;
+}
+
+.quybai-carpet-lotus.lotus-low-left {
+  left: 294px;
+  top: 1408px;
+  animation: quybaiLotusSwayLeft 4.9s ease-in-out -2.1s infinite alternate;
+}
+
+.quybai-carpet-lotus.lotus-low-right {
+  right: 294px;
+  top: 1408px;
+  animation: quybaiLotusSwayRight 4.9s ease-in-out -2.1s infinite alternate;
+}
+
+@keyframes quybaiLotusSwayLeft {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(-1.6deg) scale(0.98);
+  }
+  100% {
+    transform: translate3d(2px, -3px, 0) rotate(1.8deg) scale(1.03);
+  }
+}
+
+@keyframes quybaiLotusSwayRight {
+  0% {
+    transform: translate3d(0, 0, 0) scaleX(-1) rotate(-1.6deg) scale(0.98);
+  }
+  100% {
+    transform: translate3d(-2px, -3px, 0) scaleX(-1) rotate(1.8deg) scale(1.03);
+  }
 }
 
 #stage-wrapper.mode-quybai .mode-quybai-ui {
@@ -196,6 +339,196 @@ html, body {
   margin-left: 8px;
 }
 
+/* Bảng BÌNH LUẬN LIVE góc trái trên (Đối xứng với TẤM LÒNG THÀNH) */
+.tam-long-thanh-card.quybai-chat-card {
+  left: 22px;
+  right: auto;
+}
+
+.tam-long-thanh-card {
+  transition: border-color 0.35s ease, box-shadow 0.35s ease, transform 0.35s ease;
+}
+
+.tam-long-thanh-card.card-flash {
+  border-color: #fef08a;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.85), 0 0 28px rgba(250, 204, 21, 0.72), inset 0 0 22px rgba(250, 204, 21, 0.35);
+}
+
+.tam-long-row.just-donated-row {
+  background: linear-gradient(90deg, rgba(250, 204, 21, 0.28) 0%, rgba(250, 204, 21, 0.06) 100%);
+  border-radius: 8px;
+  box-shadow: inset 0 0 12px rgba(250, 204, 21, 0.32);
+  animation: goldRowPulse 1.2s ease-out;
+}
+
+.quybai-chat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px;
+  border-top: 1px solid rgba(245, 194, 66, 0.22);
+}
+
+.quybai-chat-row.chat-row-flash {
+  background: linear-gradient(90deg, rgba(250, 204, 21, 0.24) 0%, rgba(250, 204, 21, 0.04) 100%);
+  border-radius: 8px;
+  animation: goldRowPulse 0.9s ease-out;
+}
+
+@keyframes goldRowPulse {
+  0% {
+    background-color: rgba(250, 204, 21, 0.42);
+    transform: translateX(4px);
+  }
+  100% {
+    background-color: transparent;
+    transform: translateX(0);
+  }
+}
+
+.quybai-chat-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.22;
+}
+
+.quybai-chat-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: #fde68a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quybai-chat-text {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Hộp thông báo Donate / Dâng Lễ Vật nổi bật ở Mẫu 1 */
+.quybai-donate-toast {
+  position: absolute;
+  top: 472px;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px) scale(0.94);
+  z-index: 65;
+  min-width: 520px;
+  max-width: 760px;
+  background: linear-gradient(135deg, rgba(108, 18, 12, 0.97) 0%, rgba(58, 8, 5, 0.98) 100%);
+  border: 3px solid #facc15;
+  border-radius: 20px;
+  padding: 12px 22px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.88), 0 0 28px rgba(250, 204, 21, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.quybai-donate-toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+
+.quybai-donate-toast.visible.pulse {
+  transform: translateX(-50%) translateY(0) scale(1.05);
+  border-color: #fef08a;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.9), 0 0 42px rgba(250, 204, 21, 0.85);
+}
+
+.donate-toast-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 2.5px solid #fde047;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  background: rgba(254, 240, 138, 0.18);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.donate-toast-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.donate-toast-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.donate-toast-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.donate-toast-tag {
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: #fde047;
+  text-transform: uppercase;
+}
+
+.donate-toast-xu {
+  background: linear-gradient(135deg, #fef08a, #ca8a04);
+  color: #3b0d06;
+  font-size: 15px;
+  font-weight: 900;
+  padding: 2px 10px;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.donate-toast-main {
+  font-size: 22px;
+  font-weight: 800;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.donate-toast-main strong {
+  color: #fef08a;
+  font-weight: 900;
+}
+
+.donate-toast-gift {
+  color: #fde047;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+}
+
+.donate-gift-icon-inline {
+  width: 26px;
+  height: 26px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
 /* Bảng thông báo Dâng Hương Tam Bảo ngang dưới đài sen Phật (Chỉ hiện khi đang dâng hương / đọc kinh, xong tự ẩn) */
 .tam-bao-dedication-banner {
   position: absolute;
@@ -297,21 +630,33 @@ html, body {
 .pilgrim-foot-pill,
 .pilgrim-foot-tag {
   margin-top: -10px;
-  padding: 3px 12px 3px 6px;
-  background: rgba(18, 12, 9, 0.9);
-  border: 1.5px solid rgba(245, 194, 66, 0.78);
+  padding: 2.5px 10px 2.5px 5px;
+  background: rgba(18, 12, 9, 0.92);
+  border: 1.5px solid rgba(245, 194, 66, 0.82);
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 15px;
+  gap: 4px;
+  font-size: 13.8px;
   font-weight: 800;
+  letter-spacing: 0.1px;
   color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
   white-space: nowrap;
-  max-width: 160px;
+  max-width: 142px;
   overflow: hidden;
   text-overflow: ellipsis;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.85);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.85);
+}
+
+#stage-wrapper.theme-1 .standing-pilgrim-node .pilgrim-foot-pill,
+body.theme-1 .standing-pilgrim-node .pilgrim-foot-pill {
+  margin-top: -11px;
+  padding: 2px 9px 2px 5px;
+  font-size: 13.2px;
+  max-width: 136px;
+  background: rgba(20, 11, 7, 0.93);
+  border-color: rgba(250, 204, 21, 0.84);
 }
 
 .pilgrim-foot-pill.vip-platform,
@@ -378,6 +723,13 @@ html, body {
   animation: popInChat 0.28s ease-out;
 }
 
+.pilgrim-white-bubble.gift-gold-bubble {
+  background: linear-gradient(180deg, #fef9c3 0%, #fde047 100%);
+  color: #450a0a;
+  border: 2px solid #ca8a04;
+  box-shadow: 0 8px 24px rgba(250, 204, 21, 0.55);
+}
+
 @keyframes popInChat {
   from { transform: scale(0.6) translateY(10px); opacity: 0; }
   to { transform: scale(1) translateY(0); opacity: 1; }
@@ -398,6 +750,78 @@ html, body {
 
 .runner-walking-body {
   animation: walkStepBob 0.28s infinite alternate ease-in-out;
+}
+
+/* Hàng Đợi Xếp Hàng Lên Khấn trên Thảm Xanh / Thảm Đỏ / Bậc Thềm Hồ Sen */
+.waiting-pilgrim-node {
+  position: absolute;
+  transform: translate(-50%, -95%) scale(var(--w-scale, 0.84));
+  transform-origin: center bottom;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 44;
+  pointer-events: none;
+  transition: left 0.35s ease, top 0.35s ease, transform 0.35s ease, opacity 0.28s ease;
+}
+
+.waiting-order-tag {
+  margin-bottom: -4px;
+  padding: 2px 10px;
+  background: linear-gradient(90deg, rgba(69, 26, 3, 0.94), rgba(120, 53, 15, 0.95));
+  border: 1.5px solid #fde047;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 900;
+  color: #fef08a;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.85);
+  z-index: 4;
+}
+
+.waiting-order-tag.is-gift {
+  background: linear-gradient(90deg, #991b1b, #d97706, #991b1b);
+  border-color: #fffbeb;
+  color: #ffffff;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.9), 0 0 12px rgba(250, 204, 21, 0.55);
+}
+
+.waiting-bow-img {
+  width: 96px;
+  height: 126px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.75));
+}
+
+.waiting-overflow-banner {
+  position: absolute;
+  left: 540px;
+  top: 1612px;
+  transform: translateX(-50%);
+  padding: 3px 14px;
+  background: rgba(38, 12, 8, 0.92);
+  border: 1.5px solid rgba(250, 204, 21, 0.72);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #fde68a;
+  white-space: nowrap;
+  z-index: 46;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.85);
+}
+
+.courtyard-bow-waiting-pill {
+  margin-top: 2px;
+  padding: 2px 12px;
+  background: linear-gradient(90deg, rgba(45, 18, 8, 0.94), rgba(92, 36, 10, 0.94));
+  border: 1.5px solid #facc15;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #fef08a;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.85);
 }
 
 @keyframes walkStepBob {
@@ -442,7 +866,7 @@ html, body {
   border: 1.5px solid rgba(255, 255, 255, 0.22);
   border-radius: 999px;
   padding: 8px 20px;
-  display: inline-flex;
+  display: none !important;
   align-items: center;
   gap: 10px;
   font-size: 21px;
@@ -723,11 +1147,11 @@ html, body {
 
 .bowing-worship-stage {
   position: absolute;
-  top: 950px;
+  top: 855px;
   left: 50%;
   transform: translateX(-50%);
-  width: 260px;
-  height: 210px;
+  width: 240px;
+  height: 170px;
   z-index: 26;
   pointer-events: none;
   display: flex;
@@ -742,23 +1166,30 @@ html, body {
 
 .bowing-character-rig {
   transform-origin: center bottom;
+  transform: scale(var(--bow-scale, 1));
   animation: bowToBuddha 1.15s ease-in-out infinite;
 }
 
+.bowing-character-rig .devotee-sprite {
+  width: 86px;
+  height: 114px;
+  object-fit: contain;
+}
+
 @keyframes bowToBuddha {
-  0%, 100% { transform: translateY(0) scaleY(1); }
-  45%, 55% { transform: translateY(14px) scaleY(0.76); }
+  0%, 100% { transform: scale(var(--bow-scale, 1)) translateY(0) scaleY(1); }
+  45%, 55% { transform: scale(var(--bow-scale, 1)) translateY(14px) scaleY(0.76); }
 }
 
 .bowing-banner-toast {
   position: absolute;
-  top: -36px;
+  top: -28px;
   background: linear-gradient(90deg, rgba(180, 83, 9, 0.95), rgba(234, 179, 8, 0.98), rgba(180, 83, 9, 0.95));
   color: #1c0a02;
   border: 2px solid #fffbeb;
   border-radius: 999px;
-  padding: 5px 22px;
-  font-size: 20px;
+  padding: 4px 16px;
+  font-size: 15.5px;
   font-weight: 900;
   white-space: nowrap;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.85);
@@ -1043,6 +1474,7 @@ html, body {
    CHẾ ĐỘ ĐẠI PHÁP HỘI ĐÔNG NGƯỜI (500 - 10.000+ PHẬT TỬ CHỐNG LAG 60FPS)
    ========================================================================= */
 #crowd-lod-canvas {
+  display: none !important;
   position: absolute;
   inset: 0;
   width: 1080px;
@@ -1052,6 +1484,7 @@ html, body {
 }
 
 .crowd-lod-summary-pill {
+  display: none !important;
   position: absolute;
   top: 86px;
   left: 28px;
@@ -2010,6 +2443,581 @@ html, body {
   margin-bottom: 1px;
 }
 
+/* ============================================================================
+   5. KHUNG QUOTE ĐỌC KINH / XƯỚNG DANH TU TIÊN (ĐỌC TUẦN TỰ TỪ HÀNG ĐỢI QUEUE)
+   ============================================================================ */
+.tts-quote-widget {
+  position: absolute;
+  bottom: 66px;
+  left: 50%;
+  transform: translateX(-50%) translateY(14px) scale(0.96);
+  width: 860px;
+  max-width: 92%;
+  padding: 12px 24px 14px;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(9, 14, 28, 0.98) 100%);
+  border: 2px solid #facc15;
+  border-radius: 18px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.9), inset 0 0 18px rgba(250, 204, 21, 0.14);
+  z-index: 78;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.28s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.28s ease;
+}
 
+#stage-wrapper.mode-quybai .tts-quote-widget {
+  bottom: 148px;
+  background: linear-gradient(180deg, rgba(72, 16, 12, 0.95) 0%, rgba(38, 7, 5, 0.98) 100%);
+  border-color: #e5b84b;
+}
+
+#stage-wrapper.mode-chuaonline .tts-quote-widget {
+  bottom: 44px;
+}
+
+.tts-quote-widget.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+
+.tts-quote-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.tts-quote-speaker-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 13px;
+  background: linear-gradient(90deg, rgba(180, 83, 9, 0.95), rgba(217, 119, 6, 0.92));
+  border: 1.5px solid #fef08a;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.6px;
+  color: #fffbeb;
+  text-transform: uppercase;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.65);
+}
+
+.tts-sound-bars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2.5px;
+  height: 13px;
+}
+
+.tts-sound-bars i {
+  display: block;
+  width: 3px;
+  height: 100%;
+  background: #fef08a;
+  border-radius: 2px;
+  animation: ttsWavePulse 0.65s ease-in-out infinite alternate;
+}
+
+.tts-sound-bars i:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.tts-sound-bars i:nth-child(3) {
+  animation-delay: 0.34s;
+}
+
+@keyframes ttsWavePulse {
+  0% { transform: scaleY(0.35); }
+  100% { transform: scaleY(1); }
+}
+
+.tts-quote-author {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 800;
+  color: #fde047;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.95);
+}
+
+.tts-quote-queue-pill {
+  display: none;
+  align-items: center;
+  padding: 3px 12px;
+  background: rgba(30, 41, 59, 0.92);
+  border: 1.5px solid #38bdf8;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #7dd3fc;
+  white-space: nowrap;
+}
+
+.tts-quote-queue-pill.visible {
+  display: inline-flex;
+}
+
+#stage-wrapper.mode-quybai .tts-quote-queue-pill,
+#stage-wrapper.mode-chuaonline .tts-quote-queue-pill {
+  background: linear-gradient(90deg, rgba(120, 53, 15, 0.95), rgba(180, 83, 9, 0.95));
+  border-color: #fde047;
+  color: #fef08a;
+}
+
+.tts-quote-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  line-height: 1.35;
+}
+
+.tts-quote-mark {
+  font-family: 'Noto Serif', serif;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+  color: #facc15;
+  flex-shrink: 0;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+}
+
+.tts-quote-content {
+  font-size: 21px;
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tts-quote-waiting-line {
+  display: none;
+  margin-top: 7px;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(250, 204, 21, 0.35);
+  font-size: 14px;
+  font-weight: 800;
+  color: #fde68a;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95);
+}
+
+.tts-quote-waiting-line.visible {
+  display: block;
+}
+
+/* ==========================================================================
+   PHÁP TIỆP LAN TỎA PHÁP ÂM / NGỌC GIẢN TRUYỀN ĐẠO (SHARE EVENT BANNER)
+   ========================================================================== */
+.share-celestial-toast {
+  position: absolute;
+  top: 390px;
+  left: 50%;
+  width: 820px;
+  z-index: 88;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  transform: translateX(-50%) translateY(-18px) scale(0.88);
+  transition:
+    opacity 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.46s cubic-bezier(0.22, 1, 0.36, 1),
+    top 0.35s ease;
+}
+
+.share-celestial-toast.active {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+
+.share-celestial-toast.active.pulse {
+  animation: shareCelestialPulse 0.52s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes shareCelestialPulse {
+  0% {
+    transform: translateX(-50%) translateY(0) scale(1);
+    filter: brightness(1);
+  }
+  45% {
+    transform: translateX(-50%) translateY(-4px) scale(1.045);
+    filter: brightness(1.22) drop-shadow(0 0 24px rgba(254, 240, 138, 0.75));
+  }
+  100% {
+    transform: translateX(-50%) translateY(0) scale(1);
+    filter: brightness(1);
+  }
+}
+
+.share-toast-halo-ring {
+  position: absolute;
+  inset: -18px -28px;
+  border-radius: 36px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(254, 240, 138, 0.36) 0%,
+    rgba(244, 114, 182, 0.24) 48%,
+    rgba(0, 0, 0, 0) 76%
+  );
+  filter: blur(12px);
+  z-index: -1;
+  animation: shareHaloBreathe 2.8s ease-in-out infinite alternate;
+}
+
+@keyframes shareHaloBreathe {
+  0% {
+    opacity: 0.65;
+    transform: scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+.share-toast-ribbon {
+  position: relative;
+  z-index: 2;
+  margin-bottom: -11px;
+  padding: 5px 26px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #991b1b, #d97706, #b45309, #991b1b);
+  background-size: 200% 100%;
+  border: 2px solid #fef08a;
+  font-size: 16.5px;
+  font-weight: 900;
+  letter-spacing: 1.2px;
+  color: #fffbeb;
+  text-transform: uppercase;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.75),
+    0 0 16px rgba(250, 204, 21, 0.55);
+  animation: shareRibbonShimmer 3.6s linear infinite;
+}
+
+@keyframes shareRibbonShimmer {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.share-toast-body {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 22px;
+  border-radius: 22px;
+  background: linear-gradient(
+    135deg,
+    rgba(68, 14, 10, 0.95) 0%,
+    rgba(114, 38, 12, 0.95) 52%,
+    rgba(56, 12, 8, 0.96) 100%
+  );
+  border: 2.5px solid #facc15;
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.88),
+    0 0 28px rgba(250, 204, 21, 0.45),
+    inset 0 0 22px rgba(254, 240, 138, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.share-toast-emblem {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  font-size: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(
+    circle,
+    rgba(254, 240, 138, 0.32) 0%,
+    rgba(180, 83, 9, 0.5) 100%
+  );
+  border: 2px solid #fde047;
+  box-shadow: 0 0 18px rgba(250, 204, 21, 0.6);
+  animation: shareEmblemFloat 2.4s ease-in-out infinite;
+}
+
+@keyframes shareEmblemFloat {
+  0%, 100% {
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-4px) scale(1.06) rotate(4deg);
+  }
+}
+
+.share-toast-info {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.share-toast-user-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#share-toast-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+#share-toast-avatar img {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1.5px solid #fde047;
+  object-fit: cover;
+  box-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
+}
+
+.share-toast-username {
+  color: #fde047;
+  font-weight: 900;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.share-toast-action {
+  color: #fed7aa;
+  font-weight: 700;
+  font-size: 19px;
+  flex-shrink: 0;
+}
+
+.share-toast-sub {
+  margin-top: 3px;
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #fef3c7;
+  opacity: 0.95;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+}
+
+.share-toast-reward-pill {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fef08a 0%, #f59e0b 100%);
+  color: #451a03;
+  font-size: 17px;
+  font-weight: 900;
+  white-space: nowrap;
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.6),
+    0 0 16px rgba(250, 204, 21, 0.65);
+  border: 1.5px solid #ffffff;
+}
+
+/* --- Theme-Specific Overrides for Share Celestial Toast --- */
+
+/* Sân Chùa Đêm Trăng (mode-chuaonline) */
+#stage-wrapper.mode-chuaonline .share-celestial-toast {
+  top: 765px;
+}
+
+#stage-wrapper.mode-chuaonline .share-toast-body {
+  background: linear-gradient(
+    135deg,
+    rgba(23, 37, 84, 0.95) 0%,
+    rgba(88, 28, 135, 0.93) 50%,
+    rgba(30, 27, 75, 0.96) 100%
+  );
+  border-color: #f472b6;
+  box-shadow:
+    0 16px 38px rgba(0, 0, 0, 0.88),
+    0 0 28px rgba(244, 114, 182, 0.5);
+}
+
+#stage-wrapper.mode-chuaonline .share-toast-ribbon {
+  background: linear-gradient(90deg, #4c1d95, #db2777, #9333ea, #4c1d95);
+  background-size: 200% 100%;
+  border-color: #fbcfe8;
+}
+
+#stage-wrapper.mode-chuaonline .share-toast-emblem {
+  background: radial-gradient(
+    circle,
+    rgba(251, 207, 232, 0.35) 0%,
+    rgba(131, 24, 67, 0.55) 100%
+  );
+  border-color: #f472b6;
+  box-shadow: 0 0 18px rgba(244, 114, 182, 0.65);
+}
+
+/* Hồ Sen Phóng Sanh (theme-6) */
+#stage-wrapper.theme-6 .share-celestial-toast {
+  top: 410px;
+}
+
+#stage-wrapper.theme-6 .share-toast-body {
+  background: linear-gradient(
+    135deg,
+    rgba(6, 78, 59, 0.95) 0%,
+    rgba(15, 118, 110, 0.94) 52%,
+    rgba(4, 47, 46, 0.96) 100%
+  );
+  border-color: #34d399;
+  box-shadow:
+    0 16px 38px rgba(0, 0, 0, 0.88),
+    0 0 28px rgba(52, 211, 153, 0.5);
+}
+
+#stage-wrapper.theme-6 .share-toast-ribbon {
+  background: linear-gradient(90deg, #065f46, #10b981, #0d9488, #065f46);
+  background-size: 200% 100%;
+  border-color: #a7f3d0;
+}
+
+#stage-wrapper.theme-6 .share-toast-emblem {
+  background: radial-gradient(
+    circle,
+    rgba(167, 243, 208, 0.34) 0%,
+    rgba(6, 95, 70, 0.55) 100%
+  );
+  border-color: #6ee7b7;
+  box-shadow: 0 0 18px rgba(52, 211, 153, 0.65);
+}
+
+/* Tiên Môn Vấn Đạo (mode-tutien) */
+#stage-wrapper.mode-tutien .share-celestial-toast {
+  top: 525px;
+}
+
+#stage-wrapper.mode-tutien .share-toast-body {
+  background: linear-gradient(
+    135deg,
+    rgba(8, 47, 73, 0.95) 0%,
+    rgba(30, 58, 138, 0.94) 50%,
+    rgba(15, 23, 42, 0.96) 100%
+  );
+  border-color: #38bdf8;
+  box-shadow:
+    0 16px 38px rgba(0, 0, 0, 0.9),
+    0 0 32px rgba(56, 189, 248, 0.55);
+}
+
+#stage-wrapper.mode-tutien .share-toast-ribbon {
+  background: linear-gradient(90deg, #0c4a6e, #0284c7, #2563eb, #0c4a6e);
+  background-size: 200% 100%;
+  border-color: #bae6fd;
+}
+
+#stage-wrapper.mode-tutien .share-toast-emblem {
+  background: radial-gradient(
+    circle,
+    rgba(186, 230, 253, 0.35) 0%,
+    rgba(12, 74, 110, 0.6) 100%
+  );
+  border-color: #7dd3fc;
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.7);
+}
+
+#stage-wrapper.mode-tutien .share-toast-reward-pill {
+  background: linear-gradient(135deg, #bae6fd 0%, #38bdf8 50%, #0284c7 100%);
+  color: #082f49;
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.65),
+    0 0 16px rgba(56, 189, 248, 0.7);
+}
+
+/* --- Character Share Highlight Aura (.just-shared-aura) --- */
+.just-shared-aura {
+  position: relative;
+  z-index: 46 !important;
+  animation: justSharedCharacterBounce 0.8s cubic-bezier(0.22, 1, 0.36, 1) 2;
+}
+
+.just-shared-aura::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: 128px;
+  height: 128px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2.5px solid #fde047;
+  background: radial-gradient(
+    circle,
+    rgba(254, 240, 138, 0.42) 0%,
+    rgba(244, 114, 182, 0.25) 52%,
+    rgba(0, 0, 0, 0) 74%
+  );
+  box-shadow:
+    0 0 24px rgba(250, 204, 21, 0.85),
+    inset 0 0 16px rgba(254, 240, 138, 0.65);
+  pointer-events: none;
+  z-index: -1;
+  animation: justSharedAuraRing 1.35s ease-out infinite;
+}
+
+#stage-wrapper.mode-tutien .just-shared-aura::after {
+  border-color: #38bdf8;
+  background: radial-gradient(
+    circle,
+    rgba(186, 230, 253, 0.45) 0%,
+    rgba(56, 189, 248, 0.26) 52%,
+    rgba(0, 0, 0, 0) 74%
+  );
+  box-shadow:
+    0 0 26px rgba(56, 189, 248, 0.9),
+    inset 0 0 16px rgba(186, 230, 253, 0.7);
+}
+
+@keyframes justSharedAuraRing {
+  0% {
+    opacity: 0.95;
+    transform: translate(-50%, -50%) scale(0.72);
+  }
+  70% {
+    opacity: 0.75;
+    transform: translate(-50%, -50%) scale(1.22);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.38);
+  }
+}
+
+@keyframes justSharedCharacterBounce {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.28) drop-shadow(0 0 16px rgba(250, 204, 21, 0.9));
+  }
+}
 
 

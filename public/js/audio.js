@@ -24,7 +24,22 @@ class SacredAudioEngine {
     this.customTrackName = '';
     this.ttsAudioEl = null;
     this.ttsCancelled = false;
+    this._ttsChunkResolve = null;
     this.woodenFishLoopTimer = null;
+
+    // Hàng đợi đọc TTS tuần tự từng User 1 (Speech Queue) & hiển thị Quote
+    this.speechQueue = [];
+    this.isSpeakingQueue = false;
+    this._speechQueueGen = 0;
+    this.currentSpeechItem = null;
+    this.externalQuoteState = null;
+    this.maxSpeechQueueSize = 50;
+    this._ttsDelayTimer = null;
+    this._ttsDelayResolve = null;
+
+    // Bộ đệm tiếng ồn sấm sét dựng sẵn & bộ giới hạn tần suất âm thanh (Cooldown)
+    this._thunderNoiseBuffer = null;
+    this._lastSoundAt = {};
   }
 
   init() {
@@ -35,6 +50,40 @@ class SacredAudioEngine {
     if (this.ctx.state === 'suspended') {
       this.ctx.resume();
     }
+    if (!this._thunderNoiseBuffer && this.ctx) {
+      this._getThunderNoiseBuffer();
+    }
+  }
+
+  /**
+   * Kiểm tra cooldown để tránh chồng chéo quá nhiều hiệu ứng âm thanh cùng lúc gây rè/lag
+   */
+  _canPlaySfx(key, cooldownMs = 0) {
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    const last = this._lastSoundAt[key] || 0;
+    if (now - last < cooldownMs) {
+      return false;
+    }
+    this._lastSoundAt[key] = now;
+    return true;
+  }
+
+  /**
+   * Khởi tạo 1 lần và tái sử dụng AudioBuffer cho tiếng sấm sét (tránh tính toán 64.000 mẫu mỗi lần gọi)
+   */
+  _getThunderNoiseBuffer() {
+    if (this._thunderNoiseBuffer) return this._thunderNoiseBuffer;
+    if (!this.ctx) return null;
+    const durationSec = 0.95;
+    const bufferSize = Math.floor(this.ctx.sampleRate * durationSec);
+    const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      const env = Math.pow(1 - i / bufferSize, 1.75);
+      data[i] = (Math.random() * 2 - 1) * env;
+    }
+    this._thunderNoiseBuffer = noiseBuffer;
+    return this._thunderNoiseBuffer;
   }
 
   applySettings(settings = {}) {
@@ -105,6 +154,7 @@ class SacredAudioEngine {
    */
   playGrandBell(strikes = 1) {
     if (this.muted) return;
+    if (!this._canPlaySfx('grandBell', 1200)) return;
     this.init();
 
     const triggerSingle = (delaySec = 0) => {
@@ -150,6 +200,7 @@ class SacredAudioEngine {
    */
   playLotusChime() {
     if (this.muted) return;
+    if (!this._canPlaySfx('lotusChime', 700)) return;
     this.init();
 
     const now = this.ctx.currentTime;
@@ -183,6 +234,7 @@ class SacredAudioEngine {
    */
   playWoodenFish(beats = 1) {
     if (this.muted) return;
+    if (!this._canPlaySfx('woodenFish', beats === 1 ? 200 : 90)) return;
     this.init();
 
     const triggerKnock = (delaySec = 0) => {
@@ -221,6 +273,7 @@ class SacredAudioEngine {
    */
   playWaterSplash() {
     if (this.muted) return;
+    if (!this._canPlaySfx('waterSplash', 300)) return;
     this.init();
 
     const now = this.ctx.currentTime;
@@ -258,56 +311,53 @@ class SacredAudioEngine {
 
   /**
    * Tiếng Sấm Chớp Thiên Lôi Độ Kiếp (Tia sét giáng + Tiếng sấm rền vang)
+   * Đã tối ưu hóa tái sử dụng _getThunderNoiseBuffer() + cooldown chống giật lag
    */
   playThunderStrike() {
     if (this.muted) return;
+    if (!this._canPlaySfx('thunder', 220)) return;
     this.init();
 
     const now = this.ctx.currentTime;
+    const noiseBuffer = this._getThunderNoiseBuffer();
 
-    // 1. Tiếng nổ tia sét xé gió (White noise bandpass + high-freq crack)
-    const bufferSize = Math.floor(this.ctx.sampleRate * 1.45);
-    const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-    const data = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      const env = Math.pow(1 - i / bufferSize, 1.6);
-      data[i] = (Math.random() * 2 - 1) * env;
+    // 1. Tiếng nổ tia sét xé gió (Cached noise + lowpass mượt mà)
+    if (noiseBuffer) {
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = noiseBuffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1150, now);
+      filter.frequency.exponentialRampToValueAtTime(95, now + 0.88);
+
+      const noiseGain = this.ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.001, now);
+      noiseGain.gain.linearRampToValueAtTime(0.24 * this.volume, now + 0.018);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.92);
+
+      noise.connect(filter);
+      filter.connect(noiseGain);
+      noiseGain.connect(this.ctx.destination);
+      noise.start(now);
+      noise.stop(now + 0.95);
     }
 
-    const noise = this.ctx.createBufferSource();
-    noise.buffer = noiseBuffer;
-
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(1650, now);
-    filter.frequency.exponentialRampToValueAtTime(110, now + 1.35);
-
-    const noiseGain = this.ctx.createGain();
-    noiseGain.gain.setValueAtTime(0.001, now);
-    noiseGain.gain.linearRampToValueAtTime(0.58 * this.volume, now + 0.015);
-    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 1.4);
-
-    noise.connect(filter);
-    filter.connect(noiseGain);
-    noiseGain.connect(this.ctx.destination);
-    noise.start(now);
-    noise.stop(now + 1.45);
-
-    // 2. Tiếng sấm trầm rền dưới đáy (Sub-bass rumble)
+    // 2. Tiếng sấm trầm rền dưới đáy (Sub-bass rumble ấm áp, không bị rè)
     const subOsc = this.ctx.createOscillator();
     const subGain = this.ctx.createGain();
-    subOsc.type = 'sawtooth';
-    subOsc.frequency.setValueAtTime(92, now);
-    subOsc.frequency.exponentialRampToValueAtTime(34, now + 1.15);
+    subOsc.type = 'triangle';
+    subOsc.frequency.setValueAtTime(86, now);
+    subOsc.frequency.exponentialRampToValueAtTime(34, now + 0.88);
 
     subGain.gain.setValueAtTime(0.001, now);
-    subGain.gain.linearRampToValueAtTime(0.36 * this.volume, now + 0.03);
-    subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.25);
+    subGain.gain.linearRampToValueAtTime(0.18 * this.volume, now + 0.03);
+    subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.92);
 
     subOsc.connect(subGain);
     subGain.connect(this.ctx.destination);
     subOsc.start(now);
-    subOsc.stop(now + 1.3);
+    subOsc.stop(now + 0.95);
   }
 
   /**
@@ -315,6 +365,7 @@ class SacredAudioEngine {
    */
   playSwordWhoosh() {
     if (this.muted) return;
+    if (!this._canPlaySfx('sword', 180)) return;
     this.init();
 
     const now = this.ctx.currentTime;
@@ -328,13 +379,13 @@ class SacredAudioEngine {
       osc.frequency.exponentialRampToValueAtTime(f * 1.12, t0 + 0.18);
 
       gain.gain.setValueAtTime(0.001, t0);
-      gain.gain.linearRampToValueAtTime(0.2 * this.volume, t0 + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.55);
+      gain.gain.linearRampToValueAtTime(0.11 * this.volume, t0 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.52);
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
       osc.start(t0);
-      osc.stop(t0 + 0.6);
+      osc.stop(t0 + 0.56);
     });
   }
 
@@ -343,6 +394,7 @@ class SacredAudioEngine {
    */
   playTuTienJoinSound() {
     if (this.muted) return;
+    if (!this._canPlaySfx('tutienJoin', 180)) return;
     this.init();
 
     const now = this.ctx.currentTime;
@@ -358,18 +410,18 @@ class SacredAudioEngine {
       osc.frequency.setValueAtTime(freq, t0);
 
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(2800, t0);
-      filter.frequency.exponentialRampToValueAtTime(650, t0 + 0.75);
+      filter.frequency.setValueAtTime(2600, t0);
+      filter.frequency.exponentialRampToValueAtTime(650, t0 + 0.72);
 
       gain.gain.setValueAtTime(0.0001, t0);
-      gain.gain.linearRampToValueAtTime(0.24 * this.volume, t0 + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.85);
+      gain.gain.linearRampToValueAtTime(0.14 * this.volume, t0 + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.8);
 
       osc.connect(filter);
       filter.connect(gain);
       gain.connect(this.ctx.destination);
       osc.start(t0);
-      osc.stop(t0 + 0.9);
+      osc.stop(t0 + 0.85);
     });
   }
 
@@ -379,6 +431,7 @@ class SacredAudioEngine {
    */
   playBreakthroughSound() {
     if (this.muted) return;
+    if (!this._canPlaySfx('breakthrough', 220)) return;
     this.init();
 
     const now = this.ctx.currentTime;
@@ -387,47 +440,47 @@ class SacredAudioEngine {
     const boomOsc = this.ctx.createOscillator();
     const boomGain = this.ctx.createGain();
     boomOsc.type = 'sine';
-    boomOsc.frequency.setValueAtTime(115, now);
-    boomOsc.frequency.exponentialRampToValueAtTime(38, now + 0.95);
+    boomOsc.frequency.setValueAtTime(110, now);
+    boomOsc.frequency.exponentialRampToValueAtTime(38, now + 0.85);
     boomGain.gain.setValueAtTime(0.001, now);
-    boomGain.gain.linearRampToValueAtTime(0.48 * this.volume, now + 0.03);
-    boomGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.1);
+    boomGain.gain.linearRampToValueAtTime(0.24 * this.volume, now + 0.03);
+    boomGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.95);
     boomOsc.connect(boomGain);
     boomGain.connect(this.ctx.destination);
     boomOsc.start(now);
-    boomOsc.stop(now + 1.15);
+    boomOsc.stop(now + 1.0);
 
-    // 2. Cổ Cầm Vuốt Dây Thăng Thiên (Ascending Pentatonic Guzheng Glissando)
-    const scale = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5, 1174.66, 1318.5, 1567.98];
+    // 2. Cổ Cầm Vuốt Dây Thăng Thiên (5 nốt Ngũ Cung thanh thoát, chống quá tải AudioContext)
+    const scale = [523.25, 659.25, 783.99, 1046.5, 1318.5];
     scale.forEach((f, idx) => {
-      const t0 = now + idx * 0.048;
+      const t0 = now + idx * 0.06;
       const osc = this.ctx.createOscillator();
       const g = this.ctx.createGain();
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(f, t0);
       g.gain.setValueAtTime(0.0001, t0);
-      g.gain.linearRampToValueAtTime(0.22 * this.volume, t0 + 0.012);
-      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.15);
+      g.gain.linearRampToValueAtTime(0.14 * this.volume, t0 + 0.014);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.0);
       osc.connect(g);
       g.connect(this.ctx.destination);
       osc.start(t0);
-      osc.stop(t0 + 1.2);
+      osc.stop(t0 + 1.05);
     });
 
     // 3. Tiếng Tiên Kiếm Ngân Vang Ở Đỉnh Cảnh Giới
-    const swordTime = now + 0.38;
+    const swordTime = now + 0.32;
     [1567.98, 2093.0, 2637.02].forEach((sf, i) => {
       const sOsc = this.ctx.createOscillator();
       const sGain = this.ctx.createGain();
       sOsc.type = 'sine';
       sOsc.frequency.setValueAtTime(sf, swordTime);
       sGain.gain.setValueAtTime(0.0001, swordTime);
-      sGain.gain.linearRampToValueAtTime((0.22 / (i + 1)) * this.volume, swordTime + 0.015);
-      sGain.gain.exponentialRampToValueAtTime(0.0001, swordTime + 1.65);
+      sGain.gain.linearRampToValueAtTime((0.12 / (i + 1)) * this.volume, swordTime + 0.015);
+      sGain.gain.exponentialRampToValueAtTime(0.0001, swordTime + 1.35);
       sOsc.connect(sGain);
       sGain.connect(this.ctx.destination);
       sOsc.start(swordTime);
-      sOsc.stop(swordTime + 1.7);
+      sOsc.stop(swordTime + 1.4);
     });
   }
 
@@ -457,77 +510,328 @@ class SacredAudioEngine {
   }
 
   /**
-   * Đọc Tiếng Việt chuẩn 100% qua Server Proxy (/api/tts?text=...)
-   * Không bao giờ bị giọng tiếng Anh đọc sai chữ Việt!
+   * Đồng bộ lời khấn từ Hàng Đợi Lên Khấn (runnerQueue / bowQueue) lên Khung Quote (#tts-quote-widget)
+   * kể cả khi TTS đang tắt hoặc không đọc bình luận thường
    */
-  async speakChant(text, { withWoodenFish = true, onStart, onEnd } = {}) {
+  setExternalPrayerQuote({
+    active = false,
+    text = '',
+    author = '',
+    tag = '🙏 ĐANG LÊN KHẤN',
+    queueLength = 0,
+    queuePreview = []
+  } = {}) {
+    this.externalQuoteState = active
+      ? {
+          active: true,
+          text: String(text || '').trim(),
+          author: String(author || '').trim(),
+          tag: String(tag || '🙏 ĐANG LÊN KHẤN').trim(),
+          queueLength: Math.max(0, Number(queueLength) || 0),
+          queuePreview: Array.isArray(queuePreview) ? queuePreview : []
+        }
+      : null;
+    this._emitQuoteState();
+  }
+
+  showPrayerQuoteBanner(options = {}) {
+    return this.setExternalPrayerQuote({ active: true, ...options });
+  }
+
+  /**
+   * Phát sự kiện cập nhật trạng thái Quote đang đọc và hàng đợi chờ đọc cho giao diện Overlay
+   */
+  _emitQuoteState() {
+    if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') return;
+    const serializeItem = (it) =>
+      it
+        ? {
+            text: it.text,
+            author: it.author || '',
+            tag: it.tag || '',
+            priority: Boolean(it.priority)
+          }
+        : null;
+
+    const ext = this.externalQuoteState;
+    const hasSpeech = Boolean(this.currentSpeechItem);
+    const hasExt = Boolean(ext);
+
+    let detail;
+    if (hasSpeech) {
+      detail = {
+        active: true,
+        current: serializeItem(this.currentSpeechItem),
+        queueLength: Math.max(this.speechQueue.length, ext?.queueLength || 0),
+        queuePreview: ext?.queuePreview || [],
+        queue: this.speechQueue.slice(0, 5).map(serializeItem)
+      };
+    } else if (hasExt) {
+      detail = {
+        active: true,
+        current: {
+          text: ext.text,
+          author: ext.author,
+          tag: ext.tag,
+          priority: true
+        },
+        queueLength: ext.queueLength || 0,
+        queuePreview: ext.queuePreview || [],
+        queue: this.speechQueue.slice(0, 5).map(serializeItem)
+      };
+    } else {
+      detail = {
+        active: false,
+        current: null,
+        queueLength: this.speechQueue.length,
+        queuePreview: [],
+        queue: this.speechQueue.slice(0, 5).map(serializeItem)
+      };
+    }
+
+    window.dispatchEvent(
+      new CustomEvent('sacred-quote-update', {
+        detail
+      })
+    );
+  }
+
+  /**
+   * Đưa câu đọc của từng User vào Hàng Đợi (`this.speechQueue`) và đọc tuần tự từng người một qua Server Proxy (/api/tts?text=...)
+   * Mặc định (`interrupt = false`): Tuyệt đối không cắt ngang hay bỏ sót người đang đọc dở.
+   */
+  speakChant(
+    text,
+    {
+      withWoodenFish = true,
+      onStart,
+      onEnd,
+      priority = false,
+      interrupt = false,
+      author = '',
+      tag = ''
+    } = {}
+  ) {
+    const chunks = this.splitSentences(text);
+    const cleanText = chunks.join(' ').trim();
+    if (!cleanText || chunks.length === 0) {
+      if (onEnd) onEnd();
+      return;
+    }
+
     if (this.muted) {
       if (onEnd) onEnd();
       return;
     }
-    this.init();
-    this.stopSpeech();
-    this.ttsCancelled = false;
 
-    const chunks = this.splitSentences(text);
-    if (chunks.length === 0) {
-      if (onEnd) onEnd();
+    this.init();
+
+    const normAuthor = String(author || '').trim();
+
+    if (interrupt) {
+      this.stopSpeech(true);
+    } else {
+      // Giới hạn kích thước hàng đợi tối đa (50 người) để bảo vệ bộ nhớ khi phòng quá đông
+      if (this.speechQueue.length >= this.maxSpeechQueueSize) {
+        if (priority) {
+          const normalIdx = this.speechQueue.findIndex((q) => !q.priority);
+          if (normalIdx !== -1) {
+            const removed = this.speechQueue.splice(normalIdx, 1)[0];
+            if (removed?.onEnd) {
+              try {
+                removed.onEnd();
+              } catch (_e) {}
+            }
+          } else {
+            const removed = this.speechQueue.shift();
+            if (removed?.onEnd) {
+              try {
+                removed.onEnd();
+              } catch (_e) {}
+            }
+          }
+        } else {
+          const removed = this.speechQueue.shift();
+          if (removed?.onEnd) {
+            try {
+              removed.onEnd();
+            } catch (_e) {}
+          }
+        }
+      }
+    }
+
+    const item = {
+      text: cleanText,
+      chunks,
+      withWoodenFish,
+      onStart,
+      onEnd,
+      priority: Boolean(priority),
+      author: normAuthor,
+      tag: String(tag || '').trim()
+    };
+
+    if (priority) {
+      // Đưa lên trước các phần tử thường trong hàng đợi nhưng vẫn xếp sau các phần tử ưu tiên trước đó
+      const firstNormalIdx = this.speechQueue.findIndex((q) => !q.priority);
+      if (firstNormalIdx === -1) {
+        this.speechQueue.push(item);
+      } else {
+        this.speechQueue.splice(firstNormalIdx, 0, item);
+      }
+    } else {
+      this.speechQueue.push(item);
+    }
+
+    this._emitQuoteState();
+    this._processSpeechQueue();
+  }
+
+  enqueueSpeech(text, options = {}) {
+    return this.speakChant(text, options);
+  }
+
+  async _processSpeechQueue() {
+    if (this.isSpeakingQueue || this.speechQueue.length === 0 || this.muted) {
       return;
     }
 
-    const isTuTien = Number(this.themeId) === 7;
-    if (isTuTien) {
-      this.playTuTienJoinSound();
-    } else {
-      this.playLotusChime();
-    }
-    if (onStart) onStart();
-
-    if (withWoodenFish && !isTuTien) {
-      const intervalMs = Math.max(680, Math.round((60 / Math.max(25, this.woodenFishBpm)) * 1000));
-      this.woodenFishLoopTimer = setInterval(() => {
-        if (!this.ttsCancelled && !this.muted) {
-          this.playWoodenFish(1);
-        }
-      }, intervalMs);
-    }
-
-    const rate = Math.max(0.72, Math.min(1.25, 1.0 + this.speedPct / 120));
+    this.isSpeakingQueue = true;
+    const runGen = ++this._speechQueueGen;
 
     try {
-      for (let i = 0; i < chunks.length; i++) {
-        if (this.ttsCancelled || this.muted) break;
-        await new Promise((resolve) => {
-          const audio = new Audio(`/api/tts?text=${encodeURIComponent(chunks[i])}`);
-          this.ttsAudioEl = audio;
-          audio.volume = Math.min(1, this.volume);
-          audio.playbackRate = rate;
-          audio.preservesPitch = false; // Cho phép giọng trầm ấm hơn khi giảm tốc độ
-          audio.onended = resolve;
-          audio.onerror = resolve;
-          audio.play().catch(resolve);
-        });
+      while (this.speechQueue.length > 0 && !this.muted && this._speechQueueGen === runGen) {
+        const item = this.speechQueue.shift();
+        if (!item) continue;
+
+        this.currentSpeechItem = item;
+        this.ttsCancelled = false;
+        this._emitQuoteState();
+
+        const isTuTien = Number(this.themeId) === 7;
+        // Chỉ gảy âm báo mở đầu nhẹ nhàng nếu cách lần báo trước >= 2.2s để tránh dồn dập khi đọc liên tiếp
+        if (this._canPlaySfx('ttsIntroChime', 2200)) {
+          if (isTuTien) {
+            this.playTuTienJoinSound();
+          } else {
+            this.playLotusChime();
+          }
+        }
+
+        if (item.onStart) {
+          try {
+            item.onStart();
+          } catch (_e) {}
+        }
+
+        if (item.withWoodenFish && !isTuTien) {
+          const intervalMs = Math.max(680, Math.round((60 / Math.max(25, this.woodenFishBpm)) * 1000));
+          if (this.woodenFishLoopTimer) {
+            clearInterval(this.woodenFishLoopTimer);
+          }
+          this.woodenFishLoopTimer = setInterval(() => {
+            if (!this.ttsCancelled && !this.muted && this._speechQueueGen === runGen) {
+              this.playWoodenFish(1);
+            }
+          }, intervalMs);
+        }
+
+        const rate = Math.max(0.72, Math.min(1.25, 1.0 + this.speedPct / 120));
+
+        try {
+          for (let i = 0; i < item.chunks.length; i++) {
+            if (this.ttsCancelled || this.muted || this._speechQueueGen !== runGen) break;
+            await new Promise((resolve) => {
+              let settled = false;
+              const finish = () => {
+                if (settled) return;
+                settled = true;
+                if (this._ttsChunkResolve === finish) {
+                  this._ttsChunkResolve = null;
+                }
+                resolve();
+              };
+              this._ttsChunkResolve = finish;
+
+              const audio = new Audio(`/api/tts?text=${encodeURIComponent(item.chunks[i])}`);
+              this.ttsAudioEl = audio;
+              audio.volume = Math.min(1, this.volume);
+              audio.playbackRate = rate;
+              audio.preservesPitch = false; // Cho phép giọng trầm ấm hơn khi giảm tốc độ
+              audio.onended = finish;
+              audio.onerror = finish;
+              audio.play().catch(finish);
+            });
+          }
+        } finally {
+          if (this.woodenFishLoopTimer) {
+            clearInterval(this.woodenFishLoopTimer);
+            this.woodenFishLoopTimer = null;
+          }
+          if (
+            !this.ttsCancelled &&
+            !this.muted &&
+            this._speechQueueGen === runGen &&
+            this.speechQueue.length === 0 &&
+            !isTuTien
+          ) {
+            this.playLotusChime();
+          }
+          if (item.onEnd) {
+            try {
+              item.onEnd();
+            } catch (_e) {}
+          }
+        }
+
+        // Nghỉ nhịp ngắn ~260ms giữa 2 user trong hàng đợi để phân tách câu đọc rõ ràng, trang nghiêm
+        if (this.speechQueue.length > 0 && !this.muted && !this.ttsCancelled && this._speechQueueGen === runGen) {
+          this.currentSpeechItem = item;
+          this._emitQuoteState();
+          await new Promise((resolve) => {
+            this._ttsDelayResolve = resolve;
+            this._ttsDelayTimer = setTimeout(() => {
+              this._ttsDelayTimer = null;
+              this._ttsDelayResolve = null;
+              resolve();
+            }, 260);
+          });
+        }
       }
     } finally {
-      if (this.woodenFishLoopTimer) {
-        clearInterval(this.woodenFishLoopTimer);
-        this.woodenFishLoopTimer = null;
+      if (this._speechQueueGen === runGen) {
+        this.currentSpeechItem = null;
+        this.isSpeakingQueue = false;
+        this._emitQuoteState();
       }
-      if (!this.ttsCancelled && !this.muted) {
-        this.playLotusChime();
-      }
-      if (onEnd) onEnd();
     }
   }
 
-  stopSpeech() {
+  _cancelCurrentChunkAudio() {
     this.ttsCancelled = true;
+    if (this._ttsDelayTimer) {
+      clearTimeout(this._ttsDelayTimer);
+      this._ttsDelayTimer = null;
+    }
+    if (this._ttsDelayResolve) {
+      const resolveDelay = this._ttsDelayResolve;
+      this._ttsDelayResolve = null;
+      resolveDelay();
+    }
     if (this.ttsAudioEl) {
       try {
+        this.ttsAudioEl.onended = null;
+        this.ttsAudioEl.onerror = null;
         this.ttsAudioEl.pause();
         this.ttsAudioEl.src = '';
       } catch (_e) {}
       this.ttsAudioEl = null;
+    }
+    if (this._ttsChunkResolve) {
+      const resolve = this._ttsChunkResolve;
+      this._ttsChunkResolve = null;
+      resolve();
     }
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
@@ -536,6 +840,32 @@ class SacredAudioEngine {
       clearInterval(this.woodenFishLoopTimer);
       this.woodenFishLoopTimer = null;
     }
+  }
+
+  clearSpeechQueue() {
+    this._speechQueueGen++;
+    const pendingItems = this.speechQueue.splice(0, this.speechQueue.length);
+    this.speechQueue = [];
+    this.isSpeakingQueue = false;
+    this.currentSpeechItem = null;
+    this._cancelCurrentChunkAudio();
+    pendingItems.forEach((removed) => {
+      if (removed?.onEnd) {
+        try {
+          removed.onEnd();
+        } catch (_e) {}
+      }
+    });
+    this._emitQuoteState();
+  }
+
+  stopSpeech(clearQueue = true) {
+    if (clearQueue) {
+      this.clearSpeechQueue();
+      return;
+    }
+    this._cancelCurrentChunkAudio();
+    this._emitQuoteState();
   }
 
   /**

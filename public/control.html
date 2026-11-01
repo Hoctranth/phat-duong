@@ -302,7 +302,7 @@
           </div>
           <div style="font-size: 12px; color: #d1fae5; margin-bottom: 7px; line-height: 1.4;">
             • Phật tử mang <strong>Avatar + Tên Phật tử</strong> bước ra Bến Đá cúi thả cá xuống hồ (<strong>cá không gắn tên</strong>, thả xong <strong>bơi mãi dưới hồ</strong>).<br />
-            • Khán giả tặng quà hoặc comment <em>"thả cá", "phóng sanh", "cá koi", "rùa vàng"</em> sẽ tự động bước ra thả!
+            • <strong>Chỉ khi khán giả Tặng Quà (Donate)</strong> mới bước ra Bến Đá thả Cá Chép / Cá Koi / Rùa Vàng xuống hồ (Bình luận chỉ hiện lời khấn, không thả cá)!
           </div>
           <div class="preset-grid-4" style="grid-template-columns: repeat(2, 1fr); gap: 6px;">
             <button class="btn btn-green" data-release-fish="carp_red" data-fish-count="1" style="padding: 8px 8px; font-size: 12.5px;">
@@ -509,23 +509,27 @@
           🙇 Tặng Quà -> Đứng Dậy Lạy Phật & Xướng Tên Hồi Hướng
         </button>
 
+        <button class="btn btn-amber" id="btn-simulate-share" style="width: 100%; margin-top: 6px; padding: 10px;">
+          🌸 Test Chia Sẻ LIVE -> Lan Tỏa Pháp Âm / Truyền Đạo (+3 Công Đức · +80 Tu Vi)
+        </button>
+
         <button class="btn btn-green btn-toggle-gift-tts" style="width: 100%; margin-top: 6px; padding: 8px 12px; font-size: 12.5px;">
           🔊 Đọc Thành Tiếng Khi Có Quà (TTS): ĐANG BẬT
         </button>
 
         <div class="music-player-box" style="margin-top: 12px; border-color: #22c55e; background: rgba(16, 42, 24, 0.38);">
           <div style="display: flex; justify-content: space-between; align-items: center;">
-            <strong style="font-size: 12.8px; color: #4ade80;">🔄 Sức Chứa Sân Chùa: TỰ ĐỘNG MỞ RỘNG & ẢO HÓA CHỐNG LAG 60FPS</strong>
+            <strong style="font-size: 12.8px; color: #4ade80;">🔄 Sức Chứa Sân Chùa: TỰ ĐỘNG MỞ RỘNG HÀNG LỐI &amp; THU PHÓNG</strong>
           </div>
           <div style="font-size: 12px; color: #e2d1b5; margin-top: 4px; line-height: 1.45;">
-            • Khi kết nối LIVE: Tự động hiển thị đúng <strong>số người đang xem trên phòng LIVE</strong> (1 → 500 → 5.000+ người).<br />
-            • Khi phòng đông (&gt;60 người): Tự động bật <strong>Canvas Ảo Hóa Biển Người Hậu Cảnh</strong> + 42 đại diện tiền cảnh để <strong>5.000 người vẫn mượt 60FPS tuyệt đối không lag</strong>!<br />
+            • Khi kết nối LIVE: Tự động hiển thị đúng <strong>số người đang xem trên phòng LIVE</strong>.<br />
+            • Khi đông người: Tự động mở rộng hàng lối &amp; thu phóng kích thước theo số người xem từ <strong>48 → 150 → 300 người</strong> ngay ngắn, rõ nét!<br />
             • Đang hiển thị trên sân: <strong id="current-crowd-count-label" style="color: #fde047;">48</strong> Phật tử.
           </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr 1.6fr; gap: 6px; margin-top: 8px;">
+          <div style="display: grid; grid-template-columns: 1fr 1.3fr 1.4fr; gap: 6px; margin-top: 8px;">
             <button class="btn btn-brown" data-fill="48" style="padding: 7px 6px; font-size: 12px;">🧘 48 Người</button>
-            <button class="btn btn-blue" data-fill="500" style="padding: 7px 6px; font-size: 12px;">🪷 500 Người</button>
-            <button class="btn btn-amber" data-fill="5000" style="padding: 7px 8px; font-size: 12.5px;">🔥 Demo 5.000 Người (60FPS)</button>
+            <button class="btn btn-blue" data-fill="150" style="padding: 7px 6px; font-size: 12px;">🪷 150 Người (Mở Rộng Vừa)</button>
+            <button class="btn btn-amber" data-fill="300" style="padding: 7px 8px; font-size: 12px;">🔥 300 Người (Đại Pháp Hội)</button>
           </div>
           <button class="btn btn-brown" id="btn-clear-cushions" style="width: 100%; margin-top: 6px; padding: 7px 10px; font-size: 12.5px;">
             🧹 Làm Trống Toàn Bộ Sân Chùa (Đợi Người Xem LIVE Vào)
@@ -554,7 +558,7 @@
         <div class="group-title">4. XEM TRƯỚC MẪU THIẾT KẾ (9:16)</div>
         <div class="preview-header-sub" id="preview-theme-label">Mẫu 1: Sân Chùa Đêm Trăng (Chùa Online)</div>
         <div class="preview-916-container">
-          <iframe src="/overlay.html" id="preview-iframe" title="Overlay 9:16 Preview"></iframe>
+          <iframe src="/overlay.html?v=live29" id="preview-iframe" title="Overlay 9:16 Preview"></iframe>
         </div>
         <div class="quick-guide-text">
           <strong>☸ ĐIỂM MỚI ĐÃ CẬP NHẬT:</strong><br />
@@ -566,7 +570,7 @@
     </div>
   </main>
 
-  <script src="/js/audio.js"></script>
+  <script src="/js/audio.js?v=live29"></script>
   <script>
     const logBox = document.getElementById('event-log-box');
     const previewThemeLabel = document.getElementById('preview-theme-label');
@@ -881,7 +885,7 @@
     document.getElementById('btn-test-voice').addEventListener('click', () => {
       syncAudioConfig();
       const text = document.getElementById('chant-textarea').value;
-      window.sacredAudio.speakChant(text, { withWoodenFish: true });
+      window.sacredAudio.speakChant(text, { withWoodenFish: true, interrupt: true });
     });
 
     // Bật / Tắt đọc thành tiếng (TTS) khi có người tặng quà
@@ -1030,6 +1034,14 @@
       });
     });
 
+    document.getElementById('btn-simulate-share')?.addEventListener('click', () => {
+      const nickname = document.getElementById('input-viewer-name').value.trim() || 'Trần Quân';
+      postApi('/api/simulate', {
+        eventType: 'share',
+        data: { nickname }
+      });
+    });
+
     document.querySelectorAll('[data-fill]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const count = Number(btn.getAttribute('data-fill'));
@@ -1052,6 +1064,13 @@
       'Chà 🌸', 'Trần Quân', 'Chris', 'Vânxingg❤️', 'Ông Chú U30',
       'Mèng méng', 'Bin', 'Công chúa', 'Cậu Út', 'Ngọc Trinh', 'Thỏ Yogi 🐇'
     ];
+    const RANDOM_WISHES = [
+      'Nam Mô A Di Đà Phật 🙏',
+      'Con cầu bình an cho cả gia đình 🪷',
+      'Tâm an vạn sự an ✨',
+      'Nguyện cầu sức khỏe, vạn sự cát tường 🙏',
+      'A Di Đà Phật, chúc đại chúng an lạc 🌸'
+    ];
 
     btnAutoSim.addEventListener('click', () => {
       if (autoSimInterval) {
@@ -1064,10 +1083,15 @@
       autoSimInterval = setInterval(() => {
         const nickname = RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)];
         const r = Math.random();
-        if (r < 0.4) {
+        if (r < 0.20) {
           postApi('/api/simulate', { eventType: 'member', data: { nickname } });
-        } else if (r < 0.72) {
+        } else if (r < 0.48) {
+          const content = RANDOM_WISHES[Math.floor(Math.random() * RANDOM_WISHES.length)];
+          postApi('/api/simulate', { eventType: 'chat', data: { nickname, content } });
+        } else if (r < 0.65) {
           postApi('/api/simulate', { eventType: 'like', data: { nickname, count: 25 } });
+        } else if (r < 0.80) {
+          postApi('/api/simulate', { eventType: 'share', data: { nickname } });
         } else {
           const coins = [5, 30, 120][Math.floor(Math.random() * 3)];
           postApi('/api/simulate', {

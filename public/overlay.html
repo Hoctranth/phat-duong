@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Chùa Online & Đại Điện Quỳ Bái (9:16 TikTok LIVE Overlay)</title>
-  <link rel="stylesheet" href="/css/overlay.css?v=live26" />
+  <link rel="stylesheet" href="/css/overlay.css?v=live28" />
 </head>
 <body>
   <div id="stage-wrapper" class="mode-quybai theme-1">
@@ -19,23 +19,134 @@
       <div class="buddha-center-glow"></div>
     </div>
 
-    <!-- BADGE LIVE & TỔNG SỐ PHẬT TỬ (KHÔNG GIỚI HẠN) -->
-    <div class="live-counter-pill">
-      <span class="live-red-dot"></span>
-      <span>LIVE</span>
-      <span>👥 <strong id="seat-counter">48</strong></span>
-    </div>
-    <div class="crowd-lod-summary-pill" id="crowd-lod-summary-pill" style="display: none;">
-      🪷 Đại Pháp Hội 5.000 Phật Tử • Chế Độ Chống Lag 60FPS
-    </div>
-
     <!-- CANVAS ẢO HÓA BIỂN NGƯỜI HẬU CẢNH (CHỐNG LAG 60FPS KHI ĐÔNG 500 - 10.000+ NGƯỜI) -->
     <canvas id="crowd-lod-canvas" width="1080" height="1920"></canvas>
+
+    <!-- PHÁP TIỆP LAN TỎA PHÁP ÂM / NGỌC GIẢN TRUYỀN ĐẠO KHI NGƯỜI XEM SHARE LIVE -->
+    <div class="share-celestial-toast" id="share-celestial-toast" aria-hidden="true">
+      <div class="share-toast-halo-ring"></div>
+      <div class="share-toast-ribbon" id="share-toast-ribbon">✨ LAN TỎA PHÁP ÂM · GIEO DUYÊN LÀNH ✨</div>
+      <div class="share-toast-body">
+        <div class="share-toast-emblem" id="share-toast-emblem">🪷</div>
+        <div class="share-toast-info">
+          <div class="share-toast-user-line">
+            <span id="share-toast-avatar"></span>
+            <span class="share-toast-username" id="share-toast-username">Thiện Nhân</span>
+            <span class="share-toast-action" id="share-toast-action">vừa chia sẻ phiên LIVE!</span>
+          </div>
+          <div class="share-toast-sub" id="share-toast-sub">Gieo duyên lành lan tỏa ánh sáng từ bi khắp mười phương</div>
+        </div>
+        <div class="share-toast-reward-pill" id="share-toast-reward">+3 CÔNG ĐỨC</div>
+      </div>
+    </div>
 
     <!-- =======================================================================
          GIAO DIỆN OPTION 1: ĐẠI ĐIỆN QUỲ BÁI (CHẠY LÊN THẢM XANH QUỲ LẠY PHẬT)
          ======================================================================= -->
     <div class="mode-quybai-ui">
+      <!-- Lớp trang trí Hoa Sen Linh Thiêng & Hào Quang Pháp Điện mở rộng không gian (60FPS Zero-Lag SVG) -->
+      <div class="quybai-floral-decor" aria-hidden="true">
+        <svg width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true">
+          <defs>
+            <linearGradient id="qbLotusPetalPink" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#fff1f2" />
+              <stop offset="45%" stop-color="#f472b6" />
+              <stop offset="100%" stop-color="#be185d" />
+            </linearGradient>
+            <linearGradient id="qbLotusPetalGold" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#fffbeb" />
+              <stop offset="50%" stop-color="#fde047" />
+              <stop offset="100%" stop-color="#d97706" />
+            </linearGradient>
+            <radialGradient id="qbLotusPadGrad" cx="50%" cy="45%" r="55%">
+              <stop offset="0%" stop-color="#34d399" />
+              <stop offset="65%" stop-color="#059669" />
+              <stop offset="100%" stop-color="#064e3b" />
+            </radialGradient>
+            <linearGradient id="qbBodhiGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#fef08a" />
+              <stop offset="55%" stop-color="#f59e0b" />
+              <stop offset="100%" stop-color="#92400e" />
+            </linearGradient>
+
+            <!-- Cụm Hoa Sen & Lá Bồ Đề Vàng trang trí rìa Đại Điện & bậc Tam Bảo -->
+            <g id="qb-floral-cluster-art">
+              <!-- Tán lá sen ngọc bích & lá Bồ Đề vàng phía dưới -->
+              <ellipse cx="70" cy="86" rx="58" ry="22" fill="url(#qbLotusPadGrad)" stroke="#6ee7b7" stroke-width="1.5" opacity="0.92" />
+              <path d="M18 82 C26 56, 52 52, 66 78 C46 86, 28 88, 18 82 Z" fill="url(#qbBodhiGoldGrad)" opacity="0.88" />
+              <path d="M122 82 C114 56, 88 52, 74 78 C94 86, 112 88, 122 82 Z" fill="url(#qbBodhiGoldGrad)" opacity="0.88" />
+              <!-- Cánh sen tầng sau -->
+              <path d="M70 22 C54 38, 48 62, 70 78 C92 62, 86 38, 70 22 Z" fill="url(#qbLotusPetalPink)" />
+              <path d="M44 32 C34 50, 42 70, 66 78 C64 56, 56 40, 44 32 Z" fill="url(#qbLotusPetalPink)" opacity="0.92" />
+              <path d="M96 32 C106 50, 98 70, 74 78 C76 56, 84 40, 96 32 Z" fill="url(#qbLotusPetalPink)" opacity="0.92" />
+              <path d="M24 50 C24 68, 40 78, 64 80 C52 64, 40 54, 24 50 Z" fill="url(#qbLotusPetalGold)" opacity="0.9" />
+              <path d="M116 50 C116 68, 100 78, 76 80 C88 64, 100 54, 116 50 Z" fill="url(#qbLotusPetalGold)" opacity="0.9" />
+              <!-- Cánh sen tầng trước & đài gương sen vàng -->
+              <path d="M56 38 C50 56, 56 72, 70 80 C74 62, 66 48, 56 38 Z" fill="#fbcfe8" />
+              <path d="M84 38 C90 56, 84 72, 70 80 C66 62, 74 48, 84 38 Z" fill="#fbcfe8" />
+              <path d="M70 30 C60 48, 60 66, 70 80 C80 66, 80 48, 70 30 Z" fill="#fff1f2" />
+              <ellipse cx="70" cy="68" rx="14" ry="6" fill="url(#qbLotusPetalGold)" stroke="#fffbeb" stroke-width="1" />
+              <!-- Búp sen nhỏ 2 bên -->
+              <path d="M30 42 C22 52, 26 64, 36 68 C40 58, 38 48, 30 42 Z" fill="url(#qbLotusPetalPink)" />
+              <path d="M110 42 C118 52, 114 64, 104 68 C100 58, 102 48, 110 42 Z" fill="url(#qbLotusPetalPink)" />
+              <circle cx="70" cy="18" r="3.5" fill="#fef08a" />
+              <circle cx="38" cy="26" r="2.5" fill="#fde047" />
+              <circle cx="102" cy="26" r="2.5" fill="#fde047" />
+            </g>
+
+            <!-- Đóa Sen Bách Diệp dọc hai bên mép Thảm Xanh dẫn lên Tam Bảo -->
+            <g id="qb-carpet-lotus-art">
+              <ellipse cx="48" cy="56" rx="40" ry="15" fill="url(#qbLotusPadGrad)" stroke="#a7f3d0" stroke-width="1.2" opacity="0.92" />
+              <path d="M20 38 C20 52, 32 60, 46 60 C38 48, 30 40, 20 38 Z" fill="url(#qbLotusPetalGold)" opacity="0.9" />
+              <path d="M76 38 C76 52, 64 60, 50 60 C58 48, 66 40, 76 38 Z" fill="url(#qbLotusPetalGold)" opacity="0.9" />
+              <path d="M32 26 C26 42, 34 54, 48 58 C46 44, 40 32, 32 26 Z" fill="url(#qbLotusPetalPink)" />
+              <path d="M64 26 C70 42, 62 54, 48 58 C50 44, 56 32, 64 26 Z" fill="url(#qbLotusPetalPink)" />
+              <path d="M48 18 C38 32, 38 48, 48 58 C58 48, 58 32, 48 18 Z" fill="#fff1f2" />
+              <ellipse cx="48" cy="50" rx="10" ry="4.5" fill="url(#qbLotusPetalGold)" />
+              <circle cx="48" cy="12" r="2.5" fill="#fef08a" />
+            </g>
+          </defs>
+        </svg>
+
+        <!-- Hào quang Pháp Điện ấm áp từ đỉnh mái chùa tỏa xuống mở rộng chiều sâu -->
+        <div class="quybai-sunbeam-top"></div>
+
+        <!-- Cụm hoa sen & lá Bồ Đề đối xứng hai bên rìa Đại Điện và bậc thềm Tam Bảo -->
+        <div class="quybai-flower-cluster cluster-top-left">
+          <svg viewBox="0 0 140 105" width="136" height="102"><use href="#qb-floral-cluster-art" /></svg>
+        </div>
+        <div class="quybai-flower-cluster cluster-top-right">
+          <svg viewBox="0 0 140 105" width="136" height="102"><use href="#qb-floral-cluster-art" /></svg>
+        </div>
+        <div class="quybai-flower-cluster cluster-altar-left">
+          <svg viewBox="0 0 140 105" width="128" height="96"><use href="#qb-floral-cluster-art" /></svg>
+        </div>
+        <div class="quybai-flower-cluster cluster-altar-right">
+          <svg viewBox="0 0 140 105" width="128" height="96"><use href="#qb-floral-cluster-art" /></svg>
+        </div>
+
+        <!-- Hàng hoa sen linh thiêng dọc hai bên mép thảm xanh dẫn bước Phật tử -->
+        <div class="quybai-carpet-lotus lotus-mid-left">
+          <svg viewBox="0 0 96 72" width="92" height="68"><use href="#qb-carpet-lotus-art" /></svg>
+        </div>
+        <div class="quybai-carpet-lotus lotus-mid-right">
+          <svg viewBox="0 0 96 72" width="92" height="68"><use href="#qb-carpet-lotus-art" /></svg>
+        </div>
+        <div class="quybai-carpet-lotus lotus-low-left">
+          <svg viewBox="0 0 96 72" width="98" height="72"><use href="#qb-carpet-lotus-art" /></svg>
+        </div>
+        <div class="quybai-carpet-lotus lotus-low-right">
+          <svg viewBox="0 0 96 72" width="98" height="72"><use href="#qb-carpet-lotus-art" /></svg>
+        </div>
+      </div>
+
+      <!-- Bảng BÌNH LUẬN LIVE góc trên bên trái (Đối xứng với TẤM LÒNG THÀNH) -->
+      <aside class="tam-long-thanh-card quybai-chat-card" id="quybai-chat-card">
+        <div class="tam-long-lotus-crown">💬</div>
+        <h2 class="tam-long-title">BÌNH LUẬN LIVE</h2>
+        <div id="quybai-chat-list"></div>
+      </aside>
+
       <!-- Bảng TẤM LÒNG THÀNH góc trên bên phải -->
       <aside class="tam-long-thanh-card">
         <div class="tam-long-lotus-crown">🪷</div>
@@ -46,6 +157,22 @@
       <!-- Băng rôn đỏ viền vàng dưới đài sen Phật -->
       <div class="tam-bao-dedication-banner" id="tam-bao-banner">
         NQ HUY đã dâng 5 nén hương lên Tam Bảo. Chúc tâm như hoa sen, thanh tịnh giữa đời.
+      </div>
+
+      <!-- Hộp thông báo Donate / Dâng Lễ Vật nổi bật ở Mẫu 1 -->
+      <div class="quybai-donate-toast" id="quybai-donate-toast">
+        <div class="donate-toast-avatar" id="quybai-donate-avatar">🙏</div>
+        <div class="donate-toast-body">
+          <div class="donate-toast-top">
+            <span class="donate-toast-tag">🎁 CÔNG ĐỨC DÂNG LỄ</span>
+            <span class="donate-toast-xu" id="quybai-donate-xu">+10 xu</span>
+          </div>
+          <div class="donate-toast-main" id="quybai-donate-main">
+            <strong id="quybai-donate-name">Thiện Nhân</strong>
+            <span>dâng</span>
+            <span class="donate-toast-gift" id="quybai-donate-gift">🌹 Hoa Hồng x1</span>
+          </div>
+        </div>
       </div>
 
       <!-- Lớp nhân vật đứng 2 bên sàn đá cẩm thạch & VIP quỳ trên bục -->
@@ -274,6 +401,24 @@
       </div>
     </div>
 
+    <!-- KHUNG QUOTE ĐỌC KINH / XƯỚNG TÊN TU TIÊN (ĐỌC TUẦN TỰ TỪNG CÂU QUA HÀNG ĐỢI) -->
+    <div class="tts-quote-widget" id="tts-quote-widget" aria-live="polite">
+      <div class="tts-quote-header">
+        <span class="tts-quote-speaker-badge" id="tts-quote-tag">
+          <span class="tts-sound-bars" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span id="tts-quote-tag-text">🔊 ĐANG ĐỌC</span>
+        </span>
+        <span class="tts-quote-author" id="tts-quote-author"></span>
+        <span class="tts-quote-queue-pill" id="tts-quote-queue">Hàng đợi: +0</span>
+      </div>
+      <div class="tts-quote-body">
+        <span class="tts-quote-mark open">«</span>
+        <span class="tts-quote-content" id="tts-quote-text"></span>
+        <span class="tts-quote-mark close">»</span>
+      </div>
+      <div class="tts-quote-waiting-line" id="tts-quote-waiting-line"></div>
+    </div>
+
     <!-- THANH CÔNG CỤ DƯỚI ĐÁY (ÂM THANH, NHẠC CHÙA, CHỌN MẪU 1/2/3, CHUÔNG, ĐỌC KINH) -->
     <footer class="bottom-control-dock">
       <button class="dock-btn" id="dock-btn-audio">🔊 Âm Thanh: BẬT</button>
@@ -291,7 +436,7 @@
     <canvas id="fx-canvas" width="1080" height="1920"></canvas>
   </div>
 
-  <script src="/js/audio.js?v=live23"></script>
-  <script src="/js/overlay.js?v=live23"></script>
+  <script src="/js/audio.js?v=live29"></script>
+  <script src="/js/overlay.js?v=live29"></script>
 </body>
 </html>
