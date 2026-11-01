@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Chùa Online & Đại Điện Quỳ Bái (9:16 TikTok LIVE Overlay)</title>
-  <link rel="stylesheet" href="/css/overlay.css?v=live15" />
+  <link rel="stylesheet" href="/css/overlay.css?v=live16" />
 </head>
 <body>
   <div id="stage-wrapper" class="mode-quybai theme-1">
@@ -166,6 +166,69 @@
       <section class="courtyard-meditators-stage" id="courtyard-meditators-stage"></section>
     </div>
 
+    <!-- =======================================================================
+         GIAO DIỆN OPTION 7: TIÊN MÔN VẤN ĐẠO - TU TIÊN CÙNG NHAU (CHAT ĐỂ NHẬP MÔN)
+         (Khớp 100% với ảnh media_1793512841829_301e1bcd.png)
+         ======================================================================= -->
+    <div class="mode-tutien-ui">
+      <header class="tutien-header-wrap">
+        <h1 class="tutien-main-title" id="tutien-title">Tiên Môn Vấn Đạo</h1>
+        <p class="tutien-sub-title" id="tutien-subtitle">Tu tiên cùng nhau · Chat để nhập môn</p>
+        <div class="tutien-stats-bar">
+          <span class="tutien-stat-item"><span class="stat-green-dot"></span> <strong id="tutien-count">32</strong> tu sĩ</span>
+          <span class="tutien-stat-item">🕒 <strong id="tutien-timer">00:39:16</strong></span>
+          <span class="tutien-stat-item">💎 <strong id="tutien-gems">2.834</strong></span>
+        </div>
+      </header>
+
+      <!-- Bảng Tuần (Góc trái) -->
+      <aside class="tutien-panel tutien-left-panel">
+        <h3 class="tutien-panel-title">Bảng Tuần</h3>
+        <p class="tutien-panel-sub">Top 1-2-3 vào phòng Rồng · Phượng · Lân</p>
+        <div class="tutien-weekly-list" id="tutien-weekly-list"></div>
+      </aside>
+
+      <!-- Bảng Thăng Cấp (Góc phải) -->
+      <aside class="tutien-panel tutien-right-panel">
+        <h3 class="tutien-panel-title">Bảng Thăng Cấp</h3>
+        <div class="tutien-realm-table">
+          <div class="realm-row"><span>1. Luyện Khí</span><span class="r-cost">2 🌹</span></div>
+          <div class="realm-row"><span>2. Trúc Cơ</span><span class="r-cost">12 🌹</span></div>
+          <div class="realm-row"><span>3. Kim Đan</span><span class="r-cost">40 💎</span></div>
+          <div class="realm-row"><span>4. Nguyên Anh</span><span class="r-cost">100 💎</span></div>
+          <div class="realm-row"><span>5. Hóa Thần</span><span class="r-cost">250 💎</span></div>
+          <div class="realm-row"><span>6. Luyện Hư</span><span class="r-cost">600 💎</span></div>
+          <div class="realm-row"><span>7. Hợp Thể</span><span class="r-cost">1.5k 💎</span></div>
+          <div class="realm-row"><span>8. Đại Thừa</span><span class="r-cost">4k 💎</span></div>
+          <div class="realm-row"><span>9. Độ Kiếp</span><span class="r-cost">10k 💎</span></div>
+          <div class="realm-row"><span>10. Chân Tiên</span><span class="r-cost">25k 💎</span></div>
+        </div>
+        <div class="tutien-panel-foot">1 💎 = 10 tu vi · đột phá đổi áo mới</div>
+      </aside>
+
+      <!-- Ngôi vị Đệ Nhất Chưởng Môn (Ở chính giữa 2 bảng) -->
+      <div class="tutien-top1-throne" id="tutien-top1-throne"></div>
+
+      <!-- Thông báo Kỳ Tài Xuất Thế / Linh Căn / Đột Phá ở chính giữa -->
+      <div class="tutien-center-herald" id="tutien-center-herald">
+        <div class="herald-top-line" id="tutien-herald-top">KỲ TÀI XUẤT THẾ</div>
+        <div class="herald-big-root" id="tutien-herald-big">Lôi linh căn</div>
+        <div class="herald-sub-line" id="tutien-herald-sub">Lục Cương nhập môn · tu luyện x1.3</div>
+      </div>
+
+      <!-- Hàng 4 vị Trưởng Lão Hộ Pháp (Đệ Tứ - Đệ Nhị - Đệ Tam - Đệ Ngũ) -->
+      <section class="tutien-elders-row" id="tutien-elders-row"></section>
+
+      <!-- Thanh thông báo Nhập Môn Linh Căn nổi giữa biển mây -->
+      <div class="tutien-join-pill" id="tutien-join-pill">
+        <span class="yin-yang-icon">☯</span>
+        <span id="tutien-join-pill-text">Hazada.vn nhập môn · Hỏa linh căn</span>
+      </div>
+
+      <!-- Biển Mây Đệ Tử Nhập Môn (Ngồi xếp bằng tu luyện trên mây, tự đổi áo theo cảnh giới) -->
+      <section class="tutien-cloud-stage" id="tutien-cloud-stage"></section>
+    </div>
+
     <!-- THANH CÔNG CỤ DƯỚI ĐÁY (ÂM THANH, NHẠC CHÙA, CHỌN MẪU 1/2/3, CHUÔNG, ĐỌC KINH) -->
     <footer class="bottom-control-dock">
       <button class="dock-btn" id="dock-btn-audio">🔊 Âm Thanh: BẬT</button>
@@ -174,6 +237,7 @@
       <button class="dock-btn" data-theme="2" title="Chùa Online Sân Chùa Đêm Trăng - Ngồi Đài Sen">Mẫu 2: Sân Chùa Đêm</button>
       <button class="dock-btn" data-theme="3" title="Chánh Điện Cổ Tự">Mẫu 3: Chánh Điện</button>
       <button class="dock-btn" data-theme="6" title="Hồ Sen Phóng Sanh - Phật tử bước ra thả Cá Chép, Cá Koi, Rùa Vàng">Mẫu 6: 🐟 Phóng Sanh</button>
+      <button class="dock-btn" data-theme="7" title="Tiên Môn Vấn Đạo - Tu Tiên Cùng Nhau · Chat Để Nhập Môn">Mẫu 7: ⚔️ Tu Tiên</button>
       <button class="dock-btn" id="dock-btn-bell">🔔 Chuông</button>
       <button class="dock-btn" id="dock-btn-chant">📿 Đọc Kinh</button>
     </footer>
@@ -182,7 +246,7 @@
     <canvas id="fx-canvas" width="1080" height="1920"></canvas>
   </div>
 
-  <script src="/js/audio.js?v=live15"></script>
-  <script src="/js/overlay.js?v=live15"></script>
+  <script src="/js/audio.js?v=live16"></script>
+  <script src="/js/overlay.js?v=live16"></script>
 </body>
 </html>

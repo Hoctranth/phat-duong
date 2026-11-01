@@ -65,6 +65,26 @@
     POND_IMAGES[key] = img;
   });
 
+  // Preload bộ Sprite Tu Tiên: Tiên Môn Vấn Đạo (Mẫu 7) - 4 Cấp Tiên Y
+  const TUTIEN_SPRITE_URLS = {
+    1: '/assets/sprites/tutien_tier1.png?v=tt2',
+    2: '/assets/sprites/tutien_tier2.png?v=tt2',
+    3: '/assets/sprites/tutien_tier3.png?v=tt2',
+    4: '/assets/sprites/tutien_tier4.png?v=tt2'
+  };
+  const TUTIEN_IMAGES = {};
+  Object.entries(TUTIEN_SPRITE_URLS).forEach(([key, url]) => {
+    const img = new Image();
+    img.onload = () => {
+      lastLodSignature = '';
+      if (lastState && currentThemeId === 7) {
+        renderMassiveCrowdBackdropCanvas(getEffectiveCrowdCount(lastState));
+      }
+    };
+    img.src = url;
+    TUTIEN_IMAGES[key] = img;
+  });
+
   function getSpriteSetForPerson(person, fallbackIdx = 0) {
     if (person && (person.skin === 'nu' || person.skin === 'ni')) {
       return SPRITE_SETS.nu;
@@ -138,7 +158,10 @@
 
     if (crowdLodSummaryPill) {
       crowdLodSummaryPill.style.display = 'block';
-      crowdLodSummaryPill.textContent = `🪷 Đại Pháp Hội ${totalCrowdCount.toLocaleString('vi-VN')} Phật Tử • Ảo Hóa Chống Lag 60FPS`;
+      crowdLodSummaryPill.textContent =
+        currentThemeId === 7
+          ? `⚔️ Vạn Tiên Đại Hội ${totalCrowdCount.toLocaleString('vi-VN')} Tu Sĩ • Ảo Hóa Chống Lag 60FPS`
+          : `🪷 Đại Pháp Hội ${totalCrowdCount.toLocaleString('vi-VN')} Phật Tử • Ảo Hóa Chống Lag 60FPS`;
     }
 
     const sig = `${currentThemeId}_${totalCrowdCount}`;
@@ -147,12 +170,39 @@
 
     crowdLodCtx.clearRect(0, 0, crowdLodCanvas.width, crowdLodCanvas.height);
 
+    // Số lượng hình nhân hậu cảnh đại diện cho biển người (tối đa 360 hình trên 1 bitmap tĩnh)
+    const visualSeaCount = Math.min(360, Math.max(80, Math.floor((totalCrowdCount - 42) * 0.35)));
+
+    if (currentThemeId === 7) {
+      const t1 = TUTIEN_IMAGES[1];
+      const t2 = TUTIEN_IMAGES[2];
+      if (!t1 || !t1.complete || !t1.naturalWidth) return;
+      const rows = 9;
+      const cols = Math.ceil(visualSeaCount / rows);
+      for (let r = 0; r < rows; r++) {
+        const tRow = r / Math.max(1, rows - 1);
+        const y = 1135 + tRow * 615;
+        const sc = 0.36 + tRow * 0.16;
+        const w = 158 * sc;
+        const h = 176 * sc;
+        const rowSpan = 820 + tRow * 180;
+        for (let c = 0; c < cols; c++) {
+          const tCol = cols <= 1 ? 0.5 : c / (cols - 1) - 0.5;
+          const jitterX = ((r * 19 + c * 29) % 21) - 10;
+          const x = 540 + tCol * rowSpan + jitterX;
+          const img = (r + c) % 4 === 0 && t2 && t2.complete ? t2 : t1;
+          crowdLodCtx.globalAlpha = 0.58 + tRow * 0.18;
+          crowdLodCtx.drawImage(img, x - w / 2, y - h, w, h);
+        }
+      }
+      crowdLodCtx.globalAlpha = 1;
+      return;
+    }
+
     const maleImg = CROWD_LOD_IMAGES.nam;
     const femaleImg = CROWD_LOD_IMAGES.nu;
     if (!maleImg.complete || ! maleImg.naturalWidth) return;
 
-    // Số lượng hình nhân hậu cảnh đại diện cho biển người (tối đa 360 hình trên 1 bitmap tĩnh)
-    const visualSeaCount = Math.min(360, Math.max(80, Math.floor((totalCrowdCount - 42) * 0.35)));
     const isCourtyard = currentThemeId === 2 || currentThemeId === 4 || currentThemeId === 5;
     const isRedCarpet = currentThemeId === 3;
     const isPondMode = currentThemeId === 6;
@@ -1719,6 +1769,171 @@
   // =========================================================================
   // 8. CẬP NHẬT TRẠNG THÁI TỪ SERVER & CHUYỂN ĐỔI GIỮA CÁC OPTION
   // =========================================================================
+  const tutienCountEl = document.getElementById('tutien-count');
+  const tutienTimerEl = document.getElementById('tutien-timer');
+  const tutienGemsEl = document.getElementById('tutien-gems');
+  const tutienWeeklyListEl = document.getElementById('tutien-weekly-list');
+  const tutienTop1ThroneEl = document.getElementById('tutien-top1-throne');
+  const tutienEldersRowEl = document.getElementById('tutien-elders-row');
+  const tutienCloudStageEl = document.getElementById('tutien-cloud-stage');
+  const tutienHeraldEl = document.getElementById('tutien-center-herald');
+  const tutienHeraldTopEl = document.getElementById('tutien-herald-top');
+  const tutienHeraldBigEl = document.getElementById('tutien-herald-big');
+  const tutienHeraldSubEl = document.getElementById('tutien-herald-sub');
+  const tutienJoinPillTextEl = document.getElementById('tutien-join-pill-text');
+
+  // Đồng hồ đếm thời gian mở sơn môn Tu Tiên
+  const sectStartTime = Date.now() - (39 * 60 + 16) * 1000;
+  setInterval(() => {
+    if (!tutienTimerEl) return;
+    const elapsedSec = Math.floor((Date.now() - sectStartTime) / 1000);
+    const hh = String(Math.floor(elapsedSec / 3600)).padStart(2, '0');
+    const mm = String(Math.floor((elapsedSec % 3600) / 60)).padStart(2, '0');
+    const ss = String(elapsedSec % 60).padStart(2, '0');
+    tutienTimerEl.textContent = `${hh}:${mm}:${ss}`;
+  }, 1000);
+
+  function getRealmInfoForPerson(person) {
+    if (person && person.realmName && person.robeTier) {
+      return { name: person.realmName, tier: Number(person.robeTier) || 1 };
+    }
+    const merit = Number(person?.merit) || 0;
+    if (merit >= 250) return { name: 'Hóa Thần', tier: 4 };
+    if (merit >= 100) return { name: 'Nguyên Anh', tier: 3 };
+    if (merit >= 40) return { name: 'Kim Đan', tier: 3 };
+    if (merit >= 12) return { name: 'Trúc Cơ', tier: 2 };
+    if (merit >= 2) return { name: 'Luyện Khí', tier: 2 };
+    return { name: 'Phàm Nhân', tier: 1 };
+  }
+
+  function renderTuTienStage(meditators = []) {
+    if (!tutienCloudStageEl) return;
+    const exactTotal = getEffectiveCrowdCount(lastState) || meditators.length;
+    if (tutienCountEl) {
+      tutienCountEl.textContent = Number(exactTotal).toLocaleString('vi-VN');
+    }
+
+    const totalGems = meditators.reduce((sum, m) => sum + (Number(m.merit) || 0), 0);
+    if (tutienGemsEl) {
+      tutienGemsEl.textContent = Math.max(2834, totalGems).toLocaleString('vi-VN');
+    }
+
+    // 1. Bảng Tuần Top 5 (Rồng · Phượng · Lân)
+    if (tutienWeeklyListEl) {
+      const top5 = meditators.slice(0, 5);
+      const beasts = ['🐉 Rồng', '🔥 Phượng', '🦄 Lân', '', ''];
+      tutienWeeklyListEl.innerHTML = top5
+        .map((p, idx) => {
+          const beastHtml = beasts[idx] ? `<span class="tutien-beast-tag">${beasts[idx]}</span>` : '';
+          const crown = idx === 0 ? '👑 ' : '';
+          return `
+            <div class="tutien-week-row">
+              <span class="tutien-week-rank r-${idx + 1}">${idx + 1}</span>
+              <div class="tutien-week-info">
+                <span class="tutien-week-name">${crown}${escapeHtml(shortenName(p.nickname, 14))}</span>
+                ${beastHtml}
+              </div>
+              <span class="tutien-week-gems">${p.merit || 0} 💎</span>
+            </div>
+          `;
+        })
+        .join('');
+    }
+
+    // 2. Ngôi vị Đệ Nhất Chưởng Môn ở giữa 2 bảng (x=540, y=560)
+    if (tutienTop1ThroneEl) {
+      const top1 = meditators[0];
+      if (!top1) {
+        tutienTop1ThroneEl.innerHTML = '';
+      } else {
+        const bText = activeBubbles.get(top1.userId);
+        const rInfo = getRealmInfoForPerson(top1);
+        tutienTop1ThroneEl.innerHTML = `
+          ${bText ? `<div class="pilgrim-white-bubble">${escapeHtml(bText)}</div>` : ''}
+          <img src="${TUTIEN_SPRITE_URLS[4]}" class="cultivator-sprite" alt="Đệ Nhất" />
+          <div class="tutien-throne-plaque">
+            <div class="t-name">Đệ Nhất ${escapeHtml(shortenName(top1.nickname, 14))}</div>
+            <div class="t-realm">${escapeHtml(rInfo.name === 'Phàm Nhân' ? 'Hóa Thần' : rInfo.name)} · 💎 ${top1.merit || 404}</div>
+          </div>
+        `;
+      }
+    }
+
+    // 3. Hàng 4 vị Trưởng Lão (Đệ Tứ - Đệ Nhị - Đệ Tam - Đệ Ngũ giống ảnh mẫu)
+    if (tutienEldersRowEl) {
+      const elderOrder = [
+        { idx: 3, title: 'Đệ Tứ', x: 155, y: 155 },
+        { idx: 1, title: 'Đệ Nhị', x: 405, y: 155 },
+        { idx: 2, title: 'Đệ Tam', x: 675, y: 155 },
+        { idx: 4, title: 'Đệ Ngũ', x: 925, y: 155 }
+      ];
+      tutienEldersRowEl.innerHTML = elderOrder
+        .map((slot) => {
+          const p = meditators[slot.idx];
+          if (!p) return '';
+          const bText = activeBubbles.get(p.userId);
+          const rInfo = getRealmInfoForPerson(p);
+          return `
+            <div class="tutien-elder-node" style="left: ${slot.x}px; top: ${slot.y}px;">
+              ${bText ? `<div class="pilgrim-white-bubble">${escapeHtml(bText)}</div>` : ''}
+              <img src="${TUTIEN_SPRITE_URLS[4]}" class="cultivator-sprite" alt="${slot.title}" />
+              <div class="tutien-throne-plaque">
+                <div class="t-name">${slot.title} ${escapeHtml(shortenName(p.nickname, 11))}</div>
+                <div class="t-realm">${escapeHtml(rInfo.name === 'Phàm Nhân' ? 'Hóa Thần' : rInfo.name)} · 💎 ${p.merit || 200}</div>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+    }
+
+    // 4. Biển Mây Đệ Tử Nhập Môn (4 hàng đệ tử ngồi xếp bằng trên mây từ y=1145..1795)
+    const disciples = meditators.slice(5, 29);
+    const rowConfigs = [
+      { y: 1175, cols: 5, xMin: 125, xMax: 955, scale: 0.88 },
+      { y: 1365, cols: 5, xMin: 115, xMax: 965, scale: 0.92 },
+      { y: 1555, cols: 6, xMin: 105, xMax: 975, scale: 0.96 },
+      { y: 1755, cols: 6, xMin: 95, xMax: 985, scale: 1.0 }
+    ];
+
+    let html = '';
+    let dIdx = 0;
+    for (let r = 0; r < rowConfigs.length; r++) {
+      const cfg = rowConfigs[r];
+      for (let c = 0; c < cfg.cols; c++) {
+        if (dIdx >= disciples.length) break;
+        const p = disciples[dIdx];
+        dIdx++;
+        const tCol = cfg.cols <= 1 ? 0.5 : c / (cfg.cols - 1);
+        const staggerX = r % 2 === 1 ? 14 : -14;
+        const x = Math.round(cfg.xMin + tCol * (cfg.xMax - cfg.xMin) + staggerX);
+        const y = cfg.y;
+        const rInfo = getRealmInfoForPerson(p);
+        const spriteUrl = TUTIEN_SPRITE_URLS[rInfo.tier] || TUTIEN_SPRITE_URLS[1];
+        const bText = activeBubbles.get(p.userId);
+
+        html += `
+          <div
+            class="tutien-disciple-node${bText ? ' just-interacted-glow' : ''}"
+            style="left: ${x}px; top: ${y}px; --c-scale: ${cfg.scale}; z-index: ${bText ? 58 : 25 + r * 3};"
+          >
+            ${bText ? `<div class="pilgrim-white-bubble">${escapeHtml(bText)}</div>` : ''}
+            <img src="${spriteUrl}" class="cultivator-sprite" alt="Tu sĩ" />
+            <div class="tutien-disciple-tag">
+              <div class="tutien-name-pill tier-${rInfo.tier}">
+                ${renderAvatarBadge(p.avatar, rInfo.tier >= 3 ? '⚡' : '☯', 'pill-avatar-dot')}
+                <span>${escapeHtml(shortenName(p.nickname, 12))}</span>
+              </div>
+              <div class="tutien-realm-sub tier-${rInfo.tier}">${escapeHtml(rInfo.name)}</div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    tutienCloudStageEl.innerHTML = html;
+  }
+
   function updateLiveCounterBadge(meditators = []) {
     const exactTotal = getEffectiveCrowdCount(lastState) || meditators.length;
     seatCounterEl.textContent = Number(exactTotal).toLocaleString('vi-VN');
@@ -1727,6 +1942,16 @@
   function renderCurrentModeCrowd(meditators = []) {
     const exactTotal = getEffectiveCrowdCount(lastState) || meditators.length;
     renderMassiveCrowdBackdropCanvas(exactTotal);
+
+    if (currentThemeId === 7) {
+      if (wasFreeRoamEnabled) {
+        wasFreeRoamEnabled = false;
+        clearFreeRoamActors();
+      }
+      renderTuTienStage(meditators);
+      updateLiveCounterBadge(meditators);
+      return;
+    }
 
     if (currentSettings.freeRoamEnabled) {
       wasFreeRoamEnabled = true;
@@ -1784,12 +2009,16 @@
 
       currentThemeId = Number(state.settings.themeId) || 1;
       const modeClass =
-        currentThemeId === 1 || currentThemeId === 3 || currentThemeId === 6
+        currentThemeId === 7
+          ? 'mode-tutien'
+          : currentThemeId === 1 || currentThemeId === 3 || currentThemeId === 6
           ? 'mode-quybai'
           : 'mode-chuaonline';
       stageWrapper.className = `${modeClass} theme-${currentThemeId}`;
 
-      if (currentThemeId === 1) {
+      if (currentThemeId === 7) {
+        backdropImg.src = '/assets/tien_mon_van_dao_bg.jpg?v=tt1';
+      } else if (currentThemeId === 1) {
         backdropImg.src = '/assets/dai_dien_quy_bai_bg.jpg';
       } else if (currentThemeId === 3) {
         backdropImg.src = '/assets/amitabha_stage.jpg';
@@ -2361,18 +2590,50 @@
               meritAdded: 1,
               commentText: payload.content
             });
-          } else if (payload.walkUpBow && currentThemeId !== 6 && !isBowingNow) {
+          } else if (payload.walkUpBow && currentThemeId !== 6 && currentThemeId !== 7 && !isBowingNow) {
             enqueueBowToBuddha({
               user: payload.user,
               meritAdded: 1,
               tierName: `💬 "${shortenName(payload.content, 26)}"`
             });
-          } else if (currentSettings.freeRoamEnabled) {
+          } else if (currentSettings.freeRoamEnabled && currentThemeId !== 7) {
             const actor = freeRoamActors.get(payload.user.userId);
             if (actor && actor.state !== 'walking') {
               startActorBowSequence(actor, performance.now(), '🙏 Thành tâm');
             }
           }
+        }
+        break;
+      }
+      case 'tutien_event': {
+        window.sacredAudio.playLotusChime();
+        const heraldEl = document.getElementById('tutien-center-herald');
+        const heraldTopEl = document.getElementById('tutien-herald-top');
+        const heraldBigEl = document.getElementById('tutien-herald-big');
+        const heraldSubEl = document.getElementById('tutien-herald-sub');
+        const joinPillTextEl = document.getElementById('tutien-join-pill-text');
+
+        const topText = payload.headline || payload.heraldTop;
+        const bigText = payload.bigTitle || payload.heraldBig;
+        const subText = payload.subLine || payload.heraldSub;
+        const pillText = payload.pillLine || payload.joinPillText;
+        const msgText = payload.commentText || payload.content;
+
+        if (heraldTopEl && topText) heraldTopEl.textContent = topText;
+        if (heraldBigEl && bigText) heraldBigEl.textContent = bigText;
+        if (heraldSubEl && subText) heraldSubEl.textContent = subText;
+        if (joinPillTextEl && pillText) {
+          joinPillTextEl.textContent = String(pillText).replace(/^☯\s*/, '');
+        }
+
+        if (heraldEl) {
+          heraldEl.classList.remove('pulse');
+          void heraldEl.offsetWidth;
+          heraldEl.classList.add('pulse');
+        }
+        spawnLotusBurst(540, 610, 26);
+        if (payload.user && msgText) {
+          showBubbleForUser(payload.user.userId, msgText);
         }
         break;
       }
@@ -2404,6 +2665,9 @@
             creatureLabel: payload.creatureLabel || 'Cá Chép Đỏ Bình An',
             giftIconUrl: payload.giftIconUrl
           });
+        } else if (currentThemeId === 7) {
+          spawnLotusBurst(540, 480, 36);
+          spawnLotusRain(28);
         } else {
           triggerRunUpAndProstrate(payload);
           enqueueBowToBuddha(payload);

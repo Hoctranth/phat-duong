@@ -174,6 +174,66 @@ const VALID_SKINS = ['nam', 'nu', 'su', 'tieu', 'ni', 'caotang'];
 // Giới hạn tối đa số node Phật tử gửi qua WebSocket/DOM để phòng 5.000 - 50.000 người vẫn mượt 60FPS không lag
 const MAX_ACTIVE_MEDITATOR_NODES = 160;
 
+// ============================================================================
+// HỆ THỐNG TU TIÊN: TIÊN MÔN VẤN ĐẠO (MẪU 7) - 10 CẢNH GIỚI & LINH CĂN
+// ============================================================================
+const SPIRIT_ROOTS = [
+  { name: 'Hỏa linh căn', mult: 1.1, isProdigy: false, icon: '🔥' },
+  { name: 'Thủy linh căn', mult: 1.1, isProdigy: false, icon: '💧' },
+  { name: 'Mộc linh căn', mult: 1.1, isProdigy: false, icon: '🌿' },
+  { name: 'Kim linh căn', mult: 1.1, isProdigy: false, icon: '⚔️' },
+  { name: 'Thổ linh căn', mult: 1.0, isProdigy: false, icon: '⛰️' },
+  { name: 'Lôi linh căn', mult: 1.3, isProdigy: true, icon: '⚡' },
+  { name: 'Băng linh căn', mult: 1.3, isProdigy: true, icon: '❄️' },
+  { name: 'Phong linh căn', mult: 1.3, isProdigy: true, icon: '🌪️' },
+  { name: 'Kiếm linh căn', mult: 1.4, isProdigy: true, icon: '🗡️' },
+  { name: 'Hỗn Độn linh căn', mult: 1.5, isProdigy: true, icon: '🌌' }
+];
+
+const TUTIEN_REALMS = [
+  { level: 10, name: 'Chân Tiên', minCoins: 25000, minTuVi: 250000, robeTier: 4 },
+  { level: 9, name: 'Độ Kiếp', minCoins: 10000, minTuVi: 100000, robeTier: 4 },
+  { level: 8, name: 'Đại Thừa', minCoins: 4000, minTuVi: 40000, robeTier: 4 },
+  { level: 7, name: 'Hợp Thể', minCoins: 1500, minTuVi: 15000, robeTier: 4 },
+  { level: 6, name: 'Luyện Hư', minCoins: 600, minTuVi: 6000, robeTier: 4 },
+  { level: 5, name: 'Hóa Thần', minCoins: 250, minTuVi: 2500, robeTier: 4 },
+  { level: 4, name: 'Nguyên Anh', minCoins: 100, minTuVi: 1000, robeTier: 3 },
+  { level: 3, name: 'Kim Đan', minCoins: 40, minTuVi: 400, robeTier: 3 },
+  { level: 2, name: 'Trúc Cơ', minCoins: 12, minTuVi: 120, robeTier: 2 },
+  { level: 1, name: 'Luyện Khí', minCoins: 2, minTuVi: 20, robeTier: 2 },
+  { level: 0, name: 'Phàm Nhân', minCoins: 0, minTuVi: 0, robeTier: 1 }
+];
+
+function getCultivationRealm(merit = 0, tuVi = 0) {
+  const effectiveTuVi = Math.max(Number(merit || 0) * 10, Number(tuVi || 0));
+  for (const r of TUTIEN_REALMS) {
+    if (effectiveTuVi >= r.minTuVi) {
+      return r;
+    }
+  }
+  return TUTIEN_REALMS[TUTIEN_REALMS.length - 1];
+}
+
+function pickSpiritRoot(seedStr = '', commentText = '') {
+  const lower = String(commentText || '').toLowerCase();
+  if (lower.includes('lôi')) return SPIRIT_ROOTS[5];
+  if (lower.includes('băng')) return SPIRIT_ROOTS[6];
+  if (lower.includes('phong')) return SPIRIT_ROOTS[7];
+  if (lower.includes('kiếm')) return SPIRIT_ROOTS[8];
+  if (lower.includes('hỗn độn')) return SPIRIT_ROOTS[9];
+  if (lower.includes('hỏa')) return SPIRIT_ROOTS[0];
+  if (lower.includes('thủy')) return SPIRIT_ROOTS[1];
+  if (lower.includes('mộc')) return SPIRIT_ROOTS[2];
+  if (lower.includes('kim')) return SPIRIT_ROOTS[3];
+
+  let hash = 0;
+  const s = String(seedStr || Date.now());
+  for (let i = 0; i < s.length; i++) {
+    hash = (hash * 31 + s.charCodeAt(i)) >>> 0;
+  }
+  return SPIRIT_ROOTS[hash % SPIRIT_ROOTS.length];
+}
+
 function detectSkinFromText(text = '') {
   const lower = String(text).toLowerCase().trim();
   if (!lower) return null;
@@ -190,34 +250,44 @@ function generatePresetMeditators(count = 48) {
   const safeNodeCount = Math.min(MAX_ACTIVE_MEDITATOR_NODES, Math.max(0, Number(count) || 0));
   const now = Date.now();
   const list = [];
+  const topMerits = [404, 300, 250, 250, 200, 112];
   for (let i = 0; i < safeNodeCount; i++) {
     const baseName = BASE_NAMES[i % BASE_NAMES.length];
     const nickname = i < BASE_NAMES.length ? baseName : `${baseName} ${i + 1}`;
-    // Hàng đầu là các vị đã cúng dường Hộ Pháp / Hoa Sen giống ảnh mẫu
+    // Hàng đầu là các vị đã cúng dường Hộ Pháp / Hoa Sen hoặc Đệ Nhất..Đệ Ngũ Hóa Thần giống ảnh mẫu
     let merit = 0;
     let skin = i % 3 === 0 ? 'nu' : 'nam';
     let hasLotusSeat = false;
     let hasIncense = false;
 
     if (i < 6) {
-      merit = 210 - i * 15;
+      merit = topMerits[i] || 150;
       skin = 'su';
       hasLotusSeat = true;
       hasIncense = true;
-    } else if (i < 16) {
-      merit = 60 - (i - 6) * 4;
+    } else if (i === 6) {
+      merit = 45; // Kim Đan
       hasLotusSeat = true;
-      hasIncense = i % 2 === 0;
-    } else if (i < 28) {
-      merit = 5;
       hasIncense = true;
+    } else if (i < 15) {
+      merit = i % 2 === 0 ? 4 : 0; // Luyện Khí xen kẽ Phàm Nhân giống ảnh mẫu
+      hasLotusSeat = merit >= 10;
+      hasIncense = merit > 0;
     }
+
+    const spiritRoot = pickSpiritRoot(`seed_${i + 1}`, '');
+    const tuVi = merit * 10;
+    const realm = getCultivationRealm(merit, tuVi);
 
     list.push({
       userId: `seed_${i + 1}`,
       nickname,
       skin,
       merit,
+      tuVi,
+      spiritRoot,
+      realmName: realm.name,
+      robeTier: realm.robeTier,
       hasLotusSeat,
       hasIncense,
       joinedAt: now - (count - i) * 1000,
@@ -637,7 +707,7 @@ function extractUserInfo(rawUser = {}) {
   return { userId: String(userId), nickname: String(nickname), avatar: String(avatar) };
 }
 
-function upsertMeditator({ userId, nickname, avatar = '', preferredSkin, commentText, addMeritAmount = 0 }) {
+function upsertMeditator({ userId, nickname, avatar = '', preferredSkin, commentText, addMeritAmount = 0, addTuViAmount = 0 }) {
   const cleanName = String(nickname || 'Phật Tử').trim();
   const key = String(userId || cleanName).toLowerCase();
 
@@ -655,12 +725,17 @@ function upsertMeditator({ userId, nickname, avatar = '', preferredSkin, comment
     if (anonIdx !== -1) {
       appState.meditators.splice(anonIdx, 1);
     }
+    const spiritRoot = pickSpiritRoot(key, commentText);
     person = {
       userId: key,
       nickname: cleanName,
       avatar: avatar || '',
       skin: VALID_SKINS.includes(detectedSkin) ? detectedSkin : 'nam',
       merit: 0,
+      tuVi: 0,
+      spiritRoot,
+      realmName: 'Phàm Nhân',
+      robeTier: 1,
       hasLotusSeat: false,
       hasIncense: false,
       joinedAt: now,
@@ -680,10 +755,16 @@ function upsertMeditator({ userId, nickname, avatar = '', preferredSkin, comment
     if (commentText) {
       person.lastComment = commentText;
     }
+    if (!person.spiritRoot) {
+      person.spiritRoot = pickSpiritRoot(key, commentText);
+    }
   }
+
+  const prevRealm = person.realmName || 'Phàm Nhân';
 
   if (addMeritAmount > 0) {
     person.merit += addMeritAmount;
+    person.tuVi = (person.tuVi || 0) + addMeritAmount * 10;
     person.hasIncense = true;
     if (person.merit >= 99) {
       person.skin = 'su'; // Hộ pháp mặc áo vàng ngồi đài sen hàng đầu
@@ -693,7 +774,17 @@ function upsertMeditator({ userId, nickname, avatar = '', preferredSkin, comment
     }
   }
 
-  return { person, isNewSeat, skinChanged: Boolean(detectedSkin) };
+  if (addTuViAmount > 0) {
+    const mult = person.spiritRoot?.mult || 1.0;
+    person.tuVi = Math.round((person.tuVi || 0) + addTuViAmount * mult);
+  }
+
+  const curRealm = getCultivationRealm(person.merit, person.tuVi);
+  person.realmName = curRealm.name;
+  person.robeTier = curRealm.robeTier;
+  const realmUpgraded = prevRealm !== curRealm.name && curRealm.level > 0;
+
+  return { person, isNewSeat, skinChanged: Boolean(detectedSkin), realmUpgraded, curRealm };
 }
 
 function addMeritLeaderboard(user, points) {
@@ -740,12 +831,13 @@ function handleMemberEvent(rawUser) {
 function handleChatEvent(rawUser, content, forcedSkin) {
   const text = String(content || '').trim();
   const user = extractUserInfo(rawUser);
-  const { person, isNewSeat, skinChanged } = upsertMeditator({
+  const { person, isNewSeat, skinChanged, realmUpgraded, curRealm } = upsertMeditator({
     userId: user.userId,
     nickname: user.nickname,
     avatar: user.avatar,
     preferredSkin: forcedSkin,
-    commentText: text
+    commentText: text,
+    addTuViAmount: 10
   });
 
   const monkSpeech = `${person.nickname} thành tâm khấn nguyện: "${text}"`;
@@ -758,15 +850,10 @@ function handleChatEvent(rawUser, content, forcedSkin) {
   }
 
   // Hỗ trợ tương tác hoàn toàn bằng COMMENT trên LIVE:
-  // - Gõ "chuông" -> Ngân Đại Hồng Chung + mưa hoa sen
-  // - Gõ "gõ mõ" / "mõ" -> Gõ Mõ Tụng Kinh (+15 tim công đức)
-  // - Gõ "cho ăn" / "thả thính" / "rải mồi" -> Rải hạt thức ăn vàng xuống Hồ Sen gọi đàn cá bơi lại
-  // - Ở Mẫu 6 (Hồ Sen Phóng Sanh) hoặc khi comment có từ khóa phóng sanh ("thả cá", "cá koi", "rùa vàng"...):
-  //   Nhân vật mang Tên + Avatar + Bong bóng lời khấn của user bước xuống Bến Đá thả Cá / Rùa xuống hồ!
-  // - Ở Mẫu 1 / 2 / 3 (Đại Điện / Sân Chùa): Mọi comment cầu nguyện / khấn nguyện đều cho nhân vật mang lời khấn bước lên trước Tam Bảo dâng hương & quỳ lạy!
   const lower = text.toLowerCase();
   let walkUpBow = true;
   const isPondTheme = Number(appState.settings.themeId) === 6;
+  const isTuTienTheme = Number(appState.settings.themeId) === 7;
   const isFishKeyword =
     lower.includes('thả cá') ||
     lower.includes('tha ca') ||
@@ -789,7 +876,34 @@ function handleChatEvent(rawUser, content, forcedSkin) {
   if (lower.includes('gõ mõ') || lower === 'mõ') {
     broadcast('wooden_fish_strike', {});
   }
-  if (isFeedFishKeyword) {
+
+  if (isTuTienTheme) {
+    walkUpBow = false;
+    const sRoot = person.spiritRoot || { name: 'Hỏa linh căn', mult: 1.1, isProdigy: false };
+    if (realmUpgraded && curRealm) {
+      pushLog(`⚡ ${person.nickname} đột phá cảnh giới [${curRealm.name}] nhờ chăm chỉ tu luyện!`);
+      broadcast('tutien_event', {
+        user: person,
+        eventKind: 'breakthrough',
+        headline: 'ĐỘT PHÁ CẢNH GIỚI',
+        bigTitle: curRealm.name,
+        subLine: `${person.nickname} đột phá ${curRealm.name} · đổi tiên y mới`,
+        pillLine: `☯ ${person.nickname} đột phá · ${curRealm.name}`,
+        commentText: text
+      });
+    } else {
+      pushLog(`☯ ${person.nickname} nhập môn tu luyện [${sRoot.name} x${sRoot.mult}]: "${text}"`);
+      broadcast('tutien_event', {
+        user: person,
+        eventKind: sRoot.isProdigy ? 'prodigy' : 'join_sect',
+        headline: sRoot.isProdigy ? 'KỲ TÀI XUẤT THẾ' : 'NHẬP MÔN VẤN ĐẠO',
+        bigTitle: sRoot.name,
+        subLine: `${person.nickname} nhập môn · tu luyện x${sRoot.mult}`,
+        pillLine: `☯ ${person.nickname} nhập môn · ${sRoot.name}`,
+        commentText: text
+      });
+    }
+  } else if (isFeedFishKeyword) {
     walkUpBow = false;
     pushLog(`🌾 ${person.nickname} bình luận "${text}" -> Rải thức ăn vàng xuống Hồ Sen cho đàn cá & rùa vàng!`);
     broadcast('feed_fish', {
@@ -858,7 +972,17 @@ function handleGiftEvent({ rawUser, giftName = 'Hoa Hồng', giftIconUrl = '', d
   let releasedCreatures = [];
   let creatureLabel = '';
 
-  if (Number(appState.settings.themeId) === 6) {
+  if (Number(appState.settings.themeId) === 7) {
+    tierName = `ĐỘT PHÁ ${person.realmName.toUpperCase()}`;
+    broadcast('tutien_event', {
+      user: person,
+      eventKind: 'breakthrough',
+      headline: totalCoins >= 100 ? 'ĐẠI NĂNG ĐỘT PHÁ' : 'ĐỘT PHÁ CẢNH GIỚI',
+      bigTitle: person.realmName,
+      subLine: `${person.nickname} hấp thu ${totalCoins} 💎 · đạt ${person.realmName} (Tu vi: ${person.tuVi})`,
+      pillLine: `☯ ${person.nickname} đột phá · ${person.realmName} (+${totalCoins} 💎)`
+    });
+  } else if (Number(appState.settings.themeId) === 6) {
     if (totalCoins >= 99) {
       tierName = 'PHÓNG SANH RÙA VÀNG LINH QUY';
       creatureLabel = 'Rùa Vàng Linh Quy & Đàn Cá Koi';
@@ -887,7 +1011,9 @@ function handleGiftEvent({ rawUser, giftName = 'Hoa Hồng', giftIconUrl = '', d
       : `Cảm tạ thí chủ ${person.nickname} đã phát tâm ${giftName}, tăng ${meritAdded} công đức. Chúc con và gia đình vạn sự bình an, cát tường như ý!`;
   appState.settings.monkGreeting = dedicationText;
 
-  if (Number(appState.settings.themeId) === 6) {
+  if (Number(appState.settings.themeId) === 7) {
+    pushLog(`⚡ ${person.nickname} hấp thu ${giftName} (+${meritAdded} 💎) -> Đạt cảnh giới [${person.realmName}] (Tu vi: ${person.tuVi})`);
+  } else if (Number(appState.settings.themeId) === 6) {
     pushLog(`🐟 ${person.nickname} tặng ${giftName} x${count} -> Bước ra bến thả ${creatureLabel} (+${meritAdded} Công Đức)`);
   } else {
     pushLog(`🎁 ${person.nickname} tặng ${giftName} x${count} -> Đứng dậy lên lạy Phật (+${meritAdded} Công Đức)`);

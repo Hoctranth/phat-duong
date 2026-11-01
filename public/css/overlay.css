@@ -75,7 +75,8 @@ html, body {
    GIAO DIỆN CHẾ ĐỘ 1: ĐẠI ĐIỆN THẢM XANH - CHẠY LÊN BỤC QUỲ BÁI
    (Khớp 100% với ảnh media_1793457831621_8265b6e4.png)
    ========================================================================= */
-.mode-quybai-ui {
+.mode-quybai-ui,
+.mode-tutien-ui {
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -86,7 +87,17 @@ html, body {
   display: block;
 }
 
-#stage-wrapper.mode-quybai .mode-chuaonline-ui {
+#stage-wrapper.mode-quybai .mode-chuaonline-ui,
+#stage-wrapper.mode-quybai .mode-tutien-ui {
+  display: none;
+}
+
+#stage-wrapper.mode-tutien .mode-tutien-ui {
+  display: block;
+}
+
+#stage-wrapper.mode-tutien .mode-quybai-ui,
+#stage-wrapper.mode-tutien .mode-chuaonline-ui {
   display: none;
 }
 
@@ -1052,4 +1063,457 @@ html, body {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.85);
   pointer-events: none;
 }
+
+/* =========================================================================
+   GIAO DIỆN CHẾ ĐỘ 7: TIÊN MÔN VẤN ĐẠO - TU TIÊN CÙNG NHAU (CHAT ĐỂ NHẬP MÔN)
+   (Khớp 100% bố cục, màu sắc & phong cách ảnh media_1793512841829_301e1bcd.png)
+   ========================================================================= */
+.tutien-header-wrap {
+  position: absolute;
+  top: 152px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 780px;
+  text-align: center;
+  z-index: 45;
+}
+
+.tutien-main-title {
+  font-family: 'Noto Serif', serif;
+  font-size: 56px;
+  font-weight: 800;
+  background: linear-gradient(180deg, #fffbeb 0%, #fde047 52%, #d97706 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.92)) drop-shadow(0 0 18px rgba(250, 204, 21, 0.45));
+  letter-spacing: 1px;
+  line-height: 1.12;
+}
+
+.tutien-sub-title {
+  margin-top: 2px;
+  font-size: 23px;
+  font-weight: 800;
+  color: #fef08a;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95);
+}
+
+.tutien-stats-bar {
+  margin: 10px auto 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 24px;
+  padding: 6px 24px;
+  background: rgba(15, 23, 42, 0.78);
+  border: 1.5px solid rgba(250, 204, 21, 0.48);
+  border-radius: 999px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.75);
+}
+
+.tutien-stat-item {
+  font-size: 20px;
+  font-weight: 800;
+  color: #f8fafc;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stat-green-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 10px #22c55e;
+  display: inline-block;
+}
+
+/* 2 Bảng Kính Viền Vàng (Bảng Tuần trái & Bảng Thăng Cấp phải) */
+.tutien-panel {
+  position: absolute;
+  top: 312px;
+  width: 315px;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.84) 0%, rgba(10, 15, 30, 0.9) 100%);
+  border: 2px solid rgba(234, 179, 8, 0.58);
+  border-radius: 18px;
+  padding: 14px 16px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.82), inset 0 0 16px rgba(250, 204, 21, 0.12);
+  z-index: 46;
+}
+
+.tutien-left-panel {
+  left: 34px;
+}
+
+.tutien-right-panel {
+  right: 34px;
+}
+
+.tutien-panel-title {
+  text-align: center;
+  font-family: 'Noto Serif', serif;
+  font-size: 25px;
+  font-weight: 800;
+  color: #fef08a;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+}
+
+.tutien-panel-sub {
+  text-align: center;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #cbd5e1;
+  margin-top: 2px;
+  margin-bottom: 10px;
+}
+
+.tutien-weekly-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tutien-week-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 10px;
+  background: rgba(30, 41, 59, 0.52);
+}
+
+.tutien-week-rank {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(51, 65, 85, 0.9);
+  color: #e2e8f0;
+}
+
+.tutien-week-rank.r-1 {
+  background: linear-gradient(135deg, #fef08a, #ca8a04);
+  color: #1e1b4b;
+}
+.tutien-week-rank.r-2 {
+  background: linear-gradient(135deg, #e2e8f0, #64748b);
+  color: #0f172a;
+}
+.tutien-week-rank.r-3 {
+  background: linear-gradient(135deg, #fed7aa, #b45309);
+  color: #1c1917;
+}
+
+.tutien-week-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tutien-week-name {
+  font-size: 16.5px;
+  font-weight: 800;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tutien-beast-tag {
+  font-size: 12px;
+  font-weight: 800;
+  color: #fde047;
+}
+
+.tutien-week-gems {
+  font-size: 16px;
+  font-weight: 900;
+  color: #38bdf8;
+  flex-shrink: 0;
+}
+
+.tutien-realm-table {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3.5px;
+}
+
+.realm-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 15.5px;
+  font-weight: 800;
+  color: #f1f5f9;
+  padding: 1px 4px;
+}
+
+.realm-row .r-cost {
+  color: #38bdf8;
+  font-weight: 900;
+}
+
+.tutien-panel-foot {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(250, 204, 21, 0.28);
+  text-align: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: #fde047;
+}
+
+/* Ngôi vị Đệ Nhất Chưởng Môn ở chính giữa 2 bảng */
+.tutien-top1-throne {
+  position: absolute;
+  top: 560px;
+  left: 540px;
+  transform: translate(-50%, -88%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 44;
+}
+
+.tutien-top1-throne .cultivator-sprite {
+  width: 205px;
+  height: 228px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 22px rgba(74, 222, 128, 0.55));
+}
+
+.tutien-throne-plaque {
+  margin-top: -10px;
+  min-width: 240px;
+  max-width: 290px;
+  padding: 6px 16px;
+  background: linear-gradient(180deg, rgba(68, 40, 12, 0.95) 0%, rgba(36, 18, 5, 0.98) 100%);
+  border: 2px solid #facc15;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.85), 0 0 16px rgba(250, 204, 21, 0.35);
+}
+
+.tutien-throne-plaque .t-name {
+  font-size: 18px;
+  font-weight: 900;
+  color: #fef08a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tutien-throne-plaque .t-realm {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+/* Thông báo lớn KỲ TÀI XUẤT THẾ / LÔI LINH CĂN ở giữa màn hình */
+.tutien-center-herald {
+  position: absolute;
+  top: 635px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 880px;
+  text-align: center;
+  z-index: 54;
+  pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.tutien-center-herald.pulse {
+  animation: heraldPop 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes heraldPop {
+  0% { transform: translateX(-50%) scale(0.72); opacity: 0.2; }
+  70% { transform: translateX(-50%) scale(1.06); opacity: 1; }
+  100% { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+.herald-top-line {
+  font-size: 27px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  color: #fef08a;
+  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.95), 0 0 16px rgba(234, 179, 8, 0.7);
+}
+
+.herald-big-root {
+  font-family: 'Noto Serif', serif;
+  font-size: 72px;
+  font-weight: 800;
+  line-height: 1.08;
+  background: linear-gradient(180deg, #fffbeb 0%, #fde047 50%, #d97706 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 24px rgba(250, 204, 21, 0.6));
+}
+
+.herald-sub-line {
+  margin-top: 4px;
+  font-size: 25px;
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.95);
+}
+
+/* Hàng 4 vị Trưởng Lão (Đệ Tứ - Đệ Nhị - Đệ Tam - Đệ Ngũ) */
+.tutien-elders-row {
+  position: absolute;
+  top: 790px;
+  left: 0;
+  width: 1080px;
+  height: 220px;
+  z-index: 42;
+}
+
+.tutien-elder-node {
+  position: absolute;
+  transform: translate(-50%, -88%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tutien-elder-node .cultivator-sprite {
+  width: 165px;
+  height: 184px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 16px rgba(74, 222, 128, 0.45));
+}
+
+.tutien-elder-node .tutien-throne-plaque {
+  min-width: 195px;
+  max-width: 228px;
+  padding: 5px 12px;
+}
+
+.tutien-elder-node .tutien-throne-plaque .t-name {
+  font-size: 16px;
+}
+
+.tutien-elder-node .tutien-throne-plaque .t-realm {
+  font-size: 13.5px;
+}
+
+/* Pill thông báo Nhập Môn Linh Căn nổi giữa biển mây */
+.tutien-join-pill {
+  position: absolute;
+  top: 1062px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 52;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 28px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 2px solid #eab308;
+  border-radius: 999px;
+  font-size: 23px;
+  font-weight: 800;
+  color: #fef08a;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.88), 0 0 20px rgba(234, 179, 8, 0.35);
+  white-space: nowrap;
+}
+
+.yin-yang-icon {
+  font-size: 25px;
+  color: #facc15;
+}
+
+/* Sân Mây Đệ Tử Nhập Môn (Ngồi xếp bằng tu luyện trên biển mây) */
+.tutien-cloud-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 35;
+  pointer-events: none;
+}
+
+.tutien-disciple-node {
+  position: absolute;
+  transform: translate(-50%, -88%) scale(var(--c-scale, 1));
+  transform-origin: center bottom;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tutien-disciple-node .cultivator-sprite {
+  width: 158px;
+  height: 176px;
+  object-fit: contain;
+  animation: floatOnCloud 3.8s ease-in-out infinite alternate;
+}
+
+@keyframes floatOnCloud {
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-5px); }
+}
+
+.tutien-disciple-tag {
+  margin-top: -12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tutien-name-pill {
+  padding: 3px 13px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1.5px solid rgba(148, 163, 184, 0.55);
+  border-radius: 999px;
+  font-size: 16.5px;
+  font-weight: 800;
+  color: #ffffff;
+  white-space: nowrap;
+  max-width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+}
+
+.tutien-name-pill.tier-3,
+.tutien-name-pill.tier-4 {
+  background: linear-gradient(90deg, rgba(68, 40, 10, 0.95), rgba(40, 22, 6, 0.95));
+  border-color: #facc15;
+  color: #fef08a;
+}
+
+.tutien-name-pill.tier-2 {
+  border-color: #38bdf8;
+}
+
+.tutien-realm-sub {
+  margin-top: 1px;
+  font-size: 14px;
+  font-weight: 900;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.95);
+}
+
+.tutien-realm-sub.tier-1 {
+  color: #cbd5e1;
+}
+.tutien-realm-sub.tier-2 {
+  color: #38bdf8;
+}
+.tutien-realm-sub.tier-3 {
+  color: #facc15;
+}
+.tutien-realm-sub.tier-4 {
+  color: #4ade80;
+}
+
 
