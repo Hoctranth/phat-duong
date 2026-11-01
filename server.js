@@ -757,49 +757,73 @@ function handleChatEvent(rawUser, content, forcedSkin) {
     pushLog(`💬 ${person.nickname}: "${text}"`);
   }
 
-  // Hỗ trợ lệnh tương tác qua bình luận trên LIVE (thỉnh chuông, gõ mõ, dâng hương/thắp hương, lạy Phật, thả cá phóng sanh)
+  // Hỗ trợ tương tác hoàn toàn bằng COMMENT trên LIVE:
+  // - Gõ "chuông" -> Ngân Đại Hồng Chung + mưa hoa sen
+  // - Gõ "gõ mõ" / "mõ" -> Gõ Mõ Tụng Kinh (+15 tim công đức)
+  // - Gõ "cho ăn" / "thả thính" / "rải mồi" -> Rải hạt thức ăn vàng xuống Hồ Sen gọi đàn cá bơi lại
+  // - Ở Mẫu 6 (Hồ Sen Phóng Sanh) hoặc khi comment có từ khóa phóng sanh ("thả cá", "cá koi", "rùa vàng"...):
+  //   Nhân vật mang Tên + Avatar + Bong bóng lời khấn của user bước xuống Bến Đá thả Cá / Rùa xuống hồ!
+  // - Ở Mẫu 1 / 2 / 3 (Đại Điện / Sân Chùa): Mọi comment cầu nguyện / khấn nguyện đều cho nhân vật mang lời khấn bước lên trước Tam Bảo dâng hương & quỳ lạy!
   const lower = text.toLowerCase();
-  let walkUpBow = false;
-  if (lower.includes('chuông')) {
-    broadcast('bell_strike', {});
-  } else if (lower.includes('gõ mõ') || lower === 'mõ') {
-    broadcast('wooden_fish_strike', {});
-  } else if (
-    lower.includes('thắp hương') ||
-    lower.includes('dâng hương') ||
-    lower.includes('lạy phật') ||
-    lower.includes('lễ phật')
-  ) {
-    person.hasIncense = true;
-    walkUpBow = true;
-  } else if (
+  let walkUpBow = true;
+  const isPondTheme = Number(appState.settings.themeId) === 6;
+  const isFishKeyword =
     lower.includes('thả cá') ||
     lower.includes('tha ca') ||
     lower.includes('phóng sanh') ||
     lower.includes('phong sanh') ||
     lower.includes('phóng sinh') ||
-    lower.includes('rùa vàng') ||
-    lower.includes('cá koi') ||
-    lower.includes('cá chép')
-  ) {
+    lower.includes('rùa') ||
+    lower.includes('koi') ||
+    lower.includes('cá chép') ||
+    lower.includes('cá vàng');
+  const isFeedFishKeyword =
+    lower.includes('cho cá ăn') ||
+    lower.includes('cho ăn') ||
+    lower.includes('rải mồi') ||
+    lower.includes('thả thính');
+
+  if (lower.includes('chuông')) {
+    broadcast('bell_strike', {});
+  }
+  if (lower.includes('gõ mõ') || lower === 'mõ') {
+    broadcast('wooden_fish_strike', {});
+  }
+  if (isFeedFishKeyword) {
+    walkUpBow = false;
+    pushLog(`🌾 ${person.nickname} bình luận "${text}" -> Rải thức ăn vàng xuống Hồ Sen cho đàn cá & rùa vàng!`);
+    broadcast('feed_fish', {
+      user: person,
+      content: text
+    });
+  } else if (isPondTheme || isFishKeyword) {
+    walkUpBow = false;
     let cType = 'carp_red';
     let cLabel = 'Cá Chép Đỏ Bình An';
-    if (lower.includes('rùa')) {
+    if (lower.includes('rùa') || lower.includes('linh quy')) {
       cType = 'turtle_gold';
       cLabel = 'Rùa Vàng Linh Quy';
-    } else if (lower.includes('koi')) {
+    } else if (lower.includes('koi') || lower.includes('ngũ sắc')) {
       cType = 'koi_calico';
       cLabel = 'Cá Koi Ngũ Sắc';
+    } else if (lower.includes('cá vàng') || lower.includes('hoàng kim')) {
+      cType = 'koi_gold';
+      cLabel = 'Cá Koi Hoàng Kim';
     }
     const spawned = spawnPondCreatures(cType, 1);
-    pushLog(`🐟 ${person.nickname} bước ra bến phóng sanh thả ${cLabel} xuống Hồ Sen.`);
+    pushLog(`🐟 ${person.nickname} bình luận "${text}" -> Bước ra bến phóng sanh thả ${cLabel} xuống Hồ Sen.`);
     broadcast('fish_released', {
       user: person,
       creatures: spawned,
       creatureType: cType,
       creatureLabel: cLabel,
-      count: spawned.length
+      count: spawned.length,
+      commentText: text,
+      dedicationText: `${person.nickname} khấn nguyện: "${text}" • Phóng sanh ${cLabel} xuống Hồ Sen 🙏`
     });
+  } else {
+    person.hasIncense = true;
+    walkUpBow = true;
   }
 
   broadcast('chat', {

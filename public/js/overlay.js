@@ -511,18 +511,32 @@
     const nickname = giftPayload.user?.nickname || 'Tín Chủ';
     const incenseCount = Math.max(1, Number(giftPayload.meritAdded) || 1);
     const isAscendPlatform = incenseCount >= 5 || (giftPayload.user && giftPayload.user.merit >= 5);
+    const commentText = String(giftPayload.commentText || '').trim();
+    const isGift = !commentText;
 
-    const bannerMsg = `${nickname} đã dâng ${incenseCount} nén hương lên Tam Bảo. Chúc tâm như hoa sen, thanh tịnh giữa đời.`;
+    // Nếu hàng đợi đang đông và đây chỉ là bình luận thường thì giới hạn 2 người chờ để ưu tiên quà tặng
+    if (!isGift && runnerQueue.length >= 2) return;
 
-    runnerQueue.push({
+    const bannerMsg = commentText
+      ? `🙏 ${nickname} thành tâm khấn nguyện: "${commentText}"`
+      : `${nickname} đã dâng ${incenseCount} nén hương lên Tam Bảo. Chúc tâm như hoa sen, thanh tịnh giữa đời.`;
+
+    const entry = {
       ceremonyType: 'incense',
       nickname,
       incenseCount,
       isAscendPlatform,
       bannerMsg,
+      commentText,
       giftIconUrl: giftPayload.giftIconUrl || '',
       user: giftPayload.user
-    });
+    };
+
+    if (isGift) {
+      runnerQueue.unshift(entry);
+    } else {
+      runnerQueue.push(entry);
+    }
 
     processRunnerQueue();
   }
@@ -534,6 +548,11 @@
   function triggerWalkOutAndReleaseFish(releasePayload = {}) {
     const nickname = releasePayload.user?.nickname || 'Phật Tử';
     const creatureLabel = releasePayload.creatureLabel || 'Cá Chép Đỏ Bình An';
+    const commentText = String(releasePayload.commentText || '').trim();
+    const isGift = !commentText;
+
+    if (!isGift && runnerQueue.length >= 2) return;
+
     const creatures =
       Array.isArray(releasePayload.creatures) && releasePayload.creatures.length > 0
         ? releasePayload.creatures
@@ -552,17 +571,26 @@
       }
     });
 
-    const bannerMsg = `${nickname} thành tâm bước ra Bến Phóng Sanh thả ${creatureLabel} xuống Hồ Sen. Nguyện cầu bình an, phước báu vô lượng!`;
+    const bannerMsg = commentText
+      ? `🐟 ${nickname} khấn nguyện: "${commentText}" • Phóng sanh ${creatureLabel} xuống Hồ Sen!`
+      : `${nickname} thành tâm bước ra Bến Phóng Sanh thả ${creatureLabel} xuống Hồ Sen. Nguyện cầu bình an, phước báu vô lượng!`;
 
-    runnerQueue.push({
+    const entry = {
       ceremonyType: 'release_fish',
       nickname,
       creatureLabel,
       creatures,
       bannerMsg,
+      commentText,
       giftIconUrl: releasePayload.giftIconUrl || '',
       user: releasePayload.user
-    });
+    };
+
+    if (isGift) {
+      runnerQueue.unshift(entry);
+    } else {
+      runnerQueue.push(entry);
+    }
 
     processRunnerQueue();
   }
@@ -601,9 +629,12 @@
       const giftIconHtml = item.giftIconUrl
         ? `<img src="${escapeHtml(item.giftIconUrl)}" style="width:22px;height:22px;vertical-align:middle;margin-right:4px;" referrerpolicy="no-referrer" alt="" />`
         : '🐟 ';
+      const bubbleLine = item.commentText
+        ? `${giftIconHtml}${escapeHtml(item.commentText)}`
+        : `${giftIconHtml}Con xin phóng sanh ${escapeHtml(item.creatureLabel)} 🙏`;
 
       runnerEl.innerHTML = `
-        <div class="pilgrim-white-bubble" id="${runnerId}_bubble">${giftIconHtml}Con xin phóng sanh ${escapeHtml(item.creatureLabel)} 🙏</div>
+        <div class="pilgrim-white-bubble" id="${runnerId}_bubble">${bubbleLine}</div>
         <img
           id="${imgId}"
           src="${spriteSet.walkL}"
@@ -743,10 +774,13 @@
 
     const giftIconHtml = item.giftIconUrl
       ? `<img src="${escapeHtml(item.giftIconUrl)}" style="width:22px;height:22px;vertical-align:middle;margin-right:4px;" referrerpolicy="no-referrer" alt="" />`
-      : '';
+      : '🕯️ ';
+    const incenseBubbleLine = item.commentText
+      ? `${giftIconHtml}${escapeHtml(item.commentText)}`
+      : `${giftIconHtml}Con xin dâng ${item.incenseCount} nén hương 🙏`;
 
     runnerEl.innerHTML = `
-      <div class="pilgrim-white-bubble" id="${runnerId}_bubble">${giftIconHtml}Con xin dâng ${item.incenseCount} nén hương 🙏</div>
+      <div class="pilgrim-white-bubble" id="${runnerId}_bubble">${incenseBubbleLine}</div>
       <img
         id="${imgId}"
         src="${spriteSet.walkL}"
@@ -2324,7 +2358,14 @@
           if (payload.walkUpBow && (currentThemeId === 1 || currentThemeId === 3)) {
             triggerRunUpAndProstrate({
               user: payload.user,
-              meritAdded: 1
+              meritAdded: 1,
+              commentText: payload.content
+            });
+          } else if (payload.walkUpBow && currentThemeId !== 6 && !isBowingNow) {
+            enqueueBowToBuddha({
+              user: payload.user,
+              meritAdded: 1,
+              tierName: `💬 "${shortenName(payload.content, 26)}"`
             });
           } else if (currentSettings.freeRoamEnabled) {
             const actor = freeRoamActors.get(payload.user.userId);
@@ -2332,6 +2373,25 @@
               startActorBowSequence(actor, performance.now(), '🙏 Thành tâm');
             }
           }
+        }
+        break;
+      }
+      case 'feed_fish': {
+        window.sacredAudio.playWaterSplash();
+        const feedX = 540;
+        const feedY = 1430;
+        spawnWaterRipple(feedX, feedY, 92, 0.85, true);
+        spawnLotusBurst(feedX, feedY, 18);
+        pondSwimmers.forEach((sw) => {
+          sw.targetAngle = Math.atan2(feedY - sw.y, feedX - sw.x) + (Math.random() - 0.5) * 0.25;
+          sw.nextTurnAt = performance.now() + 2800;
+        });
+        if (payload.user) {
+          showBubbleForUser(payload.user.userId, payload.content || 'Cho cá ăn 🌾');
+          showTamBaoBanner(
+            `🌾 ${payload.user.nickname} rải thức ăn vàng xuống Hồ Sen: "${payload.content || 'Cho đàn cá ăn'}"`,
+            4200
+          );
         }
         break;
       }
@@ -2441,62 +2501,6 @@
     window.sacredAudio.init();
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ type: 'chant' }));
-    }
-  });
-
-  // Cho phép nhấn trực tiếp vào 3 bảng đỏ dưới đáy (1 xu | 5/10 xu | 10+/99+ xu) để tương tác nhanh ngay trên màn hình
-  document.querySelectorAll('.crimson-gold-plaque').forEach((plaqueEl, idx) => {
-    plaqueEl.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      window.sacredAudio.init();
-      const tierCoins = idx === 0 ? 1 : idx === 1 ? 10 : 99;
-      const giftName =
-        currentThemeId === 6
-          ? idx === 0
-            ? 'Phóng Sanh Cá Chép Đỏ'
-            : idx === 1
-              ? 'Phóng Sanh Đàn Cá Koi'
-              : 'Phóng Sanh Rùa Vàng Linh Quy'
-          : idx === 0
-            ? 'Dâng Nén Tâm Hương'
-            : idx === 1
-              ? 'Dâng Đài Hoa Sen'
-              : 'Phát Tâm Hộ Pháp';
-
-      fetch('/api/simulate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          eventType: 'gift',
-          data: {
-            nickname: `Phật Tử Hữu Duyên`,
-            giftName,
-            diamondCount: tierCoins,
-            repeatCount: 1
-          }
-        })
-      }).catch(() => {});
-    });
-  });
-
-  // Cho phép nhấn trực tiếp lên mặt nước Hồ Sen (Mẫu 6) để rải thức ăn vàng gọi đàn Cá Koi & Rùa Vàng bơi lại
-  stageWrapper.addEventListener('click', (ev) => {
-    if (currentThemeId !== 6) return;
-    if (ev.target.closest('.crimson-gold-plaque, .bottom-control-dock, .tam-long-thanh-card')) return;
-    const rect = stageWrapper.getBoundingClientRect();
-    if (!rect.width || !rect.height) return;
-    const sx = ((ev.clientX - rect.left) / rect.width) * 1080;
-    const sy = ((ev.clientY - rect.top) / rect.height) * 1920;
-
-    if (sy >= 1210 && sy <= 1740 && sx >= 160 && sx <= 920) {
-      window.sacredAudio.init();
-      window.sacredAudio.playWaterSplash();
-      spawnWaterRipple(sx, sy, 82, 0.85, true);
-      spawnLotusBurst(sx, sy, 14);
-      pondSwimmers.forEach((sw) => {
-        sw.targetAngle = Math.atan2(sy - sw.y, sx - sw.x) + (Math.random() - 0.5) * 0.28;
-        sw.nextTurnAt = performance.now() + 2600;
-      });
     }
   });
 

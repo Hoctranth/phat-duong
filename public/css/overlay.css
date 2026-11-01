@@ -228,7 +228,7 @@ html, body {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .crimson-gold-plaque {
@@ -237,27 +237,10 @@ html, body {
   border-radius: 20px;
   padding: 14px 12px;
   text-align: center;
-  cursor: pointer;
-  pointer-events: auto;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
   box-shadow:
     0 12px 28px rgba(0, 0, 0, 0.85),
     inset 0 0 0 3px rgba(107, 17, 13, 0.9),
     inset 0 0 0 5px rgba(229, 184, 75, 0.55);
-}
-
-.crimson-gold-plaque:hover {
-  transform: translateY(-4px) scale(1.02);
-  border-color: #fef08a;
-  box-shadow:
-    0 16px 34px rgba(0, 0, 0, 0.92),
-    0 0 22px rgba(250, 204, 21, 0.45),
-    inset 0 0 0 3px rgba(107, 17, 13, 0.9),
-    inset 0 0 0 5px rgba(254, 240, 138, 0.75);
-}
-
-.crimson-gold-plaque:active {
-  transform: translateY(1px) scale(0.98);
 }
 
 .standing-pilgrim-node.just-interacted-glow .pilgrim-foot-pill,
