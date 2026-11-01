@@ -548,6 +548,8 @@ function getTop3Snapshot() {
   }));
 }
 
+let lastSeedTop3DecreeAt = 0;
+
 function evaluateTop3Decree(person, meritAdded = 0, prevTop3Snapshot = []) {
   if (!person) return null;
   sortMeditatorsByMerit();
@@ -560,9 +562,18 @@ function evaluateTop3Decree(person, meritAdded = 0, prevTop3Snapshot = []) {
   const prevRank = prevIdx === -1 ? 99 : prevIdx + 1;
   const climbedRank = rank < prevRank;
 
-  // Chỉ phát thông báo đặc biệt khi: Vừa lọt vào / thăng hạng trong Top 1-2-3 HOẶC đang ở Top 1-2-3 và vừa nạp thêm quà (meritAdded > 0)
-  if (!climbedRank && meritAdded <= 0) {
+  // Chỉ phát Chiếu Chỉ Đoạt Ngôi khi thực sự THĂNG HẠNG / SOÁN NGÔI vào Top 1-2-3 (hoặc đại gia Top 1-2-3 tặng quà lớn >= 150 💎)
+  if (!climbedRank && meritAdded < 150) {
     return null;
+  }
+
+  const isSeedUser = String(person.userId || '').startsWith('seed_');
+  const now = Date.now();
+  if (isSeedUser && now - lastSeedTop3DecreeAt < 22000) {
+    return null;
+  }
+  if (isSeedUser) {
+    lastSeedTop3DecreeAt = now;
   }
 
   const prevHolder = prevTop3Snapshot[rank - 1];
@@ -1026,7 +1037,8 @@ function advanceTuTienRelic(person, delta = 12) {
     broadcast('sky_ride', {
       user: person,
       daoTitle: person.daoTitle || 'Long Châu Chi Chủ',
-      reason: `🐉 PHÁ ẤN THÁI CỔ LONG CHÂU (+800 TU VI)`
+      reason: `🐉 PHÁ ẤN THÁI CỔ LONG CHÂU (+800 TU VI)`,
+      force: true
     });
     return true;
   }
@@ -1120,7 +1132,8 @@ function handleChatEvent(rawUser, content, forcedSkin) {
     broadcast('sky_ride', {
       user: person,
       daoTitle: person.daoTitle || 'Tiêu Dao Kiếm Tiên',
-      reason: `🗡️ NGỰ KIẾM TUẦN THIÊN · ${person.realmName.toUpperCase()}`
+      reason: `🗡️ NGỰ KIẾM TUẦN THIÊN · ${person.realmName.toUpperCase()}`,
+      force: true
     });
   } else if (realmUpgraded && !relicBroken) {
     broadcast('sky_ride', {

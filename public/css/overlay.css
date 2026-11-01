@@ -1848,12 +1848,13 @@ html, body {
   color: rgba(250, 204, 21, 0.7);
 }
 
-/* 2. Pháp Tướng Ngự Kiếm Tuần Thiên (Tu sĩ cưỡi Đại Phi Kiếm lướt qua bầu trời trăng sáng) */
+/* 2. Pháp Tướng Ngự Kiếm Tuần Thiên (Tu sĩ cưỡi Đại Phi Kiếm lướt ngang Chính Giữa Sơn Môn cực bắt mắt) */
 .tutien-sky-rider {
   position: absolute;
-  top: 18px;
-  left: -380px;
-  z-index: 76;
+  top: 562px;
+  left: 0;
+  width: 1080px;
+  z-index: 85;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1862,41 +1863,49 @@ html, body {
 }
 
 .tutien-sky-rider.flying {
-  animation: skySwordFlight 5.4s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+  animation: skySwordFlight 6.8s ease-in-out forwards;
 }
 
 @keyframes skySwordFlight {
   0% {
-    transform: translateX(0) translateY(18px) scale(0.82);
+    transform: translateX(-760px) translateY(16px) scale(0.85) rotate(-2deg);
     opacity: 0;
   }
-  12% {
+  10% {
+    opacity: 1;
+  }
+  22% {
+    transform: translateX(-38px) translateY(2px) scale(1.04) rotate(0deg);
     opacity: 1;
   }
   50% {
-    transform: translateX(730px) translateY(-12px) scale(0.96);
+    transform: translateX(0px) translateY(-4px) scale(1.06) rotate(0deg);
     opacity: 1;
   }
-  88% {
+  78% {
+    transform: translateX(38px) translateY(2px) scale(1.04) rotate(0deg);
+    opacity: 1;
+  }
+  90% {
     opacity: 1;
   }
   100% {
-    transform: translateX(1520px) translateY(10px) scale(0.86);
+    transform: translateX(780px) translateY(-16px) scale(0.9) rotate(2deg);
     opacity: 0;
   }
 }
 
 .sky-rider-banner {
-  margin-bottom: -8px;
-  padding: 4px 18px;
-  background: linear-gradient(90deg, rgba(127, 29, 29, 0.95), rgba(180, 83, 9, 0.95), rgba(127, 29, 29, 0.95));
-  border: 1.5px solid #fef08a;
+  margin-top: 2px;
+  padding: 5px 22px;
+  background: linear-gradient(90deg, rgba(127, 29, 29, 0.96), rgba(180, 83, 9, 0.96), rgba(127, 29, 29, 0.96));
+  border: 2px solid #fef08a;
   border-radius: 999px;
-  font-size: 14.5px;
+  font-size: 16.5px;
   font-weight: 900;
   color: #fef08a;
   white-space: nowrap;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.85), 0 0 16px rgba(250, 204, 21, 0.55);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.92), 0 0 22px rgba(250, 204, 21, 0.72);
   z-index: 3;
 }
 
@@ -1908,42 +1917,42 @@ html, body {
 }
 
 .sky-rider-char {
-  width: 112px;
-  height: 124px;
+  width: 132px;
+  height: 146px;
   object-fit: contain;
-  filter: drop-shadow(0 0 16px rgba(250, 204, 21, 0.75));
+  filter: drop-shadow(0 0 20px rgba(250, 204, 21, 0.85)) drop-shadow(0 0 32px rgba(56, 189, 248, 0.55));
   z-index: 2;
 }
 
 .giant-immortal-sword {
-  margin-top: -22px;
-  width: 230px;
-  height: 24px;
+  margin-top: -26px;
+  width: 310px;
+  height: 30px;
   position: relative;
   display: flex;
   align-items: center;
-  filter: drop-shadow(0 0 14px #38bdf8) drop-shadow(0 0 24px #facc15);
+  filter: drop-shadow(0 0 16px #38bdf8) drop-shadow(0 0 28px #facc15);
   z-index: 1;
 }
 
 .sword-flame-tail {
-  width: 85px;
-  height: 10px;
+  width: 110px;
+  height: 13px;
   background: linear-gradient(90deg, rgba(56, 189, 248, 0), #38bdf8, #fde047);
   border-radius: 999px;
 }
 
 .sword-hilt {
-  width: 14px;
-  height: 24px;
+  width: 18px;
+  height: 30px;
   background: linear-gradient(180deg, #fde047, #b45309);
   border-radius: 4px;
-  border: 1px solid #fffbeb;
+  border: 1.5px solid #fffbeb;
 }
 
 .sword-blade {
   flex: 1;
-  height: 11px;
+  height: 14px;
   background: linear-gradient(90deg, #fef08a 0%, #ffffff 65%, #38bdf8 100%);
   clip-path: polygon(0 0, 82% 0, 100% 50%, 82% 100%, 0 100%);
 }

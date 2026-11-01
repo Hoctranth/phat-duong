@@ -1808,18 +1808,31 @@
 
   function triggerSkySwordRide(payload = {}) {
     if (!tutienSkyRiderEl) return;
+    // Nếu đang có Tu Sĩ cưỡi kiếm bay ngang giữa màn hình thì để bay trọn vẹn hết đường kiếm, không bị reset giữa chừng!
+    if (tutienSkyRiderEl.classList.contains('flying') && !payload.force) {
+      return;
+    }
     const user = payload.user || {};
     const rInfo = getRealmInfoForPerson(user);
     const spriteUrl = TUTIEN_SPRITE_URLS[Math.max(4, rInfo.tier || 4)] || TUTIEN_SPRITE_URLS[8];
+    const nickUpper = shortenName(user.nickname || 'Đạo Hữu', 14).toUpperCase();
     const titleStr = payload.daoTitle || user.daoTitle || 'Tiêu Dao Kiếm Tiên';
-    const reasonStr =
-      payload.reason || `🗡️ ${shortenName(user.nickname || 'Đạo Hữu', 14)} · 「${titleStr}」 NGỰ KIẾM TUẦN THIÊN`;
+    const actionLabel = payload.reason || `「${titleStr}」 NGỰ KIẾM TUẦN THIÊN`;
+    const bannerStr = actionLabel.includes(nickUpper)
+      ? actionLabel
+      : `🗡️ ${nickUpper} · ${actionLabel.replace(/^🗡️\s*/, '')}`;
 
     if (tutienSkyRiderImgEl) {
       tutienSkyRiderImgEl.src = spriteUrl;
     }
     if (tutienSkyRiderBannerEl) {
-      tutienSkyRiderBannerEl.textContent = reasonStr;
+      tutienSkyRiderBannerEl.textContent = bannerStr;
+    }
+    if (tutienHeraldEl) {
+      tutienHeraldEl.classList.remove('active', 'pulse');
+    }
+    if (tutienDecreeBannerEl) {
+      tutienDecreeBannerEl.classList.remove('active');
     }
 
     tutienSkyRiderEl.classList.remove('flying');
@@ -1829,7 +1842,7 @@
     if (skyRiderHideTimer) clearTimeout(skyRiderHideTimer);
     skyRiderHideTimer = setTimeout(() => {
       tutienSkyRiderEl.classList.remove('flying');
-    }, 5500);
+    }, 6800);
   }
 
   function showTop3DecreeBanner(decree, durationMs = 5400) {
@@ -1886,8 +1899,11 @@
   function showTuTienHerald(topText, bigText, subText, durationMs = 4200) {
     const heraldEl = document.getElementById('tutien-center-herald');
     if (!heraldEl) return;
-    // Nếu đang hiện Biển Chiếu Chỉ Đoạt Ngôi Top 1-2-3 thì nhường chỗ để không bị đè chữ
-    if (tutienDecreeBannerEl && tutienDecreeBannerEl.classList.contains('active')) {
+    // Nếu đang hiện Biển Chiếu Chỉ Đoạt Ngôi Top 1-2-3 hoặc Pháp Tướng Ngự Kiếm ở giữa màn hình thì nhường chỗ
+    if (
+      (tutienDecreeBannerEl && tutienDecreeBannerEl.classList.contains('active')) ||
+      (tutienSkyRiderEl && tutienSkyRiderEl.classList.contains('flying'))
+    ) {
       return;
     }
     if (tutienHeraldTopEl && topText) tutienHeraldTopEl.textContent = topText;
