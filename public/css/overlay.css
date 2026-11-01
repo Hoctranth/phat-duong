@@ -1504,10 +1504,28 @@ html, body {
 }
 
 .tutien-name-pill.tier-3,
-.tutien-name-pill.tier-4 {
+.tutien-name-pill.tier-4,
+.tutien-name-pill.tier-5,
+.tutien-name-pill.tier-6,
+.tutien-name-pill.tier-7,
+.tutien-name-pill.tier-8 {
   background: linear-gradient(90deg, rgba(68, 40, 10, 0.95), rgba(40, 22, 6, 0.95));
   border-color: #facc15;
   color: #fef08a;
+}
+
+.tutien-name-pill.tier-5 {
+  border-color: #c084fc;
+}
+
+.tutien-name-pill.tier-6 {
+  border-color: #fb7185;
+}
+
+.tutien-name-pill.tier-7,
+.tutien-name-pill.tier-8 {
+  border-color: #fde047;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.85), 0 0 14px rgba(250, 204, 21, 0.55);
 }
 
 .tutien-name-pill.tier-2 {
@@ -1532,6 +1550,18 @@ html, body {
 }
 .tutien-realm-sub.tier-4 {
   color: #4ade80;
+}
+.tutien-realm-sub.tier-5 {
+  color: #d8b4fe;
+}
+.tutien-realm-sub.tier-6 {
+  color: #fda4af;
+}
+.tutien-realm-sub.tier-7 {
+  color: #5eead4;
+}
+.tutien-realm-sub.tier-8 {
+  color: #fef08a;
 }
 
 .tutien-disciple-node.just-interacted-glow .cultivator-sprite {

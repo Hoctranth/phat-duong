@@ -191,11 +191,11 @@ const SPIRIT_ROOTS = [
 ];
 
 const TUTIEN_REALMS = [
-  { level: 10, name: 'Chân Tiên', minCoins: 25000, minTuVi: 250000, robeTier: 4 },
-  { level: 9, name: 'Độ Kiếp', minCoins: 10000, minTuVi: 100000, robeTier: 4 },
-  { level: 8, name: 'Đại Thừa', minCoins: 4000, minTuVi: 40000, robeTier: 4 },
-  { level: 7, name: 'Hợp Thể', minCoins: 1500, minTuVi: 15000, robeTier: 4 },
-  { level: 6, name: 'Luyện Hư', minCoins: 600, minTuVi: 6000, robeTier: 4 },
+  { level: 10, name: 'Chân Tiên', minCoins: 25000, minTuVi: 250000, robeTier: 8 },
+  { level: 9, name: 'Độ Kiếp', minCoins: 10000, minTuVi: 100000, robeTier: 7 },
+  { level: 8, name: 'Đại Thừa', minCoins: 4000, minTuVi: 40000, robeTier: 7 },
+  { level: 7, name: 'Hợp Thể', minCoins: 1500, minTuVi: 15000, robeTier: 6 },
+  { level: 6, name: 'Luyện Hư', minCoins: 600, minTuVi: 6000, robeTier: 5 },
   { level: 5, name: 'Hóa Thần', minCoins: 250, minTuVi: 2500, robeTier: 4 },
   { level: 4, name: 'Nguyên Anh', minCoins: 100, minTuVi: 1000, robeTier: 3 },
   { level: 3, name: 'Kim Đan', minCoins: 40, minTuVi: 400, robeTier: 3 },
@@ -250,11 +250,11 @@ function generatePresetMeditators(count = 48) {
   const safeNodeCount = Math.min(MAX_ACTIVE_MEDITATOR_NODES, Math.max(0, Number(count) || 0));
   const now = Date.now();
   const list = [];
-  const topMerits = [404, 300, 250, 250, 200, 112];
+  const topMerits = [25500, 10200, 1600, 650, 300, 120];
   for (let i = 0; i < safeNodeCount; i++) {
     const baseName = BASE_NAMES[i % BASE_NAMES.length];
     const nickname = i < BASE_NAMES.length ? baseName : `${baseName} ${i + 1}`;
-    // Hàng đầu là các vị đã cúng dường Hộ Pháp / Hoa Sen hoặc Đệ Nhất..Đệ Ngũ Hóa Thần giống ảnh mẫu
+    // Hàng đầu là các vị Đệ Nhất Chân Tiên, Độ Kiếp, Hợp Thể, Luyện Hư, Hóa Thần để khoe đủ 8 bậc pháp y
     let merit = 0;
     let skin = i % 3 === 0 ? 'nu' : 'nam';
     let hasLotusSeat = false;
@@ -269,7 +269,15 @@ function generatePresetMeditators(count = 48) {
       merit = 45; // Kim Đan
       hasLotusSeat = true;
       hasIncense = true;
-    } else if (i < 15) {
+    } else if (i === 7) {
+      merit = 260; // Hóa Thần ở hàng đệ tử
+      hasLotusSeat = true;
+      hasIncense = true;
+    } else if (i === 8) {
+      merit = 620; // Luyện Hư ở hàng đệ tử
+      hasLotusSeat = true;
+      hasIncense = true;
+    } else if (i < 16) {
       merit = i % 2 === 0 ? 4 : 0; // Luyện Khí xen kẽ Phàm Nhân giống ảnh mẫu
       hasLotusSeat = merit >= 10;
       hasIncense = merit > 0;

@@ -65,12 +65,16 @@
     POND_IMAGES[key] = img;
   });
 
-  // Preload bộ Sprite Tu Tiên: Tiên Môn Vấn Đạo (Mẫu 7) - 4 Cấp Tiên Y
+  // Preload bộ Sprite Tu Tiên: Tiên Môn Vấn Đạo (Mẫu 7) - 8 Cấp Tiên Y (Phàm Nhân -> Chân Tiên)
   const TUTIEN_SPRITE_URLS = {
-    1: '/assets/sprites/tutien_tier1.png?v=tt2',
-    2: '/assets/sprites/tutien_tier2.png?v=tt2',
-    3: '/assets/sprites/tutien_tier3.png?v=tt2',
-    4: '/assets/sprites/tutien_tier4.png?v=tt2'
+    1: '/assets/sprites/tutien_tier1.png?v=tt3',
+    2: '/assets/sprites/tutien_tier2.png?v=tt3',
+    3: '/assets/sprites/tutien_tier3.png?v=tt3',
+    4: '/assets/sprites/tutien_tier4.png?v=tt3',
+    5: '/assets/sprites/tutien_tier5.png?v=tt3',
+    6: '/assets/sprites/tutien_tier6.png?v=tt3',
+    7: '/assets/sprites/tutien_tier7.png?v=tt3',
+    8: '/assets/sprites/tutien_tier8.png?v=tt3'
   };
   const TUTIEN_IMAGES = {};
   Object.entries(TUTIEN_SPRITE_URLS).forEach(([key, url]) => {
@@ -1830,7 +1834,12 @@
     if (person && person.realmName && person.robeTier) {
       return { name: person.realmName, tier: Number(person.robeTier) || 1 };
     }
-    const effectiveTuVi = Math.max((Number(person?.merit) || 0) * 100, Number(person?.tuVi) || 0);
+    const effectiveTuVi = Math.max((Number(person?.merit) || 0) * 10, Number(person?.tuVi) || 0);
+    if (effectiveTuVi >= 250000) return { name: 'Chân Tiên', tier: 8 };
+    if (effectiveTuVi >= 100000) return { name: 'Độ Kiếp', tier: 7 };
+    if (effectiveTuVi >= 40000) return { name: 'Đại Thừa', tier: 7 };
+    if (effectiveTuVi >= 15000) return { name: 'Hợp Thể', tier: 6 };
+    if (effectiveTuVi >= 6000) return { name: 'Luyện Hư', tier: 5 };
     if (effectiveTuVi >= 2500) return { name: 'Hóa Thần', tier: 4 };
     if (effectiveTuVi >= 1000) return { name: 'Nguyên Anh', tier: 3 };
     if (effectiveTuVi >= 400) return { name: 'Kim Đan', tier: 3 };
@@ -1865,7 +1874,7 @@
         .map((p, idx) => {
           const beastHtml = beasts[idx] ? `<span class="tutien-beast-tag">${beasts[idx]}</span>` : '';
           const crown = idx === 0 ? '👑 ' : '';
-          const scoreLabel = (p.merit || 0) > 0 ? `${p.merit} 💎` : `${formatTuViShort(p.tuVi || 0)} ⚡`;
+          const scoreLabel = (p.merit || 0) > 0 ? `${formatTuViShort(p.merit)} 💎` : `${formatTuViShort(p.tuVi || 0)} ⚡`;
           return `
             <div class="tutien-week-row">
               <span class="tutien-week-rank r-${idx + 1}">${idx + 1}</span>
@@ -1892,10 +1901,12 @@
         tutienSeatPositions.set(top1.userId, { x: 540, y: 455 });
         const bText = activeBubbles.get(top1.userId);
         const rInfo = getRealmInfoForPerson(top1);
-        const tvVal = Math.max((top1.merit || 404) * 100, top1.tuVi || 0);
+        const top1Tier = Math.max(4, rInfo.tier || 4);
+        const top1Sprite = TUTIEN_SPRITE_URLS[top1Tier] || TUTIEN_SPRITE_URLS[8];
+        const tvVal = Math.max((top1.merit || 404) * 10, top1.tuVi || 0);
         tutienTop1ThroneEl.innerHTML = `
           ${bText ? `<div class="pilgrim-white-bubble">${escapeHtml(bText)}</div>` : ''}
-          <img src="${TUTIEN_SPRITE_URLS[4]}" class="cultivator-sprite" alt="Đệ Nhất" />
+          <img src="${top1Sprite}" class="cultivator-sprite" alt="Đệ Nhất" />
           <div class="tutien-throne-plaque">
             <div class="t-name">Đệ Nhất ${escapeHtml(shortenName(top1.nickname, 14))}</div>
             <div class="t-realm">${escapeHtml(rInfo.name === 'Phàm Nhân' ? 'Hóa Thần' : rInfo.name)} · ⚡ ${formatTuViShort(tvVal)} TV</div>
@@ -1919,11 +1930,13 @@
           tutienSeatPositions.set(p.userId, { x: slot.x, y: 790 + slot.y - 75 });
           const bText = activeBubbles.get(p.userId);
           const rInfo = getRealmInfoForPerson(p);
-          const tvVal = Math.max((p.merit || 200) * 100, p.tuVi || 0);
+          const elderTier = Math.max(4, rInfo.tier || 4);
+          const elderSprite = TUTIEN_SPRITE_URLS[elderTier] || TUTIEN_SPRITE_URLS[4];
+          const tvVal = Math.max((p.merit || 200) * 10, p.tuVi || 0);
           return `
             <div class="tutien-elder-node" style="left: ${slot.x}px; top: ${slot.y}px;">
               ${bText ? `<div class="pilgrim-white-bubble">${escapeHtml(bText)}</div>` : ''}
-              <img src="${TUTIEN_SPRITE_URLS[4]}" class="cultivator-sprite" alt="${slot.title}" />
+              <img src="${elderSprite}" class="cultivator-sprite" alt="${slot.title}" />
               <div class="tutien-throne-plaque">
                 <div class="t-name">${slot.title} ${escapeHtml(shortenName(p.nickname, 11))}</div>
                 <div class="t-realm">${escapeHtml(rInfo.name === 'Phàm Nhân' ? 'Hóa Thần' : rInfo.name)} · ⚡ ${formatTuViShort(tvVal)} TV</div>
@@ -2434,35 +2447,47 @@
     });
   }
 
-  function spawnLotusRain(count = 45) {
-    for (let i = 0; i < count; i++) {
-      lotusPetals.push({
+  const MAX_ACTIVE_PETALS = 34;
+
+  function pushPetalCapped(petalObj) {
+    if (lotusPetals.length >= MAX_ACTIVE_PETALS) {
+      lotusPetals.shift();
+    }
+    lotusPetals.push(petalObj);
+  }
+
+  function spawnLotusRain(count = 28) {
+    const safeCount = Math.min(count, 28);
+    for (let i = 0; i < safeCount; i++) {
+      pushPetalCapped({
         x: 60 + Math.random() * 960,
-        y: -20 - Math.random() * 260,
-        vx: (Math.random() - 0.5) * 1.5,
-        vy: 2.0 + Math.random() * 2.4,
-        size: 9 + Math.random() * 11,
+        y: -20 - Math.random() * 180,
+        vx: (Math.random() - 0.5) * 2.2,
+        vy: 6.2 + Math.random() * 4.8,
+        size: 5.5 + Math.random() * 5.5,
         angle: Math.random() * Math.PI * 2,
-        vAngle: (Math.random() - 0.5) * 0.05,
-        alpha: 0.95,
+        vAngle: (Math.random() - 0.5) * 0.08,
+        alpha: 0.9,
+        fastFade: true,
         color: i % 2 === 0 ? '#f472b6' : '#fde047'
       });
     }
   }
 
-  function spawnLotusBurst(originX, originY, count = 24) {
-    for (let i = 0; i < count; i++) {
+  function spawnLotusBurst(originX, originY, count = 14) {
+    const safeCount = Math.min(count, 16);
+    for (let i = 0; i < safeCount; i++) {
       const a = Math.random() * Math.PI * 2;
-      const spd = 1.2 + Math.random() * 3.8;
-      lotusPetals.push({
+      const spd = 2.4 + Math.random() * 5.2;
+      pushPetalCapped({
         x: originX,
         y: originY,
         vx: Math.cos(a) * spd,
         vy: Math.sin(a) * spd - 1.5,
-        size: 6 + Math.random() * 7,
+        size: 4.5 + Math.random() * 4.5,
         angle: a,
-        vAngle: 0.04,
-        alpha: 1,
+        vAngle: 0.06,
+        alpha: 0.95,
         isSparkle: true,
         color: '#fde047'
       });
@@ -2510,7 +2535,6 @@
     spawnLightningTribulation(targetX, targetY, 4, 'gold');
     spawnSwordRainFX(targetX, targetY, 16);
     spawnQiPillarFX(targetX, targetY, 'gold');
-    spawnBlossomRainFX(40);
 
     // 2. Vòng Pháp Trận Bát Quái Hoàng Kim xoay dưới chân nhân vật vừa thăng cấp
     baguaArrays.push({
@@ -2592,19 +2616,19 @@
       color: '255, 255, 255'
     });
 
-    // Tia lửa điện bắn tung tóe tại điểm sét đánh
-    for (let i = 0; i < 28; i++) {
+    // Tia lửa điện bắn tung tóe tại điểm sét đánh (giới hạn ít, nhỏ & tan nhanh)
+    for (let i = 0; i < 12; i++) {
       const a = Math.random() * Math.PI * 2;
-      const spd = 2.2 + Math.random() * 6.5;
-      lotusPetals.push({
+      const spd = 2.8 + Math.random() * 6.5;
+      pushPetalCapped({
         x: targetX,
         y: targetY,
         vx: Math.cos(a) * spd,
         vy: Math.sin(a) * spd - 2.0,
-        size: 5 + Math.random() * 7,
+        size: 3.5 + Math.random() * 4.5,
         angle: a,
         vAngle: 0.12,
-        alpha: 1,
+        alpha: 0.95,
         isSparkle: true,
         color: i % 2 === 0 ? '#38bdf8' : '#fef08a'
       });
@@ -2646,22 +2670,24 @@
       alpha: 0.9,
       color: color === 'cyan' ? '56, 189, 248' : '250, 204, 21'
     });
-    spawnLotusBurst(targetX, targetY, 28);
+    spawnLotusBurst(targetX, targetY, 10);
   }
 
-  function spawnBlossomRainFX(count = 75) {
+  function spawnBlossomRainFX(count = 22) {
     window.sacredAudio.playLotusChime();
+    const safeCount = Math.min(count, 24);
     const palette = ['#f472b6', '#fbcfe8', '#fb7185', '#fde047', '#f9a8d4'];
-    for (let i = 0; i < count; i++) {
-      lotusPetals.push({
-        x: -40 + Math.random() * 1160,
-        y: -20 - Math.random() * 480,
-        vx: 0.8 + (Math.random() - 0.35) * 1.8,
-        vy: 1.9 + Math.random() * 2.6,
-        size: 8 + Math.random() * 11,
+    for (let i = 0; i < safeCount; i++) {
+      pushPetalCapped({
+        x: 30 + Math.random() * 1020,
+        y: -20 - Math.random() * 240,
+        vx: 0.9 + (Math.random() - 0.35) * 2.2,
+        vy: 7.2 + Math.random() * 5.6,
+        size: 5 + Math.random() * 5,
         angle: Math.random() * Math.PI * 2,
-        vAngle: (Math.random() - 0.5) * 0.06,
-        alpha: 0.96,
+        vAngle: (Math.random() - 0.5) * 0.08,
+        alpha: 0.9,
+        fastFade: true,
         color: palette[i % palette.length]
       });
     }
@@ -2699,30 +2725,31 @@
   }
 
   function renderTuTienCanvasLayer() {
-    // 1. Hoa đào tiên giới rơi nhẹ nhàng & Linh khí bay lên thường trực
-    if (lotusPetals.length < 28 && Math.random() < 0.32) {
+    // 1. Hoa đào tiên giới rơi nhanh, thoáng mắt (tối đa 10 cánh trên màn hình để không che nhân vật)
+    if (lotusPetals.length < 10 && Math.random() < 0.14) {
       const isRightCliff = Math.random() < 0.55;
-      lotusPetals.push({
-        x: isRightCliff ? 680 + Math.random() * 400 : Math.random() * 420,
+      pushPetalCapped({
+        x: isRightCliff ? 680 + Math.random() * 380 : Math.random() * 400,
         y: -15,
-        vx: isRightCliff ? -0.65 - Math.random() * 0.8 : 0.55 + Math.random() * 0.8,
-        vy: 1.35 + Math.random() * 1.4,
-        size: 6.5 + Math.random() * 6.5,
+        vx: isRightCliff ? -1.1 - Math.random() * 1.2 : 0.9 + Math.random() * 1.2,
+        vy: 5.2 + Math.random() * 3.6,
+        size: 4.5 + Math.random() * 4.5,
         angle: Math.random() * Math.PI * 2,
-        vAngle: (Math.random() - 0.5) * 0.045,
-        alpha: 0.88,
+        vAngle: (Math.random() - 0.5) * 0.06,
+        alpha: 0.85,
+        fastFade: true,
         color: Math.random() < 0.72 ? '#f472b6' : '#fbcfe8'
       });
     }
 
     // Hạt linh khí vàng/lam bay ngược từ biển mây lên trời
-    if (Math.random() < 0.28) {
-      lotusPetals.push({
+    if (lotusPetals.length < 22 && Math.random() < 0.18) {
+      pushPetalCapped({
         x: 90 + Math.random() * 900,
         y: 1200 + Math.random() * 680,
         vx: (Math.random() - 0.5) * 0.6,
-        vy: -1.4 - Math.random() * 1.6,
-        size: 3.5 + Math.random() * 4.5,
+        vy: -2.2 - Math.random() * 2.2,
+        size: 3 + Math.random() * 3.5,
         angle: 0,
         vAngle: 0,
         alpha: 0.85,
@@ -3045,12 +3072,15 @@
       p.angle += p.vAngle;
 
       if (p.isSparkle) {
-        p.alpha -= 0.022;
-      } else if (p.y > 1930) {
+        p.alpha -= 0.028;
+      } else if (p.fastFade) {
+        p.alpha -= 0.011;
+      }
+      if (p.y > 1860 || p.x < -80 || p.x > 1160) {
         p.alpha = 0;
       }
 
-      if (p.alpha <= 0.02) {
+      if (p.alpha <= 0.03) {
         lotusPetals.splice(i, 1);
         continue;
       }
