@@ -1594,4 +1594,208 @@ html, body {
   font-weight: 900;
 }
 
+/* ============================================================================
+   BIỂN TREO THƯỞNG ĐUA TOP 1·2·3 & CHIẾU CHỈ ĐOẠT NGÔI KÍCH THÍCH DONATE
+   ============================================================================ */
+.tutien-top3-bounty-box {
+  margin-top: 8px;
+  padding: 7px 9px;
+  background: linear-gradient(180deg, rgba(69, 26, 3, 0.88) 0%, rgba(30, 15, 6, 0.94) 100%);
+  border: 1.5px solid rgba(250, 204, 21, 0.65);
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.75), inset 0 0 12px rgba(250, 204, 21, 0.15);
+}
+
+.bounty-head {
+  font-size: 12.5px;
+  font-weight: 900;
+  color: #fef08a;
+  text-align: center;
+  letter-spacing: 0.4px;
+  margin-bottom: 4px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95);
+}
+
+.bounty-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #f8fafc;
+  padding: 1.5px 0;
+}
+
+.bounty-row .b-need {
+  color: #4ade80;
+  font-weight: 900;
+}
+
+.bounty-foot {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px dashed rgba(250, 204, 21, 0.35);
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #fda4af;
+  text-align: center;
+}
+
+/* Biển danh hiệu Phòng Rồng / Phòng Phượng / Phòng Lân trên ngai vàng Top 1-2-3 */
+.tutien-vip-crest {
+  margin-bottom: 3px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.85);
+}
+
+.tutien-vip-crest.crest-dragon {
+  background: linear-gradient(90deg, #991b1b, #d97706, #991b1b);
+  border: 1.5px solid #fef08a;
+  color: #fef08a;
+  box-shadow: 0 0 16px rgba(250, 204, 21, 0.6);
+}
+
+.tutien-vip-crest.crest-phoenix {
+  background: linear-gradient(90deg, #9f1239, #ea580c, #9f1239);
+  border: 1.5px solid #fed7aa;
+  color: #fff1f2;
+}
+
+.tutien-vip-crest.crest-kirin {
+  background: linear-gradient(90deg, #581c87, #7e22ce, #581c87);
+  border: 1.5px solid #e9d5ff;
+  color: #f3e8ff;
+}
+
+/* Biển Chiếu Chỉ Đặc Biệt Khi Có Người Đạt / Đoạt Ngôi TOP 1 · 2 · 3 */
+.tutien-top3-decree-banner {
+  position: absolute;
+  top: 548px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.84) translateY(-10px);
+  width: 860px;
+  z-index: 82;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.38s ease, transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tutien-top3-decree-banner.active {
+  opacity: 1;
+  transform: translateX(-50%) scale(1) translateY(0);
+}
+
+.decree-top-ribbon {
+  padding: 4px 24px;
+  background: linear-gradient(90deg, #7f1d1d 0%, #b45309 50%, #7f1d1d 100%);
+  border: 2px solid #fde047;
+  border-radius: 999px;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 1.2px;
+  color: #fef08a;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.85), 0 0 20px rgba(250, 204, 21, 0.55);
+  z-index: 2;
+}
+
+.decree-main-card {
+  margin-top: -7px;
+  width: 100%;
+  padding: 13px 22px 11px;
+  background: linear-gradient(180deg, rgba(45, 14, 10, 0.96) 0%, rgba(24, 9, 6, 0.98) 100%);
+  border: 2.5px solid #facc15;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.92), 0 0 28px rgba(250, 204, 21, 0.42), inset 0 0 20px rgba(250, 204, 21, 0.16);
+}
+
+.tutien-top3-decree-banner.rank-2 .decree-main-card {
+  background: linear-gradient(180deg, rgba(67, 20, 7, 0.96) 0%, rgba(28, 10, 6, 0.98) 100%);
+  border-color: #fb923c;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.92), 0 0 32px rgba(251, 146, 60, 0.45);
+}
+
+.tutien-top3-decree-banner.rank-3 .decree-main-card {
+  background: linear-gradient(180deg, rgba(46, 16, 101, 0.96) 0%, rgba(19, 8, 45, 0.98) 100%);
+  border-color: #c084fc;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.92), 0 0 32px rgba(192, 132, 252, 0.45);
+}
+
+.decree-beast-emblem {
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(250, 204, 21, 0.35) 0%, rgba(120, 53, 15, 0.85) 100%);
+  border: 2.5px solid #fde047;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44px;
+  flex-shrink: 0;
+  box-shadow: 0 0 18px rgba(250, 204, 21, 0.5);
+}
+
+.decree-text-col {
+  flex: 1;
+  text-align: center;
+  min-width: 0;
+}
+
+.decree-hero-title {
+  font-size: 33px;
+  font-weight: 900;
+  color: #fef08a;
+  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.95), 0 0 18px rgba(250, 204, 21, 0.65);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.decree-reward-sub {
+  margin-top: 4px;
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95);
+}
+
+.decree-rank-stamp {
+  padding: 10px 18px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fde047 0%, #ca8a04 100%);
+  border: 2px solid #fffbeb;
+  font-size: 24px;
+  font-weight: 900;
+  color: #451a03;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.75);
+}
+
+.decree-cta-strip {
+  margin-top: -6px;
+  padding: 7px 26px;
+  background: linear-gradient(90deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  border: 2px solid #38bdf8;
+  border-radius: 999px;
+  font-size: 18.5px;
+  font-weight: 800;
+  color: #7dd3fc;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.9), 0 0 16px rgba(56, 189, 248, 0.4);
+  white-space: nowrap;
+  z-index: 2;
+}
+
+
 

@@ -250,7 +250,15 @@ function generatePresetMeditators(count = 48) {
   const safeNodeCount = Math.min(MAX_ACTIVE_MEDITATOR_NODES, Math.max(0, Number(count) || 0));
   const now = Date.now();
   const list = [];
-  const topMerits = [25500, 10200, 1600, 650, 300, 120];
+  const topMerits = [120, 68, 30, 22, 16, 12];
+  const presetTopRealms = [
+    { name: 'Chân Tiên', robeTier: 8, tuVi: 255000 },
+    { name: 'Độ Kiếp', robeTier: 7, tuVi: 105000 },
+    { name: 'Hợp Thể', robeTier: 6, tuVi: 17500 },
+    { name: 'Luyện Hư', robeTier: 5, tuVi: 6800 },
+    { name: 'Hóa Thần', robeTier: 4, tuVi: 3200 },
+    { name: 'Nguyên Anh', robeTier: 3, tuVi: 1200 }
+  ];
   for (let i = 0; i < safeNodeCount; i++) {
     const baseName = BASE_NAMES[i % BASE_NAMES.length];
     const nickname = i < BASE_NAMES.length ? baseName : `${baseName} ${i + 1}`;
@@ -261,31 +269,44 @@ function generatePresetMeditators(count = 48) {
     let hasIncense = false;
 
     if (i < 6) {
-      merit = topMerits[i] || 150;
+      merit = topMerits[i] || 12;
       skin = 'su';
       hasLotusSeat = true;
       hasIncense = true;
     } else if (i === 6) {
-      merit = 45; // Kim Đan
+      merit = 10; // Kim Đan
       hasLotusSeat = true;
       hasIncense = true;
     } else if (i === 7) {
-      merit = 260; // Hóa Thần ở hàng đệ tử
+      merit = 8; // Hóa Thần ở hàng đệ tử
       hasLotusSeat = true;
       hasIncense = true;
     } else if (i === 8) {
-      merit = 620; // Luyện Hư ở hàng đệ tử
+      merit = 6; // Luyện Hư ở hàng đệ tử
       hasLotusSeat = true;
       hasIncense = true;
     } else if (i < 16) {
-      merit = i % 2 === 0 ? 4 : 0; // Luyện Khí xen kẽ Phàm Nhân giống ảnh mẫu
+      merit = i % 2 === 0 ? 2 : 0; // Luyện Khí xen kẽ Phàm Nhân giống ảnh mẫu
       hasLotusSeat = merit >= 10;
       hasIncense = merit > 0;
     }
 
     const spiritRoot = pickSpiritRoot(`seed_${i + 1}`, '');
-    const tuVi = merit * 10;
-    const realm = getCultivationRealm(merit, tuVi);
+    let tuVi = merit * 100;
+    let realm = getCultivationRealm(merit, tuVi);
+    if (i < 6 && presetTopRealms[i]) {
+      tuVi = presetTopRealms[i].tuVi;
+      realm = { name: presetTopRealms[i].name, robeTier: presetTopRealms[i].robeTier };
+    } else if (i === 6) {
+      tuVi = 450;
+      realm = { name: 'Kim Đan', robeTier: 3 };
+    } else if (i === 7) {
+      tuVi = 2600;
+      realm = { name: 'Hóa Thần', robeTier: 4 };
+    } else if (i === 8) {
+      tuVi = 6200;
+      realm = { name: 'Luyện Hư', robeTier: 5 };
+    }
 
     list.push({
       userId: `seed_${i + 1}`,
@@ -510,12 +531,100 @@ function getEffectiveRankScore(person) {
   return Math.max((Number(person?.merit) || 0) * 100, Number(person?.tuVi) || 0);
 }
 
+function getTop3Snapshot() {
+  sortMeditatorsByMerit();
+  return appState.meditators.slice(0, 3).map((m) => ({
+    userId: m.userId,
+    nickname: m.nickname,
+    merit: Number(m.merit) || 0,
+    tuVi: Number(m.tuVi) || 0
+  }));
+}
+
+function evaluateTop3Decree(person, meritAdded = 0, prevTop3Snapshot = []) {
+  if (!person) return null;
+  sortMeditatorsByMerit();
+  const top3 = appState.meditators.slice(0, 3);
+  const newIdx = top3.findIndex((m) => m.userId === person.userId);
+  if (newIdx === -1) return null;
+
+  const rank = newIdx + 1; // 1, 2, hoặc 3
+  const prevIdx = prevTop3Snapshot.findIndex((m) => m.userId === person.userId);
+  const prevRank = prevIdx === -1 ? 99 : prevIdx + 1;
+  const climbedRank = rank < prevRank;
+
+  // Chỉ phát thông báo đặc biệt khi: Vừa lọt vào / thăng hạng trong Top 1-2-3 HOẶC đang ở Top 1-2-3 và vừa nạp thêm quà (meritAdded > 0)
+  if (!climbedRank && meritAdded <= 0) {
+    return null;
+  }
+
+  const prevHolder = prevTop3Snapshot[rank - 1];
+  const dethronedName =
+    climbedRank && prevHolder && prevHolder.userId !== person.userId ? prevHolder.nickname : null;
+
+  const roomMeta = {
+    1: {
+      roomName: 'PHÒNG RỒNG 🐉',
+      title: 'ĐỆ NHẤT CHƯỞNG MÔN',
+      beastIcon: '🐉',
+      rewardSkin: 'Thần Y Chân Tiên (Lục Kiếm Hoàng Kim)'
+    },
+    2: {
+      roomName: 'PHÒNG PHƯỢNG 🔥',
+      title: 'ĐỆ NHỊ TÔN GIẢ',
+      beastIcon: '🔥',
+      rewardSkin: 'Pháp Y Độ Kiếp (Bát Quái Thần Long)'
+    },
+    3: {
+      roomName: 'PHÒNG LÂN 🦄',
+      title: 'ĐỆ TAM HỘ PHÁP',
+      beastIcon: '🦄',
+      rewardSkin: 'Pháp Y Hợp Thể (Đôi Cánh Hỏa Phượng)'
+    }
+  }[rank];
+
+  const curMerit = Number(person.merit) || 0;
+  const top1Merit = Number(top3[0]?.merit) || 0;
+  const top2Merit = Number(top3[1]?.merit) || 0;
+
+  let ctaDonateText = '';
+  if (rank === 1) {
+    ctaDonateText = `🔥 KHIÊU CHIẾN: Ai dám tặng quà vượt ${curMerit + 1} 💎 để soán ngôi Đệ Nhất Phòng Rồng của ${person.nickname}?!`;
+  } else if (rank === 2) {
+    const needTop1 = Math.max(1, top1Merit - curMerit + 1);
+    ctaDonateText = `⚡ KÍCH THÍCH ĐUA TOP: Chỉ cần thêm +${needTop1} 💎 để ${person.nickname} soán ngôi TOP 1 Phòng Rồng!`;
+  } else {
+    const needTop2 = Math.max(1, top2Merit - curMerit + 1);
+    ctaDonateText = `⚡ KÍCH THÍCH ĐUA TOP: Chỉ cần thêm +${needTop2} 💎 để ${person.nickname} bứt phá lên TOP 2 Phòng Phượng!`;
+  }
+
+  return {
+    rank,
+    prevRank,
+    climbedRank,
+    user: person,
+    dethronedName,
+    meritAdded,
+    merit: curMerit,
+    tuVi: Number(person.tuVi) || 0,
+    roomName: roomMeta.roomName,
+    rankTitle: roomMeta.title,
+    beastIcon: roomMeta.beastIcon,
+    rewardSkin: roomMeta.rewardSkin,
+    ctaDonateText
+  };
+}
+
 function sortMeditatorsByMerit() {
   if (!Array.isArray(appState.meditators) || appState.meditators.length <= 1) return;
 
   const now = Date.now();
-  // Tầng 1: Top 6 vị Hộ Pháp / Trưởng Lão có điểm công đức hoặc Tu Vi cao nhất ngồi hàng đầu
+  // Tầng 1: Top 6 vị Hộ Pháp / Trưởng Lão: Luôn xếp chuẩn xác từ cao xuống thấp theo số Kim Cương (merit 💎), sau đó tới Tu Vi
   const byMeritDesc = [...appState.meditators].sort((a, b) => {
+    const meritA = Number(a.merit) || 0;
+    const meritB = Number(b.merit) || 0;
+    if (meritB !== meritA) return meritB - meritA;
+
     const scoreA = getEffectiveRankScore(a);
     const scoreB = getEffectiveRankScore(b);
     if (scoreB !== scoreA) return scoreB - scoreA;
@@ -920,6 +1029,7 @@ function handleChatEvent(rawUser, content, forcedSkin) {
   else if (isBlossomCmd) baseTuVi = 210 + Math.floor(Math.random() * 80);
   else if (isLuckyEnlightenment) baseTuVi = Math.round(baseTuVi * 2.2);
 
+  const prevTop3Snapshot = getTop3Snapshot();
   const { person, isNewSeat, skinChanged, realmUpgraded, prevRealm, curRealm, tuViAdded } = upsertMeditator({
     userId: user.userId,
     nickname: user.nickname,
@@ -928,6 +1038,13 @@ function handleChatEvent(rawUser, content, forcedSkin) {
     commentText: text,
     addTuViAmount: baseTuVi
   });
+  const top3Decree = evaluateTop3Decree(person, 0, prevTop3Snapshot);
+  if (top3Decree) {
+    pushLog(
+      `👑 [TOP ${top3Decree.rank} ${top3Decree.roomName}] ${person.nickname} đoạt ngôi ${top3Decree.rankTitle} (${top3Decree.rewardSkin})!`
+    );
+    broadcast('top3_decree', top3Decree);
+  }
 
   const isPondTheme = Number(appState.settings.themeId) === 6;
   const isTuTienTheme = Number(appState.settings.themeId) === 7;
@@ -1132,6 +1249,7 @@ function handleGiftEvent({ rawUser, giftName = 'Hoa Hồng', giftIconUrl = '', d
   const totalCoins = diamonds * count;
   const meritAdded = totalCoins;
 
+  const prevTop3Snapshot = getTop3Snapshot();
   const { person, realmUpgraded, prevRealm, tuViAdded } = upsertMeditator({
     userId: user.userId,
     nickname: user.nickname,
@@ -1140,6 +1258,14 @@ function handleGiftEvent({ rawUser, giftName = 'Hoa Hồng', giftIconUrl = '', d
   });
 
   addMeritLeaderboard(user, meritAdded);
+
+  const top3Decree = evaluateTop3Decree(person, meritAdded, prevTop3Snapshot);
+  if (top3Decree) {
+    pushLog(
+      `👑 [TOP ${top3Decree.rank} ${top3Decree.roomName}] ${person.nickname} tặng ${giftName} (+${meritAdded} 💎) -> Đoạt ngôi ${top3Decree.rankTitle}!`
+    );
+    broadcast('top3_decree', top3Decree);
+  }
 
   // Phân cấp quà tặng:
   // Nếu đang ở Mẫu 6 (Hồ Sen Phóng Sanh): Phật tử bước ra bến hồ thả Cá Chép / Cá Koi / Rùa Vàng
