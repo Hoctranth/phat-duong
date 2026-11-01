@@ -1797,5 +1797,210 @@ html, body {
   z-index: 2;
 }
 
+/* ============================================================================
+   4 CƠ CHẾ ĐỘC BẢN "OÁCH XÀ LÁCH": BÍ CẢNH LONG CHÂU · NGỰ KIẾM TUẦN THIÊN ·
+   DỊ TƯỢNG PHÁP LUÂN XOAY 360° · ĐẠO HIỆU PHONG THẦN
+   ============================================================================ */
+
+/* 1. Thanh Bí Cảnh Thái Cổ Long Châu ngay dưới thanh trạng thái */
+.tutien-relic-bar {
+  margin-top: 8px;
+  width: 650px;
+  height: 30px;
+  background: rgba(9, 18, 36, 0.88);
+  border: 1.5px solid rgba(250, 204, 21, 0.65);
+  border-radius: 999px;
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.85), 0 0 16px rgba(234, 179, 8, 0.28);
+}
+
+.relic-progress-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, rgba(180, 83, 9, 0.78) 0%, rgba(234, 179, 8, 0.85) 60%, rgba(56, 189, 248, 0.75) 100%);
+  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.relic-label-content {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.95);
+}
+
+.relic-label-content strong {
+  color: #fef08a;
+  font-weight: 900;
+}
+
+.relic-sep {
+  color: rgba(250, 204, 21, 0.7);
+}
+
+/* 2. Pháp Tướng Ngự Kiếm Tuần Thiên (Tu sĩ cưỡi Đại Phi Kiếm lướt qua bầu trời trăng sáng) */
+.tutien-sky-rider {
+  position: absolute;
+  top: 18px;
+  left: -380px;
+  z-index: 76;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.tutien-sky-rider.flying {
+  animation: skySwordFlight 5.4s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+@keyframes skySwordFlight {
+  0% {
+    transform: translateX(0) translateY(18px) scale(0.82);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  50% {
+    transform: translateX(730px) translateY(-12px) scale(0.96);
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(1520px) translateY(10px) scale(0.86);
+    opacity: 0;
+  }
+}
+
+.sky-rider-banner {
+  margin-bottom: -8px;
+  padding: 4px 18px;
+  background: linear-gradient(90deg, rgba(127, 29, 29, 0.95), rgba(180, 83, 9, 0.95), rgba(127, 29, 29, 0.95));
+  border: 1.5px solid #fef08a;
+  border-radius: 999px;
+  font-size: 14.5px;
+  font-weight: 900;
+  color: #fef08a;
+  white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.85), 0 0 16px rgba(250, 204, 21, 0.55);
+  z-index: 3;
+}
+
+.sky-rider-figure {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sky-rider-char {
+  width: 112px;
+  height: 124px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 16px rgba(250, 204, 21, 0.75));
+  z-index: 2;
+}
+
+.giant-immortal-sword {
+  margin-top: -22px;
+  width: 230px;
+  height: 24px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  filter: drop-shadow(0 0 14px #38bdf8) drop-shadow(0 0 24px #facc15);
+  z-index: 1;
+}
+
+.sword-flame-tail {
+  width: 85px;
+  height: 10px;
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0), #38bdf8, #fde047);
+  border-radius: 999px;
+}
+
+.sword-hilt {
+  width: 14px;
+  height: 24px;
+  background: linear-gradient(180deg, #fde047, #b45309);
+  border-radius: 4px;
+  border: 1px solid #fffbeb;
+}
+
+.sword-blade {
+  flex: 1;
+  height: 11px;
+  background: linear-gradient(90deg, #fef08a 0%, #ffffff 65%, #38bdf8 100%);
+  clip-path: polygon(0 0, 82% 0, 100% 50%, 82% 100%, 0 100%);
+}
+
+/* 3. Dị Tượng Pháp Luân Tinh Đồ Xoay 360° Sau Lưng Top 1 · 2 · 3 */
+.dharma-wheel-halo {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 196px;
+  height: 196px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  animation: spinDharmaWheel 14s linear infinite;
+}
+
+.tutien-elder-node .dharma-wheel-halo {
+  width: 158px;
+  height: 158px;
+  top: 4px;
+}
+
+.dharma-wheel-halo.halo-dragon {
+  border: 2.5px dashed rgba(250, 204, 21, 0.78);
+  box-shadow: 0 0 28px rgba(250, 204, 21, 0.45), inset 0 0 24px rgba(234, 179, 8, 0.32);
+  background: radial-gradient(circle, rgba(250, 204, 21, 0.18) 0%, rgba(250, 204, 21, 0.04) 58%, transparent 72%);
+}
+
+.dharma-wheel-halo.halo-phoenix {
+  border: 2px dashed rgba(251, 146, 60, 0.72);
+  box-shadow: 0 0 22px rgba(251, 113, 133, 0.42), inset 0 0 18px rgba(251, 146, 60, 0.25);
+  background: radial-gradient(circle, rgba(251, 113, 133, 0.16) 0%, transparent 70%);
+}
+
+.dharma-wheel-halo.halo-kirin {
+  border: 2px dashed rgba(192, 132, 252, 0.72);
+  box-shadow: 0 0 22px rgba(192, 132, 252, 0.42), inset 0 0 18px rgba(168, 85, 247, 0.25);
+  background: radial-gradient(circle, rgba(192, 132, 252, 0.16) 0%, transparent 70%);
+}
+
+@keyframes spinDharmaWheel {
+  0% { transform: translateX(-50%) rotate(0deg); }
+  100% { transform: translateX(-50%) rotate(360deg); }
+}
+
+/* 4. Đạo Hiệu Phong Thần (Hiển thị trên đầu / trong thẻ bài tu sĩ) */
+.dao-title-tag {
+  font-size: 11.5px;
+  font-weight: 900;
+  color: #fde047;
+  letter-spacing: 0.4px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95);
+  margin-bottom: 1px;
+}
+
+
 
 

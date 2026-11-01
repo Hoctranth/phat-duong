@@ -442,6 +442,13 @@ function createInitialState() {
       totalMerit: 973
     },
     pondCreatures: generateInitialPondCreatures(),
+    tutienRelic: {
+      name: 'Thái Cổ Long Châu',
+      progress: 68,
+      target: 100,
+      lastMvp: 'Chà 🌸',
+      stageLevel: 1
+    },
     totalCrowdCount: initialMeditators.length,
     meditators: initialMeditators,
     leaderboardMap,
@@ -753,6 +760,13 @@ function serializeState() {
     settings: appState.settings,
     altar: appState.altar,
     pondCreatures: appState.pondCreatures || [],
+    tutienRelic: appState.tutienRelic || {
+      name: 'Thái Cổ Long Châu',
+      progress: 68,
+      target: 100,
+      lastMvp: 'Chà 🌸',
+      stageLevel: 1
+    },
     totalCrowdCount: totalCrowd,
     totalSlots: totalCrowd,
     meditators: appState.meditators,
@@ -977,12 +991,69 @@ function handleMemberEvent(rawUser) {
   });
 }
 
+function advanceTuTienRelic(person, delta = 12) {
+  if (!appState.tutienRelic) {
+    appState.tutienRelic = {
+      name: 'Thái Cổ Long Châu',
+      progress: 68,
+      target: 100,
+      lastMvp: 'Chà 🌸',
+      stageLevel: 1
+    };
+  }
+  const relic = appState.tutienRelic;
+  relic.progress = Math.max(0, (Number(relic.progress) || 0) + delta);
+  if (relic.progress >= relic.target) {
+    relic.progress = 18;
+    relic.stageLevel = (Number(relic.stageLevel) || 1) + 1;
+    relic.lastMvp = person.nickname;
+    person.tuVi = (Number(person.tuVi) || 0) + 800;
+    // Chỉ giữ duy nhất 1 người đương nhiệm giữ Đạo Hiệu 「Long Châu Chi Chủ」
+    appState.meditators.forEach((m) => {
+      if (m.daoTitle === 'Long Châu Chi Chủ') {
+        m.daoTitle = '';
+      }
+    });
+    if (!person.customDaoTitle) {
+      person.daoTitle = 'Long Châu Chi Chủ';
+    }
+    const curRealm = getCultivationRealm(person.merit, person.tuVi);
+    person.realmName = curRealm.name;
+    person.robeTier = curRealm.robeTier;
+    pushLog(
+      `🐉 [BÍ CẢNH KHAI MỞ] ${person.nickname} đã phá vỡ phong ấn Thái Cổ Long Châu (Tầng ${relic.stageLevel - 1}) -> Nhận +800 Tu Vi & Đạo Hiệu 「Long Châu Chi Chủ」!`
+    );
+    broadcast('sky_ride', {
+      user: person,
+      daoTitle: person.daoTitle || 'Long Châu Chi Chủ',
+      reason: `🐉 PHÁ ẤN THÁI CỔ LONG CHÂU (+800 TU VI)`
+    });
+    return true;
+  }
+  return false;
+}
+
 function handleChatEvent(rawUser, content, forcedSkin) {
   const text = String(content || '').trim();
   const lower = text.toLowerCase();
   const user = extractUserInfo(rawUser);
 
   // Phát hiện các lệnh tương tác Tu Tiên qua Comment để cộng mạnh Tu Vi & dễ dàng lên cấp
+  const isSkyRideCmd =
+    lower.includes('ngự kiếm') ||
+    lower.includes('ngu kiem') ||
+    lower.includes('cưỡi kiếm') ||
+    lower.includes('tuần thiên') ||
+    lower.includes('bay lên');
+  const isRelicSlashCmd =
+    lower.includes('phá trận') ||
+    lower.includes('pha tran') ||
+    lower.includes('trảm') ||
+    lower.includes('bảo vật') ||
+    lower.includes('long châu');
+  const daoTitleMatch = text.match(/(?:đạo hiệu|dao hieu|danh hiệu|danh hieu)\s+(.+)/i);
+  const customDaoTitle = daoTitleMatch ? daoTitleMatch[1].trim().slice(0, 16) : null;
+
   const isThunderCmd =
     lower.includes('sấm') ||
     lower.includes('sam chop') ||
@@ -1023,7 +1094,9 @@ function handleChatEvent(rawUser, content, forcedSkin) {
   // Đồng thời có 45% tỉ lệ "Đốn Ngộ Tiên Duyên" bạo kích x2.2 Tu Vi!
   const isLuckyEnlightenment = Math.random() < 0.45;
   let baseTuVi = 120 + Math.floor(Math.random() * 75); // Mặc định 120..195 Tu Vi mỗi comment
-  if (isDuelCmd) baseTuVi = 320 + Math.floor(Math.random() * 120);
+  if (isRelicSlashCmd) baseTuVi = 350 + Math.floor(Math.random() * 110);
+  else if (isSkyRideCmd) baseTuVi = 290 + Math.floor(Math.random() * 100);
+  else if (isDuelCmd) baseTuVi = 320 + Math.floor(Math.random() * 120);
   else if (isThunderCmd) baseTuVi = 280 + Math.floor(Math.random() * 110);
   else if (isSwordCmd) baseTuVi = 250 + Math.floor(Math.random() * 90);
   else if (isBlossomCmd) baseTuVi = 210 + Math.floor(Math.random() * 80);
@@ -1038,6 +1111,24 @@ function handleChatEvent(rawUser, content, forcedSkin) {
     commentText: text,
     addTuViAmount: baseTuVi
   });
+  if (customDaoTitle) {
+    person.customDaoTitle = true;
+    person.daoTitle = customDaoTitle;
+  }
+  const relicBroken = advanceTuTienRelic(person, isRelicSlashCmd ? 24 : 7);
+  if (isSkyRideCmd && !relicBroken) {
+    broadcast('sky_ride', {
+      user: person,
+      daoTitle: person.daoTitle || 'Tiêu Dao Kiếm Tiên',
+      reason: `🗡️ NGỰ KIẾM TUẦN THIÊN · ${person.realmName.toUpperCase()}`
+    });
+  } else if (realmUpgraded && !relicBroken) {
+    broadcast('sky_ride', {
+      user: person,
+      daoTitle: person.daoTitle || 'Thiên Đạo Kỳ Tài',
+      reason: `⚡ ĐỘT PHÁ ${person.realmName.toUpperCase()} · NGỰ KIẾM PHI HÀNH`
+    });
+  }
   const top3Decree = evaluateTop3Decree(person, 0, prevTop3Snapshot);
   if (top3Decree) {
     pushLog(
@@ -1259,12 +1350,20 @@ function handleGiftEvent({ rawUser, giftName = 'Hoa Hồng', giftIconUrl = '', d
 
   addMeritLeaderboard(user, meritAdded);
 
+  const relicBroken = advanceTuTienRelic(person, Math.min(100, Math.max(25, meritAdded * 2)));
   const top3Decree = evaluateTop3Decree(person, meritAdded, prevTop3Snapshot);
   if (top3Decree) {
     pushLog(
       `👑 [TOP ${top3Decree.rank} ${top3Decree.roomName}] ${person.nickname} tặng ${giftName} (+${meritAdded} 💎) -> Đoạt ngôi ${top3Decree.rankTitle}!`
     );
     broadcast('top3_decree', top3Decree);
+  }
+  if (!relicBroken) {
+    broadcast('sky_ride', {
+      user: person,
+      daoTitle: top3Decree ? top3Decree.rankTitle : person.daoTitle || 'Chân Tiên Chí Tôn',
+      reason: `👑 ${person.nickname.toUpperCase()} NGỰ KIẾM TUẦN THIÊN (+${meritAdded} 💎)`
+    });
   }
 
   // Phân cấp quà tặng:
