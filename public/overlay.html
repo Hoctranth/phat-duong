@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Chùa Online & Đại Điện Quỳ Bái (9:16 TikTok LIVE Overlay)</title>
-  <link rel="stylesheet" href="/css/overlay.css?v=live28" />
+  <link rel="stylesheet" href="/css/overlay.css?v=live30" />
 </head>
 <body>
   <div id="stage-wrapper" class="mode-quybai theme-1">
@@ -302,13 +302,13 @@
         <h1 class="tutien-main-title" id="tutien-title">Tiên Môn Vấn Đạo</h1>
         <p class="tutien-sub-title" id="tutien-subtitle">Tu tiên cùng nhau · Chat để nhập môn</p>
 
-        <!-- Thanh Bí Cảnh Săn Bảo Vật Toàn Server: Thái Cổ Long Châu -->
+        <!-- Thanh Bí Cảnh Săn Bảo Vật Toàn Server: Thái Cổ Long Châu / Thiên Nghịch Châu -->
         <div class="tutien-relic-bar" id="tutien-relic-bar">
           <div class="relic-progress-fill" id="tutien-relic-fill" style="width: 68%;"></div>
-          <div class="relic-label-content">
-            <span>🐉 <strong>THÁI CỔ LONG CHÂU</strong> (<span id="tutien-relic-pct">68%</span>)</span>
+          <div class="relic-label-content" id="tutien-relic-label-content">
+            <span id="tutien-relic-name">🐉 <strong>THÁI CỔ LONG CHÂU</strong></span> (<span id="tutien-relic-pct">68%</span>)
             <span class="relic-sep">·</span>
-            <span>Chat <strong>"phá trận"</strong> đoạt +800 TV</span>
+            <span id="tutien-relic-cmd">Chat <strong>"phá trận"</strong> đoạt +800 TV</span>
             <span class="relic-sep">·</span>
             <span class="relic-mvp">Chi Chủ: <strong id="tutien-relic-mvp">Chà 🌸</strong></span>
           </div>
@@ -331,7 +331,7 @@
       <!-- Bảng Tuần (Góc trái) kèm Biển Treo Thưởng Đua Top 1-2-3 Kích Thích Donate -->
       <aside class="tutien-panel tutien-left-panel">
         <h3 class="tutien-panel-title">Bảng Tuần</h3>
-        <p class="tutien-panel-sub">Top 1-2-3 vào phòng Rồng · Phượng · Lân</p>
+        <p class="tutien-panel-sub" id="tutien-weekly-sub">Top 1-2-3 vào phòng Rồng · Phượng · Lân</p>
         <div class="tutien-weekly-list" id="tutien-weekly-list"></div>
         <div class="tutien-top3-bounty-box" id="tutien-top3-bounty-box"></div>
       </aside>
@@ -339,7 +339,7 @@
       <!-- Bảng Thăng Cấp (Góc phải) -->
       <aside class="tutien-panel tutien-right-panel">
         <h3 class="tutien-panel-title">Bảng Thăng Cấp</h3>
-        <div class="tutien-realm-table">
+        <div class="tutien-realm-table" id="tutien-realm-table">
           <div class="realm-row"><span>1. Luyện Khí</span><span class="r-cost">2 🌹</span></div>
           <div class="realm-row"><span>2. Trúc Cơ</span><span class="r-cost">12 🌹</span></div>
           <div class="realm-row"><span>3. Kim Đan</span><span class="r-cost">40 💎</span></div>
@@ -428,6 +428,7 @@
       <button class="dock-btn" data-theme="3" title="Chánh Điện Cổ Tự">Mẫu 3: Chánh Điện</button>
       <button class="dock-btn" data-theme="6" title="Hồ Sen Phóng Sanh - Phật tử bước ra thả Cá Chép, Cá Koi, Rùa Vàng">Mẫu 6: 🐟 Phóng Sanh</button>
       <button class="dock-btn" data-theme="7" title="Tiên Môn Vấn Đạo - Tu Tiên Cùng Nhau · Chat Để Nhập Môn">Mẫu 7: ⚔️ Tu Tiên</button>
+      <button class="dock-btn" data-theme="8" title="Tiên Nghịch Vấn Đạo - Thuận Vi Phàm Nghịch Tắc Tiên (Vương Lâm)">Mẫu 8: 🩸 Tiên Nghịch</button>
       <button class="dock-btn" id="dock-btn-bell">🔔 Chuông</button>
       <button class="dock-btn" id="dock-btn-chant">📿 Đọc Kinh</button>
     </footer>
@@ -436,7 +437,7 @@
     <canvas id="fx-canvas" width="1080" height="1920"></canvas>
   </div>
 
-  <script src="/js/audio.js?v=live29"></script>
-  <script src="/js/overlay.js?v=live29"></script>
+  <script src="/js/audio.js?v=live30"></script>
+  <script src="/js/overlay.js?v=live30"></script>
 </body>
 </html>
