@@ -407,8 +407,8 @@
       const spriteSet = SPRITE_SETS[genderKey];
       html += `
         <div
-          class="standing-pilgrim-node"
-          style="left: ${slot.x}px; top: ${slot.y}px; --p-scale: ${isRedCarpetStage ? 0.94 : 0.88}; z-index: ${14 + idx};"
+          class="standing-pilgrim-node${bText ? ' just-interacted-glow' : ''}"
+          style="left: ${slot.x}px; top: ${slot.y}px; --p-scale: ${isRedCarpetStage ? 0.94 : 0.88}; z-index: ${bText ? 55 : 14 + idx};"
         >
           ${bText ? `<div class="pilgrim-white-bubble">${escapeHtml(bText)}</div>` : ''}
           <img
@@ -440,8 +440,8 @@
 
       html += `
         <div
-          class="standing-pilgrim-node"
-          style="left: ${x}px; top: ${y}px; --p-scale: ${scale}; z-index: ${zIndex};"
+          class="standing-pilgrim-node${bubbleText ? ' just-interacted-glow' : ''}"
+          style="left: ${x}px; top: ${y}px; --p-scale: ${scale}; z-index: ${bubbleText ? 56 : zIndex};"
         >
           ${bubbleText ? `<div class="pilgrim-white-bubble">${escapeHtml(bubbleText)}</div>` : ''}
           <img
@@ -2297,6 +2297,9 @@
       case 'member': {
         window.sacredAudio.playWoodenFish(1);
         flashMonkCard(payload.monkSpeech, false);
+        if (payload.monkSpeech && activeRunnersCount === 0 && runnerQueue.length === 0) {
+          showTamBaoBanner(payload.monkSpeech, 4000);
+        }
         if (payload.user) {
           showBubbleForUser(payload.user.userId, 'nam mô a di đà phật 🙏');
           if (currentSettings.freeRoamEnabled) {
@@ -2313,9 +2316,17 @@
       case 'chat': {
         window.sacredAudio.playWoodenFish(1);
         flashMonkCard(payload.monkSpeech, false);
+        if (payload.monkSpeech && activeRunnersCount === 0 && runnerQueue.length === 0 && !payload.walkUpBow) {
+          showTamBaoBanner(payload.monkSpeech, 4500);
+        }
         if (payload.user) {
           showBubbleForUser(payload.user.userId, payload.content || 'nam mô');
-          if (currentSettings.freeRoamEnabled) {
+          if (payload.walkUpBow && (currentThemeId === 1 || currentThemeId === 3)) {
+            triggerRunUpAndProstrate({
+              user: payload.user,
+              meritAdded: 1
+            });
+          } else if (currentSettings.freeRoamEnabled) {
             const actor = freeRoamActors.get(payload.user.userId);
             if (actor && actor.state !== 'walking') {
               startActorBowSequence(actor, performance.now(), '🙏 Thành tâm');
@@ -2430,6 +2441,62 @@
     window.sacredAudio.init();
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ type: 'chant' }));
+    }
+  });
+
+  // Cho phép nhấn trực tiếp vào 3 bảng đỏ dưới đáy (1 xu | 5/10 xu | 10+/99+ xu) để tương tác nhanh ngay trên màn hình
+  document.querySelectorAll('.crimson-gold-plaque').forEach((plaqueEl, idx) => {
+    plaqueEl.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      window.sacredAudio.init();
+      const tierCoins = idx === 0 ? 1 : idx === 1 ? 10 : 99;
+      const giftName =
+        currentThemeId === 6
+          ? idx === 0
+            ? 'Phóng Sanh Cá Chép Đỏ'
+            : idx === 1
+              ? 'Phóng Sanh Đàn Cá Koi'
+              : 'Phóng Sanh Rùa Vàng Linh Quy'
+          : idx === 0
+            ? 'Dâng Nén Tâm Hương'
+            : idx === 1
+              ? 'Dâng Đài Hoa Sen'
+              : 'Phát Tâm Hộ Pháp';
+
+      fetch('/api/simulate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventType: 'gift',
+          data: {
+            nickname: `Phật Tử Hữu Duyên`,
+            giftName,
+            diamondCount: tierCoins,
+            repeatCount: 1
+          }
+        })
+      }).catch(() => {});
+    });
+  });
+
+  // Cho phép nhấn trực tiếp lên mặt nước Hồ Sen (Mẫu 6) để rải thức ăn vàng gọi đàn Cá Koi & Rùa Vàng bơi lại
+  stageWrapper.addEventListener('click', (ev) => {
+    if (currentThemeId !== 6) return;
+    if (ev.target.closest('.crimson-gold-plaque, .bottom-control-dock, .tam-long-thanh-card')) return;
+    const rect = stageWrapper.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const sx = ((ev.clientX - rect.left) / rect.width) * 1080;
+    const sy = ((ev.clientY - rect.top) / rect.height) * 1920;
+
+    if (sy >= 1210 && sy <= 1740 && sx >= 160 && sx <= 920) {
+      window.sacredAudio.init();
+      window.sacredAudio.playWaterSplash();
+      spawnWaterRipple(sx, sy, 82, 0.85, true);
+      spawnLotusBurst(sx, sy, 14);
+      pondSwimmers.forEach((sw) => {
+        sw.targetAngle = Math.atan2(sy - sw.y, sx - sw.x) + (Math.random() - 0.5) * 0.28;
+        sw.nextTurnAt = performance.now() + 2600;
+      });
     }
   });
 

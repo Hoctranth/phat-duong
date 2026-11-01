@@ -429,17 +429,49 @@ function getPersonPriorityBucket(person) {
 }
 
 function sortMeditatorsByMerit() {
-  // Ưu tiên: 1) Người thật có tên/avatar -> 2) Người xem ẩn danh trên LIVE -> 3) Dữ liệu mẫu seed_*
-  appState.meditators.sort((a, b) => {
+  if (!Array.isArray(appState.meditators) || appState.meditators.length <= 1) return;
+
+  const now = Date.now();
+  // Tầng 1: Top 6 vị Hộ Pháp có công đức (merit > 0) cao nhất ngồi 6 đệm VIP hàng đầu trước Tam Bảo
+  const byMeritDesc = [...appState.meditators].sort((a, b) => {
+    if ((b.merit || 0) !== (a.merit || 0)) return (b.merit || 0) - (a.merit || 0);
     const bucketA = getPersonPriorityBucket(a);
     const bucketB = getPersonPriorityBucket(b);
     if (bucketA !== bucketB) return bucketA - bucketB;
-    if (b.merit !== a.merit) return b.merit - a.merit;
+    return (b.lastActiveAt || b.joinedAt || 0) - (a.lastActiveAt || a.joinedAt || 0);
+  });
+
+  const topVipSet = new Set();
+  const topVips = [];
+  for (const p of byMeritDesc) {
+    if (topVips.length >= 6) break;
+    if ((p.merit || 0) > 0 || topVips.length < 6) {
+      topVips.push(p);
+      topVipSet.add(p.userId);
+    }
+  }
+
+  // Tầng 2: Những người xem thật (bucket 0) vừa mới tương tác (comment / vào phòng / thả cá / thả tim)
+  // được ưu tiên đứng ngay hàng đầu đạo tràng tiền cảnh (vị trí 7..24) để dù phòng 5.000 người vẫn luôn hiện rõ Tên + Avatar + Bong bóng lời khấn!
+  const remaining = appState.meditators.filter((p) => !topVipSet.has(p.userId));
+  remaining.sort((a, b) => {
+    const bucketA = getPersonPriorityBucket(a);
+    const bucketB = getPersonPriorityBucket(b);
+    const recentA = bucketA === 0 && now - (a.lastActiveAt || 0) < 180000 ? 1 : 0;
+    const recentB = bucketB === 0 && now - (b.lastActiveAt || 0) < 180000 ? 1 : 0;
+    if (recentA !== recentB) return recentB - recentA;
+    if (recentA === 1 && recentB === 1) {
+      return (b.lastActiveAt || 0) - (a.lastActiveAt || 0);
+    }
+    if (bucketA !== bucketB) return bucketA - bucketB;
+    if ((b.merit || 0) !== (a.merit || 0)) return (b.merit || 0) - (a.merit || 0);
     const rankA = a.roomRank || 9999;
     const rankB = b.roomRank || 9999;
     if (rankA !== rankB) return rankA - rankB;
     return (b.lastActiveAt || b.joinedAt || 0) - (a.lastActiveAt || a.joinedAt || 0);
   });
+
+  appState.meditators = [...topVips, ...remaining].slice(0, MAX_ACTIVE_MEDITATOR_NODES);
 }
 
 function purgeSeedMeditators() {
@@ -725,14 +757,21 @@ function handleChatEvent(rawUser, content, forcedSkin) {
     pushLog(`💬 ${person.nickname}: "${text}"`);
   }
 
-  // Hỗ trợ lệnh tương tác qua bình luận trên LIVE (thỉnh chuông, gõ mõ, dâng hương/thắp hương, thả cá phóng sanh)
+  // Hỗ trợ lệnh tương tác qua bình luận trên LIVE (thỉnh chuông, gõ mõ, dâng hương/thắp hương, lạy Phật, thả cá phóng sanh)
   const lower = text.toLowerCase();
+  let walkUpBow = false;
   if (lower.includes('chuông')) {
     broadcast('bell_strike', {});
   } else if (lower.includes('gõ mõ') || lower === 'mõ') {
     broadcast('wooden_fish_strike', {});
-  } else if (lower.includes('thắp hương') || lower.includes('dâng hương')) {
+  } else if (
+    lower.includes('thắp hương') ||
+    lower.includes('dâng hương') ||
+    lower.includes('lạy phật') ||
+    lower.includes('lễ phật')
+  ) {
     person.hasIncense = true;
+    walkUpBow = true;
   } else if (
     lower.includes('thả cá') ||
     lower.includes('tha ca') ||
@@ -768,7 +807,8 @@ function handleChatEvent(rawUser, content, forcedSkin) {
     content: text,
     isNewSeat,
     skinChanged,
-    monkSpeech
+    monkSpeech,
+    walkUpBow
   });
 }
 
