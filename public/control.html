@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chùa Online - Bảng Điều Khiển LIVE (Không Giới Hạn Người + Lạy Phật + Nhạc & TTS Chuẩn)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-dark: #221308;
+      --panel-bg: #2a180b;
+      --border-gold: #8c6630;
+      --gold-text: #f3c462;
+      --amber-btn: #c88728;
+      --brown-btn: #4f3118;
+      --green-btn: #2e8540;
+      --red-btn: #b3392b;
+      --blue-btn: #1f6feb;
+      --input-bg: #160c05;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg-dark);
+      color: #f5ebe0;
+      font-family: 'Plus Jakarta Sans', Segoe UI, Tahoma, sans-serif;
+      padding: 14px 18px;
+      min-height: 100vh;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid rgba(243, 196, 98, 0.25);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .top-bar-left h1 {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--gold-text);
+    }
+
+    .top-bar-left p {
+      font-size: 13px;
+      color: #4ade80;
+      font-weight: 600;
+      margin-top: 3px;
+    }
+
+    .top-bar-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 410px 1fr 375px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    @media (max-width: 1280px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    @media (max-width: 860px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .group-box {
+      background: var(--panel-bg);
+      border: 1.5px solid var(--border-gold);
+      border-radius: 6px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .group-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: var(--gold-text);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .theme-list {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .theme-btn {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--brown-btn);
+      border: 1px solid #78552b;
+      border-radius: 4px;
+      color: #fff5e4;
+      font-size: 13.5px;
+      font-weight: 700;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .theme-btn:hover {
+      filter: brightness(1.12);
+    }
+
+    .theme-btn.active {
+      background: var(--amber-btn);
+      color: #1f0e03;
+      border-color: #fde68a;
+    }
+
+    label {
+      display: block;
+      font-size: 12.5px;
+      color: #e2d1b5;
+      margin: 8px 0 4px 0;
+      font-weight: 600;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid #7c582b;
+      border-radius: 4px;
+      padding: 7px 10px;
+      color: #fff;
+      font-size: 13.5px;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .row-flex {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .grid-2x2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 12px;
+      margin-top: 8px;
+    }
+
+    .inline-field {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+    }
+
+    .inline-field input {
+      width: 72px;
+      text-align: center;
+    }
+
+    .music-player-box {
+      background: rgba(15, 8, 4, 0.65);
+      border: 1px solid #7c582b;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-top: 8px;
+    }
+
+    .btn {
+      padding: 9px 14px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #fff;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-family: inherit;
+      text-decoration: none;
+      transition: filter 0.15s;
+    }
+    .btn:hover {
+      filter: brightness(1.12);
+    }
+
+    .btn-amber { background: var(--amber-btn); color: #1c0c02; }
+    .btn-green { background: var(--green-btn); }
+    .btn-red { background: var(--red-btn); }
+    .btn-brown { background: var(--brown-btn); }
+    .btn-blue { background: var(--blue-btn); }
+
+    .preset-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .log-console {
+      margin-top: 10px;
+      height: 145px;
+      background: #0b0704;
+      border: 1px solid #6b4c24;
+      border-radius: 4px;
+      padding: 8px 10px;
+      font-family: Consolas, monospace;
+      font-size: 12.5px;
+      color: #d1fae5;
+      overflow-y: auto;
+      line-height: 1.45;
+    }
+
+    .preview-header-sub {
+      text-align: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--gold-text);
+      margin-bottom: 8px;
+    }
+
+    .preview-916-container {
+      width: 100%;
+      aspect-ratio: 9 / 16;
+      background: #090402;
+      border: 2px solid var(--border-gold);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .preview-916-container iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .quick-guide-text {
+      margin-top: 10px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #d6c2a5;
+    }
+  </style>
+</head>
+<body>
+  <header class="top-bar">
+    <div class="top-bar-left">
+      <h1>🙏 BẢNG ĐIỀU KHIỂN CHÙA ONLINE (KHÔNG GIỚI HẠN NGƯỜI · ĐỨNG DẬY LẠY PHẬT · NHẠC & TTS VIỆT CHUẨN)</h1>
+      <p>● Trạng thái Server: Đang chạy tại http://localhost:3000</p>
+    </div>
+    <div class="top-bar-actions">
+      <button class="btn btn-amber" id="btn-sync-server">▶ Đồng Bộ Server</button>
+      <a class="btn btn-red" href="/overlay.html" target="_blank">🪟 Mở Cửa Sổ Overlay 9:16</a>
+    </div>
+  </header>
+
+  <main class="dashboard-grid">
+    <!-- CỘT 1: MẪU KHÔNG GIAN + MÁY PHÁT NHẠC THIỀN + GIỌNG ĐỌC TIẾNG VIỆT CHUẨN -->
+    <div>
+      <section class="group-box">
+        <div class="group-title">1. CHỌN OPTION GIAO DIỆN CHÙA (ĐỔI TRỰC TIẾP TRÊN LIVE)</div>
+        <div class="theme-list">
+          <button class="theme-btn active" data-theme="1" data-label="Mẫu 1: Đại Điện Quỳ Bái (Chạy Lên Thảm Xanh)">Mẫu 1: Đại Điện Thảm Xanh (Tặng Quà Chạy Lên Bục Quỳ Bái)</button>
+          <button class="theme-btn" data-theme="2" data-label="Mẫu 2: Sân Chùa Đêm Trăng (Chùa Online)">Mẫu 2: Chùa Online - Sân Chùa Đêm Trăng (Ngồi Đài Sen)</button>
+          <button class="theme-btn" data-theme="3" data-label="Mẫu 3: Chánh Điện Cổ Tự">Mẫu 3: Chánh Điện Cổ Tự Truyền Thống</button>
+          <button class="theme-btn" data-theme="4" data-label="Mẫu 4: Thiền Viện Trúc Lâm">Mẫu 4: Thiền Viện Trúc Lâm Thanh Tịnh</button>
+          <button class="theme-btn" data-theme="5" data-label="Mẫu 5: Tây Phương Cực Lạc">Mẫu 5: Tây Phương Cực Lạc Hoàng Kim</button>
+          <button class="theme-btn" data-theme="6" data-label="Mẫu 6: Hồ Sen Phóng Sanh (Thả Cá Koi / Cá Chép / Rùa Vàng)" style="border-color: #10b981; background: rgba(6, 78, 59, 0.72);">
+            🐟 Mẫu 6: Hồ Sen Phóng Sanh (Phật Tử Bước Ra Thả Cá Chép / Cá Koi / Rùa Vàng)
+          </button>
+        </div>
+
+        <!-- OPTION MỚI: HỒ SEN PHÓNG SANH (PHẬT TỬ BƯỚC RA THẢ CÁ CHÉP / CÁ KOI / RÙA VÀNG) -->
+        <div class="music-player-box" style="margin-top: 10px; border-color: #10b981; background: rgba(6, 48, 38, 0.55);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <strong style="font-size: 13px; color: #6ee7b7;">🐟 Kịch Bản Hồ Sen Phóng Sanh (Cá Bơi Vĩnh Viễn Dưới Hồ):</strong>
+            <span id="pond-fish-count-badge" style="font-size: 12px; font-weight: 700; color: #fde047;">Đang bơi: 6 cá & rùa</span>
+          </div>
+          <div style="font-size: 12px; color: #d1fae5; margin-bottom: 7px; line-height: 1.4;">
+            • Phật tử mang <strong>Avatar + Tên Phật tử</strong> bước ra Bến Đá cúi thả cá xuống hồ (<strong>cá không gắn tên</strong>, thả xong <strong>bơi mãi dưới hồ</strong>).<br />
+            • Khán giả tặng quà hoặc comment <em>"thả cá", "phóng sanh", "cá koi", "rùa vàng"</em> sẽ tự động bước ra thả!
+          </div>
+          <div class="preset-grid-4" style="grid-template-columns: repeat(2, 1fr); gap: 6px;">
+            <button class="btn btn-green" data-release-fish="carp_red" data-fish-count="1" style="padding: 8px 8px; font-size: 12.5px;">
+              🐟 Bước Ra Thả Cá Chép Đỏ
+            </button>
+            <button class="btn btn-amber" data-release-fish="koi_calico" data-fish-count="1" style="padding: 8px 8px; font-size: 12.5px;">
+              🐠 Bước Ra Thả Cá Koi Ngũ Sắc
+            </button>
+            <button class="btn btn-blue" data-release-fish="mixed_koi" data-fish-count="3" style="padding: 8px 8px; font-size: 12.5px;">
+              ✨ Thả Đàn 3 Cá Koi Vàng
+            </button>
+            <button class="btn btn-red" data-release-fish="turtle_gold" data-fish-count="1" style="padding: 8px 8px; font-size: 12.5px;">
+              🐢 Bước Ra Thả Rùa Vàng
+            </button>
+          </div>
+        </div>
+
+        <!-- OPTION MỚI: MỞ KHẢ NĂNG CÁC PHẬT TỬ TỰ DO DI CHUYỂN & HÀNH LỄ -->
+        <div class="music-player-box" style="margin-top: 10px; border-color: #d97706;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <strong style="font-size: 13px; color: var(--gold-text);">🚶 Option Phật Tử Tự Do Di Chuyển & Hành Lễ:</strong>
+            <span id="free-roam-status-badge" style="font-size: 12px; font-weight: 700; color: #fbbf24;">Đang TẮT (Quỳ cố định)</span>
+          </div>
+
+          <button class="btn btn-brown" id="btn-toggle-free-roam" style="width: 100%; padding: 10px 12px; font-size: 13.5px;">
+            🚶 BẬT Chế Độ: Các Phật Tử Tự Do Di Chuyển & Hành Lễ
+          </button>
+
+          <div class="row-flex" style="margin-top: 7px;">
+            <select id="select-roam-behavior" style="flex: 1;" title="Chọn các hoạt động phật tử tự thực hiện">
+              <option value="all">✨ Tất cả: Đi dạo + Tự lên thắp hương + Quỳ lạy + Ngồi thiền + Chào nhau</option>
+              <option value="kinh_hanh">🚶 Đi bộ Kinh Hành quanh chùa & Đứng xá Phật</option>
+              <option value="le_phat">🕯️ Hành lễ sôi nổi: Thay phiên lên Lư Hương dâng nhang & Quỳ lạy</option>
+              <option value="thien_dinh">🧘 Thiền hành & Tọa thiền tĩnh tâm</option>
+            </select>
+            <select id="select-roam-speed" style="width: 128px;" title="Tốc độ và nhịp độ di chuyển">
+              <option value="calm">Chậm rãi</option>
+              <option value="normal" selected>Tự nhiên</option>
+              <option value="lively">Nhộn nhịp</option>
+            </select>
+          </div>
+
+          <div class="preset-grid-4" style="margin-top: 7px;">
+            <button class="btn btn-brown" data-roam-action="roam_all" style="padding: 6px 4px; font-size: 12px;" title="Cho toàn bộ phật tử đi bộ kinh hành quanh chùa">🚶 Kinh Hành</button>
+            <button class="btn btn-brown" data-roam-action="bow_all" style="padding: 6px 4px; font-size: 12px;" title="Tất cả đồng loạt dừng lại quỳ lạy Tam Bảo 3 lạy">🙇 Đồng Lạy</button>
+            <button class="btn btn-brown" data-roam-action="incense_random" style="padding: 6px 4px; font-size: 12px;" title="Cử phật tử bước lên trước Lư Hương dâng nhang">🕯️ Dâng Hương</button>
+            <button class="btn btn-brown" data-roam-action="settle_all" style="padding: 6px 4px; font-size: 12px;" title="Cho tất cả đi bộ trở về vị trí ghế đệm ngồi/quỳ ngay ngắn">🧘 Về Vị Trí</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="group-box">
+        <div class="group-title">2. TRÌNH PHÁT NHẠC CHÙA & GIỌNG ĐỌC TIẾNG VIỆT CHUẨN</div>
+
+        <!-- TRÌNH PHÁT NHẠC CHÙA & KHO NHẠC NỀN TẢI VỀ ĐƯA VÀO -->
+        <div class="music-player-box">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <strong style="font-size: 13px; color: var(--gold-text);">🎵 Kho Nhạc Nền Chùa (<span id="music-count-badge">3</span> bài):</strong>
+            <span id="music-status-badge" style="font-size: 12px; color: #4ade80;">Sẵn sàng</span>
+          </div>
+
+          <div class="row-flex">
+            <select id="bg-track" style="flex: 1;">
+              <option value="/music/01_Nhac_Thien_Dan_Tranh_432Hz.wav">🎵 01 Nhạc Thiền Đàn Tranh 432Hz (.wav)</option>
+              <option value="/music/02_Tieng_Chuong_Chua_Tinh_Tam.wav">🎵 02 Tiếng Chuông Chùa Tĩnh Tâm (.wav)</option>
+              <option value="/music/03_Sao_Truc_Thien_Vien_Dem_Trang.wav">🎵 03 Sáo Trúc Thiền Viện Đêm Trăng (.wav)</option>
+              <option value="synth:1">🎹 Nhạc Tổng Hợp: Đàn Tranh & Chuông Xoay 432Hz</option>
+              <option value="synth:2">🎹 Nhạc Tổng Hợp: Sáo Trúc Thiền Viện</option>
+            </select>
+            <button class="btn btn-brown" id="btn-rescan-music" style="padding: 8px 10px;" title="Quét lại thư mục public/music sau khi chép file vào">🔄</button>
+          </div>
+
+          <div class="row-flex" style="margin-top: 6px;">
+            <input type="file" id="mp3-file-input" accept=".mp3,.wav,.ogg,.m4a,audio/*" multiple style="display: none;" />
+            <button class="btn btn-amber" id="btn-pick-mp3" style="flex: 1;" title="Chọn file nhạc .MP3 / .WAV vừa tải về máy để đưa thẳng vào thư mục public/music">
+              ⬆️ Đưa File Nhạc (.MP3 / .WAV) Vào Chùa
+            </button>
+            <a class="btn btn-brown" id="btn-download-track" href="/music/01_Nhac_Thien_Dan_Tranh_432Hz.wav" download title="Tải file nhạc đang chọn về máy">
+              ⬇️ Tải Về
+            </a>
+          </div>
+
+          <div class="row-flex" style="margin-top: 8px;">
+            <button class="btn btn-green" id="btn-toggle-music" style="flex: 1;">▶️ Phát Nhạc Nền Ngay</button>
+            <span style="font-size: 12px;">Âm lượng:</span>
+            <input type="range" id="music-vol-slider" min="0" max="100" value="55" style="width: 90px;" />
+          </div>
+
+          <div style="margin-top: 7px; font-size: 11.5px; color: #d6c2a5; line-height: 1.45; border-top: 1px dashed rgba(217,168,78,0.3); padding-top: 6px;">
+            📂 <strong>Thư mục chứa nhạc:</strong> <code style="color: #fde047;">e:\D\CODE\tiktok-live\public\music</code><br />
+            🌐 <strong>Nguồn tải MP3 Nhạc Thiền miễn phí:</strong>
+            <a href="https://pixabay.com/music/search/buddhist%20meditation/" target="_blank" style="color: #38bdf8; text-decoration: underline; margin-left: 4px;">Pixabay Nhạc Phật/Thiền</a> ·
+            <a href="https://pixabay.com/music/search/zen%20flute/" target="_blank" style="color: #38bdf8; text-decoration: underline;">Sáo Thiền Zen</a>
+            <em>(Tải file .mp3 về rồi bấm nút vàng [⬆️ Đưa File Nhạc Vào Chùa])</em>
+          </div>
+        </div>
+
+        <!-- GIỌNG ĐỌC TIẾNG VIỆT CHUẨN -->
+        <label for="voice-preset" style="margin-top: 10px;">Giọng đọc Tiếng Việt chuẩn (Đã sửa qua Google Vietnamese TTS):</label>
+        <select id="voice-preset">
+          <option value="male_deep">Giọng Đọc Trầm Ấm Chúc Phúc & Hồi Hướng (-8% tốc độ)</option>
+          <option value="patriarch">Giọng Chậm Rãi Trang Nghiêm (-18% tốc độ)</option>
+          <option value="serene">Giọng Tự Nhiên Rõ Ràng (Chuẩn 100%)</option>
+        </select>
+
+        <div class="grid-2x2">
+          <div class="inline-field">
+            <span>Tốc độ đọc (%):</span>
+            <input type="number" id="input-speed" value="-8" />
+          </div>
+          <div class="inline-field">
+            <span>Nhịp Mõ (BPM):</span>
+            <input type="number" id="input-bpm" value="46" />
+          </div>
+        </div>
+
+        <textarea id="chant-textarea" rows="3" style="margin-top: 8px;">Nam Mô Bổn Sư Thích Ca Mâu Ni Phật. Nguyện cầu cho toàn thể chư vị Phật tử thân tâm thường an lạc, vạn sự cát tường như ý.</textarea>
+
+        <div class="row-flex" style="margin-top: 8px;">
+          <button class="btn btn-green" id="btn-test-voice" style="flex: 1;">🔊 Nghe Thử Giọng Đọc Tiếng Việt</button>
+          <button class="btn btn-red" id="btn-stop-voice">⏹ Dừng</button>
+        </div>
+
+        <div class="row-flex" style="margin-top: 8px;">
+          <button class="btn btn-amber" id="btn-broadcast-chant" style="flex: 1;">📿 Phát Đọc Kinh Lên Overlay</button>
+          <button class="btn btn-brown" id="btn-strike-bell">🔔 Thỉnh Chuông</button>
+          <button class="btn btn-brown" id="btn-strike-fish">🪵 Gõ Mõ (+15)</button>
+        </div>
+
+        <!-- TÙY CHỌN BẬT/TẮT ĐỌC THÀNH TIẾNG KHI CÓ NGƯỜI TẶNG QUÀ -->
+        <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed rgba(243, 196, 98, 0.3);">
+          <button class="btn btn-green btn-toggle-gift-tts" style="width: 100%; padding: 9px 12px;">
+            🔊 Đọc Thành Tiếng Khi Có Quà (TTS): ĐANG BẬT
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <!-- CỘT 2: KHÔNG GIỚI HẠN SỐ NGƯỜI · ĐỨNG DẬY LẠY PHẬT KHI DONATE -->
+    <div>
+      <section class="group-box">
+        <div class="group-title">3. KHÔNG GIỚI HẠN SỐ NGƯỜI · TẶNG QUÀ ĐỨNG DẬY LẠY PHẬT</div>
+
+        <label for="input-viewer-name">Tên Phật tử / Người xem TikTok:</label>
+        <input type="text" id="input-viewer-name" value="Trần Quân" />
+
+        <label for="select-viewer-skin">Chọn trang phục (Gõ nam · nữ · sư · tiểu · ni · cao tăng trên Live):</label>
+        <select id="select-viewer-skin">
+          <option value="nam">nam - Áo Lam Xanh Đạo Tràng</option>
+          <option value="nu">nữ - Áo Lam Xanh Nữ Phật Tử</option>
+          <option value="su">sư - Áo Vàng Hộ Pháp / Sư Thầy</option>
+          <option value="tieu">tiểu - Chú Tiểu Áo Vàng</option>
+          <option value="ni">ni - Sư Cô / Ni Cô</option>
+          <option value="caotang">cao tăng - Cao Tăng Hộ Pháp</option>
+        </select>
+
+        <label for="input-viewer-comment">Nội dung bình luận / Lời khấn:</label>
+        <input type="text" id="input-viewer-comment" value="Nam Mô A Di Đà Phật, chúc mọi người buổi tối an lành" />
+
+        <button class="btn btn-green" id="btn-enter-meditation" style="width: 100%; margin-top: 10px; padding: 11px;">
+          👤 Cho Vào Chùa Ngồi Thiền / Đổi Trang Phục
+        </button>
+
+        <div class="row-flex" style="margin-top: 12px; justify-content: space-between;">
+          <label style="margin: 0;">Quà TikTok (<span id="gift-count-label">728</span> quà từ API TikTok):</label>
+          <button class="btn btn-brown" id="btn-refresh-gifts" style="padding: 4px 10px; font-size: 12px;" title="Tải lại danh sách quà trực tiếp từ TikTok Webcast API">🔄 API</button>
+        </div>
+        <div class="row-flex" style="margin-top: 5px;">
+          <select id="select-gift" style="flex: 1;">
+            <option value="Hoa Hồng (Rose)|1">Hoa Hồng (Rose) [1 xu]</option>
+            <option value="Bắn Tim (Finger Heart)|5">Bắn Tim (Finger Heart) [5 xu]</option>
+            <option value="Nước Hoa (Perfume)|20">Nước Hoa (Perfume) [20 xu]</option>
+            <option value="Thiên Nga (Swan)|699">Thiên Nga (Swan) [699 xu]</option>
+          </select>
+          <input type="number" id="input-gift-qty" value="1" min="1" max="999" style="width: 68px;" />
+        </div>
+
+        <button class="btn btn-red" id="btn-send-gift" style="width: 100%; margin-top: 8px; padding: 11px;">
+          🙇 Tặng Quà -> Đứng Dậy Lạy Phật & Xướng Tên Hồi Hướng
+        </button>
+
+        <button class="btn btn-green btn-toggle-gift-tts" style="width: 100%; margin-top: 6px; padding: 8px 12px; font-size: 12.5px;">
+          🔊 Đọc Thành Tiếng Khi Có Quà (TTS): ĐANG BẬT
+        </button>
+
+        <div class="music-player-box" style="margin-top: 12px; border-color: #22c55e; background: rgba(16, 42, 24, 0.38);">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong style="font-size: 12.8px; color: #4ade80;">🔄 Sức Chứa Sân Chùa: TỰ ĐỘNG MỞ RỘNG & ẢO HÓA CHỐNG LAG 60FPS</strong>
+          </div>
+          <div style="font-size: 12px; color: #e2d1b5; margin-top: 4px; line-height: 1.45;">
+            • Khi kết nối LIVE: Tự động hiển thị đúng <strong>số người đang xem trên phòng LIVE</strong> (1 → 500 → 5.000+ người).<br />
+            • Khi phòng đông (&gt;60 người): Tự động bật <strong>Canvas Ảo Hóa Biển Người Hậu Cảnh</strong> + 42 đại diện tiền cảnh để <strong>5.000 người vẫn mượt 60FPS tuyệt đối không lag</strong>!<br />
+            • Đang hiển thị trên sân: <strong id="current-crowd-count-label" style="color: #fde047;">48</strong> Phật tử.
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1.6fr; gap: 6px; margin-top: 8px;">
+            <button class="btn btn-brown" data-fill="48" style="padding: 7px 6px; font-size: 12px;">🧘 48 Người</button>
+            <button class="btn btn-blue" data-fill="500" style="padding: 7px 6px; font-size: 12px;">🪷 500 Người</button>
+            <button class="btn btn-amber" data-fill="5000" style="padding: 7px 8px; font-size: 12.5px;">🔥 Demo 5.000 Người (60FPS)</button>
+          </div>
+          <button class="btn btn-brown" id="btn-clear-cushions" style="width: 100%; margin-top: 6px; padding: 7px 10px; font-size: 12.5px;">
+            🧹 Làm Trống Toàn Bộ Sân Chùa (Đợi Người Xem LIVE Vào)
+          </button>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; margin-bottom: 4px; flex-wrap: wrap; gap: 6px;">
+          <label for="input-tiktok-id" style="margin: 0;">● Nhập @ID Kênh TikTok đang Live:</label>
+          <span id="live-viewer-status-badge" style="font-size: 12px; font-weight: 700; color: #fbbf24; background: rgba(0,0,0,0.45); padding: 3px 9px; border-radius: 999px; border: 1px solid rgba(251,191,36,0.4);">
+            ⚪ Chưa kết nối LIVE (Chế độ mẫu)
+          </span>
+        </div>
+        <div class="row-flex">
+          <input type="text" id="input-tiktok-id" value="@thaovu.17" style="border-color: #22c55e;" />
+          <button class="btn btn-red" id="btn-connect-tiktok" style="white-space: nowrap;">🔗 Kết Nối</button>
+          <button class="btn btn-blue" id="btn-auto-sim" style="white-space: nowrap;">🤖 Auto</button>
+        </div>
+
+        <div class="log-console" id="event-log-box"></div>
+      </section>
+    </div>
+
+    <!-- CỘT 3: XEM TRƯỚC TRỰC TIẾP (9:16) -->
+    <div>
+      <section class="group-box">
+        <div class="group-title">4. XEM TRƯỚC MẪU THIẾT KẾ (9:16)</div>
+        <div class="preview-header-sub" id="preview-theme-label">Mẫu 1: Sân Chùa Đêm Trăng (Chùa Online)</div>
+        <div class="preview-916-container">
+          <iframe src="/overlay.html" id="preview-iframe" title="Overlay 9:16 Preview"></iframe>
+        </div>
+        <div class="quick-guide-text">
+          <strong>☸ ĐIỂM MỚI ĐÃ CẬP NHẬT:</strong><br />
+          • <strong>Không giới hạn số người:</strong> Thử bấm [180 Người] hoặc [300 Người] để xem đại chúng ngồi kín sân chùa.<br />
+          • <strong>Đứng dậy lạy Phật khi Donate:</strong> Bấm nút đỏ [🙇 Tặng Quà] để xem nhân vật bước lên trước Lư Hương cúi lạy Phật 3 lần và thăng cấp ngồi gần Phật.<br />
+          • <strong>Giọng đọc Tiếng Việt chuẩn 100%:</strong> Đọc qua Google Vietnamese TTS rõ từng chữ.
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="/js/audio.js"></script>
+  <script>
+    const logBox = document.getElementById('event-log-box');
+    const previewThemeLabel = document.getElementById('preview-theme-label');
+    const previewIframe = document.getElementById('preview-iframe');
+
+    function renderLogs(logs = []) {
+      logBox.innerHTML = logs.map((l) => `<div>${l}</div>`).join('');
+    }
+
+    async function postApi(url, data) {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const json = await res.json();
+      if (json.state && json.state.logs) {
+        renderLogs(json.state.logs);
+      }
+      return json;
+    }
+
+    // 1. Chọn Mẫu Không Gian Chùa
+    document.querySelectorAll('.theme-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.theme-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        const themeId = Number(btn.getAttribute('data-theme'));
+        previewThemeLabel.textContent = btn.getAttribute('data-label');
+        postApi('/api/config', { themeId });
+      });
+    });
+
+    // 1B. Option Phật Tử Tự Do Di Chuyển & Hành Lễ
+    const btnToggleFreeRoam = document.getElementById('btn-toggle-free-roam');
+    const freeRoamStatusBadge = document.getElementById('free-roam-status-badge');
+    const selectRoamBehavior = document.getElementById('select-roam-behavior');
+    const selectRoamSpeed = document.getElementById('select-roam-speed');
+    let isFreeRoamOn = false;
+
+    function updateFreeRoamControlUi(settings) {
+      if (!settings) return;
+      isFreeRoamOn = Boolean(settings.freeRoamEnabled);
+      if (settings.freeRoamBehavior) selectRoamBehavior.value = settings.freeRoamBehavior;
+      if (settings.freeRoamSpeed) selectRoamSpeed.value = settings.freeRoamSpeed;
+
+      if (isFreeRoamOn) {
+        btnToggleFreeRoam.className = 'btn btn-green';
+        btnToggleFreeRoam.textContent = '🟢 ĐANG BẬT: Phật Tử Tự Do Di Chuyển (Bấm để TẮT về Quỳ Cố Định)';
+        freeRoamStatusBadge.textContent = 'Đang BẬT (Tự do đi lại)';
+        freeRoamStatusBadge.style.color = '#4ade80';
+      } else {
+        btnToggleFreeRoam.className = 'btn btn-brown';
+        btnToggleFreeRoam.textContent = '🚶 BẬT Chế Độ: Các Phật Tử Tự Do Di Chuyển & Hành Lễ';
+        freeRoamStatusBadge.textContent = 'Đang TẮT (Quỳ cố định)';
+        freeRoamStatusBadge.style.color = '#fbbf24';
+      }
+    }
+
+    btnToggleFreeRoam.addEventListener('click', () => {
+      isFreeRoamOn = !isFreeRoamOn;
+      updateFreeRoamControlUi({
+        freeRoamEnabled: isFreeRoamOn,
+        freeRoamBehavior: selectRoamBehavior.value,
+        freeRoamSpeed: selectRoamSpeed.value
+      });
+      postApi('/api/config', {
+        freeRoamEnabled: isFreeRoamOn,
+        freeRoamBehavior: selectRoamBehavior.value,
+        freeRoamSpeed: selectRoamSpeed.value
+      });
+    });
+
+    selectRoamBehavior.addEventListener('change', () => {
+      postApi('/api/config', { freeRoamBehavior: selectRoamBehavior.value });
+    });
+
+    selectRoamSpeed.addEventListener('change', () => {
+      postApi('/api/config', { freeRoamSpeed: selectRoamSpeed.value });
+    });
+
+    document.querySelectorAll('[data-roam-action]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const action = btn.getAttribute('data-roam-action');
+        if (action === 'roam_all' || action === 'incense_random') {
+          isFreeRoamOn = true;
+          updateFreeRoamControlUi({ freeRoamEnabled: true });
+        }
+        postApi('/api/simulate', { eventType: 'free_roam_action', data: { action } });
+      });
+    });
+
+    // 1C. Nút Thử Kịch Bản Phật Tử Bước Ra Thả Cá Phóng Sanh
+    const pondFishCountBadge = document.getElementById('pond-fish-count-badge');
+    document.querySelectorAll('[data-release-fish]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const creatureType = btn.getAttribute('data-release-fish') || 'carp_red';
+        const count = Number(btn.getAttribute('data-fish-count')) || 1;
+        const nickname = document.getElementById('sim-name')?.value?.trim() || 'Thiện Nhân';
+        const skin = document.getElementById('sim-skin')?.value || 'nam';
+
+        // Đồng bộ nút chọn Mẫu 6 trên giao diện
+        document.querySelectorAll('.theme-btn').forEach((b) => {
+          b.classList.toggle('active', Number(b.getAttribute('data-theme')) === 6);
+        });
+        previewThemeLabel.textContent = 'Mẫu 6: Hồ Sen Phóng Sanh (Thả Cá Koi / Cá Chép / Rùa Vàng)';
+
+        postApi('/api/simulate', {
+          eventType: 'release_fish',
+          data: {
+            nickname,
+            skin,
+            creatureType,
+            count,
+            autoSwitchTheme: true
+          }
+        });
+      });
+    });
+
+    // 2. Trình Phát Nhạc Chùa & Kho Nhạc Nền (public/music)
+    const btnToggleMusic = document.getElementById('btn-toggle-music');
+    const musicStatusBadge = document.getElementById('music-status-badge');
+    const musicCountBadge = document.getElementById('music-count-badge');
+    const bgTrackSelect = document.getElementById('bg-track');
+    const btnDownloadTrack = document.getElementById('btn-download-track');
+    const btnRescanMusic = document.getElementById('btn-rescan-music');
+
+    function updateDownloadLink(val) {
+      if (val && !val.startsWith('synth:')) {
+        btnDownloadTrack.href = val;
+        btnDownloadTrack.style.opacity = '1';
+        btnDownloadTrack.style.pointerEvents = 'auto';
+      } else {
+        btnDownloadTrack.removeAttribute('href');
+        btnDownloadTrack.style.opacity = '0.45';
+        btnDownloadTrack.style.pointerEvents = 'none';
+      }
+    }
+
+    async function loadMusicLibrary(selectUrl = '') {
+      try {
+        const res = await fetch('/api/music-list');
+        const data = await res.json();
+        const files = Array.isArray(data.files) ? data.files : [];
+        musicCountBadge.textContent = files.length;
+
+        const prevVal = selectUrl || bgTrackSelect.value;
+        const fileOpts = files
+          .map(
+            (f) =>
+              `<option value="${f.url}">🎵 ${f.name} (${f.sizeKb || 0} KB)</option>`
+          )
+          .join('');
+        const synthOpts = `
+          <option value="synth:1">🎹 Nhạc Tổng Hợp: Đàn Tranh & Chuông Xoay 432Hz</option>
+          <option value="synth:2">🎹 Nhạc Tổng Hợp: Sáo Trúc Thiền Viện</option>
+        `;
+        bgTrackSelect.innerHTML = fileOpts + synthOpts;
+
+        if (prevVal && Array.from(bgTrackSelect.options).some((o) => o.value === prevVal)) {
+          bgTrackSelect.value = prevVal;
+        }
+        updateDownloadLink(bgTrackSelect.value);
+      } catch (_e) {}
+    }
+
+    loadMusicLibrary();
+    btnRescanMusic.addEventListener('click', () => loadMusicLibrary());
+
+    function applySelectedTrack(playNow = false) {
+      const val = bgTrackSelect.value;
+      updateDownloadLink(val);
+      if (val.startsWith('synth:')) {
+        const bgTrackId = Number(val.split(':')[1]) || 1;
+        window.sacredAudio.clearCustomAudio();
+        window.sacredAudio.applySettings({ bgTrackId });
+        if (playNow) window.sacredAudio.startAmbient();
+        postApi('/api/config', {
+          bgTrackId,
+          bgMusicUrl: val,
+          bgMusicPlaying: window.sacredAudio.ambientRunning
+        });
+      } else {
+        const label = bgTrackSelect.options[bgTrackSelect.selectedIndex]?.textContent || 'Nhạc nền';
+        if (playNow || window.sacredAudio.ambientRunning) {
+          window.sacredAudio.loadCustomAudioUrl(val, label);
+          btnToggleMusic.textContent = '⏸️ Tạm Dừng Nhạc Nền';
+          musicStatusBadge.textContent = `Đang phát: ${label.replace(/^🎵\s*/, '')}`;
+        }
+        postApi('/api/config', {
+          bgMusicUrl: val,
+          bgMusicPlaying: window.sacredAudio.ambientRunning
+        });
+      }
+    }
+
+    btnToggleMusic.addEventListener('click', () => {
+      window.sacredAudio.init();
+      const val = bgTrackSelect.value;
+      if (!window.sacredAudio.ambientRunning && val && !val.startsWith('synth:')) {
+        const label = bgTrackSelect.options[bgTrackSelect.selectedIndex]?.textContent || 'Nhạc nền';
+        window.sacredAudio.loadCustomAudioUrl(val, label);
+      } else {
+        window.sacredAudio.toggleAmbient();
+      }
+      const running = window.sacredAudio.ambientRunning;
+      btnToggleMusic.textContent = running ? '⏸️ Tạm Dừng Nhạc Nền' : '▶️ Phát Nhạc Nền Ngay';
+      musicStatusBadge.textContent = running
+        ? window.sacredAudio.customTrackName || 'Đang phát nhạc thiền'
+        : 'Đã tạm dừng';
+      postApi('/api/config', {
+        bgMusicUrl: val,
+        bgMusicPlaying: running
+      });
+    });
+
+    bgTrackSelect.addEventListener('change', () => {
+      window.sacredAudio.init();
+      applySelectedTrack(window.sacredAudio.ambientRunning);
+    });
+
+    document.getElementById('music-vol-slider').addEventListener('input', (e) => {
+      const vol = Number(e.target.value) / 100;
+      window.sacredAudio.setMusicVolume(vol);
+      postApi('/api/config', { bgMusicVolume: vol });
+    });
+
+    const mp3Input = document.getElementById('mp3-file-input');
+    document.getElementById('btn-pick-mp3').addEventListener('click', () => mp3Input.click());
+    mp3Input.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      if (files.length === 0) return;
+      window.sacredAudio.init();
+      musicStatusBadge.textContent = '⏳ Đang lưu vào public/music...';
+      let lastUploadedUrl = '';
+      let lastFileName = '';
+
+      for (const file of files) {
+        try {
+          const buf = await file.arrayBuffer();
+          const res = await fetch('/api/music/upload', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/octet-stream',
+              'X-File-Name': encodeURIComponent(file.name)
+            },
+            body: buf
+          });
+          const data = await res.json();
+          if (data && data.ok && data.url) {
+            lastUploadedUrl = data.url;
+            lastFileName = data.fileName || file.name;
+            if (data.state && data.state.logs) {
+              renderLogs(data.state.logs);
+            }
+          }
+        } catch (_err) {}
+      }
+
+      if (lastUploadedUrl) {
+        await loadMusicLibrary(lastUploadedUrl);
+        window.sacredAudio.loadCustomAudioUrl(lastUploadedUrl, lastFileName);
+        btnToggleMusic.textContent = '⏸️ Tạm Dừng Nhạc Nền';
+        musicStatusBadge.textContent = `Đang phát: ${lastFileName}`;
+      }
+      mp3Input.value = '';
+    });
+
+    // Giọng đọc Tiếng Việt chuẩn
+    document.getElementById('voice-preset').addEventListener('change', (e) => {
+      const val = e.target.value;
+      const speedInput = document.getElementById('input-speed');
+      if (val === 'male_deep') speedInput.value = -8;
+      else if (val === 'patriarch') speedInput.value = -18;
+      else speedInput.value = 0;
+      syncAudioConfig();
+    });
+
+    function syncAudioConfig() {
+      const settings = {
+        voiceSpeedPct: Number(document.getElementById('input-speed').value) || -8,
+        woodenFishBpm: Number(document.getElementById('input-bpm').value) || 46,
+        chantText: document.getElementById('chant-textarea').value
+      };
+      window.sacredAudio.applySettings(settings);
+      postApi('/api/config', settings);
+    }
+
+    document.getElementById('btn-test-voice').addEventListener('click', () => {
+      syncAudioConfig();
+      const text = document.getElementById('chant-textarea').value;
+      window.sacredAudio.speakChant(text, { withWoodenFish: true });
+    });
+
+    // Bật / Tắt đọc thành tiếng (TTS) khi có người tặng quà
+    const giftTtsButtons = document.querySelectorAll('.btn-toggle-gift-tts');
+    let isGiftTtsEnabled = true;
+
+    function updateGiftTtsButtonsUi(enabled) {
+      isGiftTtsEnabled = enabled !== false;
+      giftTtsButtons.forEach((btn) => {
+        if (isGiftTtsEnabled) {
+          btn.className = 'btn btn-green btn-toggle-gift-tts';
+          btn.textContent = '🔊 Đọc Thành Tiếng Khi Có Quà (TTS): ĐANG BẬT';
+        } else {
+          btn.className = 'btn btn-brown btn-toggle-gift-tts';
+          btn.textContent = '🔇 Đọc Thành Tiếng Khi Có Quà (TTS): ĐANG TẮT';
+        }
+      });
+    }
+
+    giftTtsButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        isGiftTtsEnabled = !isGiftTtsEnabled;
+        updateGiftTtsButtonsUi(isGiftTtsEnabled);
+        if (!isGiftTtsEnabled && window.sacredAudio) {
+          window.sacredAudio.stopSpeech();
+        }
+        postApi('/api/config', { giftTtsEnabled: isGiftTtsEnabled });
+      });
+    });
+
+    // Cập nhật hiển thị trạng thái LIVE và Số người xem LIVE thật
+    const liveViewerStatusBadge = document.getElementById('live-viewer-status-badge');
+    const currentCrowdCountLabel = document.getElementById('current-crowd-count-label');
+    function updateLiveConnectionBadge(state) {
+      if (!state) return;
+      if (currentCrowdCountLabel) {
+        const total = Number(state.totalCrowdCount) || (Array.isArray(state.meditators) ? state.meditators.length : 0);
+        currentCrowdCountLabel.textContent = total.toLocaleString('vi-VN');
+      }
+      if (!state.connection || !liveViewerStatusBadge) return;
+      const conn = state.connection;
+      if (conn.status === 'connected') {
+        const viewers = Number(conn.viewerCount) || 0;
+        liveViewerStatusBadge.textContent = `🟢 Đang LIVE (${conn.username}) • 👥 ${viewers.toLocaleString('vi-VN')} người xem`;
+        liveViewerStatusBadge.style.color = '#4ade80';
+        liveViewerStatusBadge.style.borderColor = '#22c55e';
+      } else if (conn.status === 'connecting') {
+        liveViewerStatusBadge.textContent = `⏳ Đang kết nối ${conn.username}...`;
+        liveViewerStatusBadge.style.color = '#fde047';
+        liveViewerStatusBadge.style.borderColor = '#facc15';
+      } else if (conn.status === 'error') {
+        liveViewerStatusBadge.textContent = `❌ Chưa LIVE / Lỗi kết nối`;
+        liveViewerStatusBadge.style.color = '#f87171';
+        liveViewerStatusBadge.style.borderColor = '#ef4444';
+      } else {
+        liveViewerStatusBadge.textContent = `⚪ Chưa kết nối LIVE (Tự mở rộng khi kết nối)`;
+        liveViewerStatusBadge.style.color = '#fbbf24';
+        liveViewerStatusBadge.style.borderColor = 'rgba(251,191,36,0.4)';
+      }
+    }
+
+    document.getElementById('btn-stop-voice').addEventListener('click', () => {
+      window.sacredAudio.stopSpeech();
+    });
+
+    document.getElementById('btn-broadcast-chant').addEventListener('click', () => {
+      syncAudioConfig();
+      const text = document.getElementById('chant-textarea').value;
+      postApi('/api/simulate', { eventType: 'chant', data: { text } });
+    });
+
+    document.getElementById('btn-strike-bell').addEventListener('click', () => {
+      window.sacredAudio.playGrandBell(1);
+      postApi('/api/simulate', { eventType: 'bell' });
+    });
+
+    document.getElementById('btn-strike-fish').addEventListener('click', () => {
+      window.sacredAudio.playWoodenFish(1);
+      postApi('/api/simulate', { eventType: 'wooden_fish' });
+    });
+
+    // 3. Tương tác vào chùa & Tặng quà đứng dậy lạy Phật
+    document.getElementById('btn-enter-meditation').addEventListener('click', () => {
+      const nickname = document.getElementById('input-viewer-name').value.trim() || 'Trần Quân';
+      const skin = document.getElementById('select-viewer-skin').value;
+      const content = document.getElementById('input-viewer-comment').value.trim();
+      postApi('/api/simulate', {
+        eventType: 'seat_or_skin',
+        data: { nickname, skin, content }
+      });
+    });
+
+    // Nạp danh sách ~728 quà tặng thật từ TikTok Webcast API
+    const selectGiftEl = document.getElementById('select-gift');
+    const giftCountLabelEl = document.getElementById('gift-count-label');
+    const btnRefreshGifts = document.getElementById('btn-refresh-gifts');
+    window.loadedTikTokGifts = [];
+
+    function populateGiftSelect(gifts = []) {
+      if (!Array.isArray(gifts) || gifts.length === 0) return;
+      window.loadedTikTokGifts = gifts;
+      giftCountLabelEl.textContent = gifts.length;
+      selectGiftEl.innerHTML = gifts
+        .map((g) => {
+          const safeName = String(g.name || 'Rose').replace(/"/g, '&quot;');
+          const coins = Number(g.diamondCount) || 1;
+          return `<option value="${safeName}|${coins}">${safeName} [${coins} xu]</option>`;
+        })
+        .join('');
+    }
+
+    async function loadTikTokGifts(forceRefresh = false) {
+      try {
+        btnRefreshGifts.textContent = '⏳...';
+        const res = await fetch(forceRefresh ? '/api/gifts/refresh' : '/api/gifts', {
+          method: forceRefresh ? 'POST' : 'GET'
+        });
+        const data = await res.json();
+        if (data && Array.isArray(data.gifts)) {
+          populateGiftSelect(data.gifts);
+        }
+        if (data?.state?.logs) {
+          renderLogs(data.state.logs);
+        }
+      } catch (_e) {
+      } finally {
+        btnRefreshGifts.textContent = '🔄 API';
+      }
+    }
+
+    btnRefreshGifts.addEventListener('click', () => loadTikTokGifts(true));
+    loadTikTokGifts(false);
+
+    document.getElementById('btn-send-gift').addEventListener('click', () => {
+      const nickname = document.getElementById('input-viewer-name').value.trim() || 'Trần Quân';
+      const [giftName, diamondsStr] = document.getElementById('select-gift').value.split('|');
+      const repeatCount = Number(document.getElementById('input-gift-qty').value) || 1;
+      postApi('/api/simulate', {
+        eventType: 'gift',
+        data: {
+          nickname,
+          giftName,
+          diamondCount: Number(diamondsStr) || 1,
+          repeatCount
+        }
+      });
+    });
+
+    document.querySelectorAll('[data-fill]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const count = Number(btn.getAttribute('data-fill'));
+        postApi('/api/simulate', { eventType: 'fill_preset', data: { count } });
+      });
+    });
+
+    document.getElementById('btn-clear-cushions').addEventListener('click', () => {
+      postApi('/api/simulate', { eventType: 'fill_preset', data: { count: 0 } });
+    });
+
+    document.getElementById('btn-connect-tiktok').addEventListener('click', async () => {
+      const username = document.getElementById('input-tiktok-id').value.trim();
+      await postApi('/api/connect', { username });
+    });
+
+    let autoSimInterval = null;
+    const btnAutoSim = document.getElementById('btn-auto-sim');
+    const RANDOM_NAMES = [
+      'Chà 🌸', 'Trần Quân', 'Chris', 'Vânxingg❤️', 'Ông Chú U30',
+      'Mèng méng', 'Bin', 'Công chúa', 'Cậu Út', 'Ngọc Trinh', 'Thỏ Yogi 🐇'
+    ];
+
+    btnAutoSim.addEventListener('click', () => {
+      if (autoSimInterval) {
+        clearInterval(autoSimInterval);
+        autoSimInterval = null;
+        btnAutoSim.textContent = '🤖 Auto';
+        return;
+      }
+      btnAutoSim.textContent = '⏸ Dừng';
+      autoSimInterval = setInterval(() => {
+        const nickname = RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)];
+        const r = Math.random();
+        if (r < 0.4) {
+          postApi('/api/simulate', { eventType: 'member', data: { nickname } });
+        } else if (r < 0.72) {
+          postApi('/api/simulate', { eventType: 'like', data: { nickname, count: 25 } });
+        } else {
+          const coins = [5, 30, 120][Math.floor(Math.random() * 3)];
+          postApi('/api/simulate', {
+            eventType: 'gift',
+            data: { nickname, giftName: 'Hoa Sen Công Đức', diamondCount: coins, repeatCount: 1 }
+          });
+        }
+      }, 3600);
+    });
+
+    document.getElementById('btn-sync-server').addEventListener('click', async () => {
+      const res = await fetch('/api/state');
+      const state = await res.json();
+      if (state.logs) renderLogs(state.logs);
+    });
+
+    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${proto}//${window.location.host}`);
+    ws.onmessage = (ev) => {
+      try {
+        const msg = JSON.parse(ev.data);
+        if (msg.state) {
+          if (msg.state.logs) renderLogs(msg.state.logs);
+          if (msg.state.settings) {
+            updateFreeRoamControlUi(msg.state.settings);
+            updateGiftTtsButtonsUi(msg.state.settings.giftTtsEnabled);
+            document.querySelectorAll('.theme-btn').forEach((b) => {
+              const isMatch = Number(b.getAttribute('data-theme')) === Number(msg.state.settings.themeId);
+              b.classList.toggle('active', isMatch);
+              if (isMatch) {
+                previewThemeLabel.textContent = b.getAttribute('data-label');
+              }
+            });
+          }
+          if (Array.isArray(msg.state.pondCreatures) && pondFishCountBadge) {
+            pondFishCountBadge.textContent = `Đang bơi: ${msg.state.pondCreatures.length} cá & rùa`;
+          }
+          updateLiveConnectionBadge(msg.state);
+        }
+      } catch (_e) {}
+    };
+  </script>
+</body>
+</html>

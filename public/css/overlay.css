@@ -1,0 +1,1048 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif:wght@600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap');
+
+:root {
+  --stage-w: 1080px;
+  --stage-h: 1920px;
+  --stage-scale: 1;
+
+  --gold-bright: #ffe680;
+  --gold: #f5c242;
+  --gold-dark: #b47814;
+  --card-bg: rgba(42, 27, 18, 0.86);
+  --card-border: rgba(245, 194, 66, 0.58);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+html, body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #070812;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#stage-wrapper {
+  width: 1080px;
+  height: 1920px;
+  min-width: 1080px;
+  min-height: 1920px;
+  flex-shrink: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  overflow: hidden;
+  transform: translate(-50%, -50%) scale(var(--stage-scale));
+  transform-origin: center center;
+  background: #121629;
+  box-shadow: 0 0 90px rgba(0, 0, 0, 0.95);
+}
+
+/* =========================================================================
+   NỀN CHÙA THEO TỪNG CHẾ ĐỘ (ĐẠI ĐIỆN QUỲ BÁI / CHÙA ONLINE / CỔ TỰ)
+   ========================================================================= */
+.courtyard-backdrop-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.courtyard-backdrop-img {
+  width: 1080px;
+  height: 1920px;
+  object-fit: cover;
+  transition: filter 0.45s ease;
+}
+
+#stage-wrapper.theme-4 .courtyard-backdrop-img {
+  filter: hue-rotate(18deg) saturate(1.18) contrast(1.05);
+}
+#stage-wrapper.theme-5 .courtyard-backdrop-img {
+  filter: sepia(0.18) saturate(1.35) brightness(1.04);
+}
+
+/* =========================================================================
+   GIAO DIỆN CHẾ ĐỘ 1: ĐẠI ĐIỆN THẢM XANH - CHẠY LÊN BỤC QUỲ BÁI
+   (Khớp 100% với ảnh media_1793457831621_8265b6e4.png)
+   ========================================================================= */
+.mode-quybai-ui {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: none;
+}
+
+#stage-wrapper.mode-quybai .mode-quybai-ui {
+  display: block;
+}
+
+#stage-wrapper.mode-quybai .mode-chuaonline-ui {
+  display: none;
+}
+
+/* Bảng TẤM LÒNG THÀNH góc phải trên */
+.tam-long-thanh-card {
+  position: absolute;
+  top: 235px;
+  right: 22px;
+  width: 315px;
+  z-index: 50;
+  background: linear-gradient(180deg, rgba(88, 18, 14, 0.94) 0%, rgba(48, 8, 6, 0.96) 100%);
+  border: 2.5px solid #e5b84b;
+  border-radius: 16px;
+  padding: 20px 18px 16px 18px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.8), inset 0 0 18px rgba(245, 194, 66, 0.2);
+}
+
+.tam-long-lotus-crown,
+.tam-long-lotus-top {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 44px;
+  height: 28px;
+  background: radial-gradient(circle, #fef08a 0%, #d97706 80%);
+  border: 2px solid #fffbeb;
+  border-radius: 50% 50% 12px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.tam-long-title {
+  font-family: 'Noto Serif', serif;
+  font-size: 23px;
+  font-weight: 800;
+  color: #fde68a;
+  text-align: center;
+  letter-spacing: 1.5px;
+  margin-bottom: 12px;
+}
+
+.tam-long-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 6px;
+  border-top: 1px solid rgba(245, 194, 66, 0.22);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.tam-long-rank-badge,
+.tam-long-rank {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fef08a, #ca8a04);
+  color: #3b0d06;
+  font-weight: 900;
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.tam-long-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255, 235, 180, 0.2);
+  border: 1px solid rgba(254, 240, 138, 0.65);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.tam-long-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #fff;
+}
+
+.tam-long-xu {
+  color: #fde047;
+  font-weight: 800;
+  margin-left: 8px;
+}
+
+/* Bảng thông báo Dâng Hương Tam Bảo ngang dưới đài sen Phật (Chỉ hiện khi đang dâng hương / đọc kinh, xong tự ẩn) */
+.tam-bao-dedication-banner {
+  position: absolute;
+  top: 492px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-14px);
+  width: 790px;
+  background: linear-gradient(180deg, rgba(82, 16, 12, 0.93) 0%, rgba(46, 8, 6, 0.96) 100%);
+  border: 2.5px solid #e5b84b;
+  border-radius: 16px;
+  padding: 16px 28px;
+  text-align: center;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.38;
+  color: #ffffff;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.85), inset 0 0 20px rgba(245, 194, 66, 0.22);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+.tam-bao-dedication-banner.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.tam-bao-dedication-banner.visible.pulse {
+  transform: translateX(-50%) scale(1.04);
+  border-color: #fef08a;
+  box-shadow: 0 0 34px rgba(250, 204, 21, 0.65);
+}
+
+/* 3 Bảng Đỏ Viền Vàng Dưới Đáy (1 xu dâng hương | 5 xu lên bục | 10+ xu tăng công đức) */
+.bottom-three-plaques {
+  position: absolute;
+  bottom: 28px;
+  left: 52px;
+  right: 52px;
+  z-index: 50;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.crimson-gold-plaque {
+  background: linear-gradient(180deg, #6b110d 0%, #3e0705 100%);
+  border: 3px solid #e5b84b;
+  border-radius: 20px;
+  padding: 14px 12px;
+  text-align: center;
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.85),
+    inset 0 0 0 3px rgba(107, 17, 13, 0.9),
+    inset 0 0 0 5px rgba(229, 184, 75, 0.55);
+}
+
+.crimson-gold-plaque h4 {
+  font-size: 33px;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1.15;
+}
+
+.crimson-gold-plaque p {
+  font-size: 27px;
+  font-weight: 800;
+  color: #fef08a;
+  margin-top: 2px;
+}
+
+/* =========================================================================
+   KHU VỰC NHÂN VẬT CHẠY LÊN THẢM XANH & QUỲ BÁI TRÊN BỤC (QUỲ BÁI STAGE)
+   ========================================================================= */
+.quybai-characters-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 22;
+  pointer-events: none;
+}
+
+.standing-pilgrim-node {
+  position: absolute;
+  transform: translate(-50%, -100%) scale(var(--p-scale, 1));
+  transform-origin: center bottom;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: left 0.45s ease, top 0.45s ease;
+}
+
+.pilgrim-foot-pill,
+.pilgrim-foot-tag {
+  margin-top: -10px;
+  padding: 3px 12px 3px 6px;
+  background: rgba(18, 12, 9, 0.9);
+  border: 1.5px solid rgba(245, 194, 66, 0.78);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #ffffff;
+  white-space: nowrap;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.85);
+}
+
+.pilgrim-foot-pill.vip-platform,
+.pilgrim-foot-tag.vip-rank {
+  background: linear-gradient(90deg, #5c2406, #92400e);
+  border-color: #fde047;
+  color: #fef08a;
+  padding-right: 8px;
+}
+
+.pill-avatar-dot,
+.mini-avatar-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fde68a, #d97706);
+  color: #290904;
+  font-size: 12px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatar-circle-img {
+  object-fit: cover;
+  border: 1.5px solid #fde047;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+}
+
+.vip-badge-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fde047;
+  color: #3b0d06;
+  font-size: 13px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+}
+
+/* Bong bóng chat trắng phía trên đầu người đứng hai bên thảm */
+.pilgrim-white-bubble,
+.pilgrim-chat-bubble {
+  position: absolute;
+  bottom: 102%;
+  background: rgba(255, 255, 255, 0.97);
+  color: #0f172a;
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-size: 16.5px;
+  font-weight: 800;
+  line-height: 1.28;
+  width: max-content;
+  max-width: 235px;
+  white-space: normal;
+  text-align: left;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55);
+  z-index: 38;
+  animation: popInChat 0.28s ease-out;
+}
+
+@keyframes popInChat {
+  from { transform: scale(0.6) translateY(10px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* Nhân vật ĐANG CHẠY DỌC THẢM XANH LÊN BỤC QUỲ BÁI */
+.runner-pilgrim-actor {
+  position: absolute;
+  transform: translate(-50%, -92%) scale(var(--runner-scale, 1));
+  transform-origin: center bottom;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 48;
+  pointer-events: none;
+  transition: top 2.05s linear, left 2.05s linear, transform 2.05s linear, opacity 0.4s ease;
+}
+
+.runner-walking-body {
+  animation: walkStepBob 0.28s infinite alternate ease-in-out;
+}
+
+@keyframes walkStepBob {
+  0% { transform: translateY(0px) rotate(-2deg); }
+  100% { transform: translateY(-7px) rotate(2deg); }
+}
+
+/* Động tác Quỳ Vái Cao Tay -> Cúi Rạp Đầu Sát Đất Bái Phật (Ngũ Thể Đầu Địa) */
+.kneeling-bow-cycle {
+  transform-origin: center bottom;
+  animation: fullProstrationCycle 3.4s ease-in-out infinite;
+}
+
+@keyframes fullProstrationCycle {
+  0%, 100% {
+    transform: translateY(0) scaleY(1);
+  }
+  25% {
+    transform: translateY(-4px) scaleY(1.04);
+  }
+  55%, 72% {
+    transform: translateY(22px) scaleY(0.54) scaleX(1.12);
+  }
+}
+
+/* =========================================================================
+   GIAO DIỆN CHẾ ĐỘ 2: CHÙA ONLINE - SÂN CHÙA ĐÊM TRĂNG
+   ========================================================================= */
+.mode-chuaonline-ui {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  pointer-events: none;
+}
+
+.live-counter-pill {
+  position: absolute;
+  top: 26px;
+  left: 28px;
+  z-index: 35;
+  background: rgba(15, 18, 34, 0.82);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  padding: 8px 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 21px;
+  font-weight: 800;
+  color: #ffffff;
+  backdrop-filter: blur(8px);
+}
+
+.live-red-dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 10px #ef4444;
+  animation: blinkDot 1.4s infinite;
+}
+
+@keyframes blinkDot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+.top-header-center {
+  position: absolute;
+  top: 52px;
+  left: 40px;
+  right: 40px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.chua-online-title {
+  font-size: 64px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #ffd644;
+  text-shadow:
+    0 4px 0 #7c4a08,
+    0 8px 24px rgba(0, 0, 0, 0.85),
+    0 0 32px rgba(255, 214, 68, 0.45);
+}
+
+.chua-online-subtitle {
+  margin-top: 4px;
+  font-size: 26px;
+  font-weight: 700;
+  color: #f8fafc;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95);
+}
+
+.wooden-fish-bar-wrap {
+  position: relative;
+  margin-top: 22px;
+  width: 680px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  pointer-events: auto;
+}
+
+.floating-wooden-fish-widget {
+  position: absolute;
+  left: -95px;
+  top: -36px;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  border: 2.5px dashed rgba(255, 230, 140, 0.75);
+  background: radial-gradient(circle, rgba(255, 196, 85, 0.25) 0%, transparent 72%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  transition: transform 0.16s ease;
+}
+
+.floating-wooden-fish-widget.knock-anim {
+  transform: scale(1.18) rotate(-8deg);
+}
+
+.wooden-fish-plus-popup {
+  position: absolute;
+  top: -18px;
+  right: 4px;
+  font-size: 24px;
+  font-weight: 900;
+  color: #fde047;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.wooden-fish-plus-popup.pop {
+  animation: floatUpPlus 0.85s ease-out forwards;
+}
+
+@keyframes floatUpPlus {
+  0% { transform: translateY(8px) scale(0.8); opacity: 1; }
+  100% { transform: translateY(-22px) scale(1.15); opacity: 0; }
+}
+
+.like-progress-track {
+  width: 100%;
+  height: 40px;
+  background: rgba(35, 23, 38, 0.85);
+  border: 2px solid rgba(244, 114, 182, 0.55);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.65);
+}
+
+.like-progress-fill {
+  height: 100%;
+  width: 33%;
+  background: linear-gradient(90deg, #f472b6 0%, #fb7185 50%, #f59e0b 100%);
+  border-radius: 999px;
+  transition: width 0.35s ease;
+}
+
+.like-progress-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 21px;
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+}
+
+.top-cards-row {
+  position: absolute;
+  top: 268px;
+  left: 28px;
+  right: 28px;
+  z-index: 28;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.glass-card {
+  background: var(--card-bg);
+  border: 2px solid var(--card-border);
+  border-radius: 20px;
+  padding: 16px 18px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.upgrade-tier-card {
+  width: 294px;
+  padding: 14px 16px 12px;
+}
+
+.card-heading {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--gold-bright);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tier-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  min-height: 74px;
+  border-top: 1px solid rgba(245, 194, 66, 0.22);
+}
+
+.tier-mini-preview {
+  width: 64px;
+  height: 68px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: visible;
+}
+
+.tier-mini-preview .lotus-seat-wrapper {
+  transform: scale(0.46);
+  transform-origin: center center;
+  margin-top: 6px;
+}
+
+.tier-preview-incense {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+}
+
+.tier-desc h4 { font-size: 20px; font-weight: 800; color: #ffffff; }
+.tier-desc p { font-size: 17px; font-weight: 600; color: #cbd5e1; }
+
+.monk-greeting-card {
+  flex: 1;
+  max-width: 410px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.monk-greeting-card.highlight {
+  transform: scale(1.04);
+  border-color: #fde047;
+  box-shadow: 0 0 28px rgba(250, 204, 21, 0.45);
+}
+
+.monk-avatar-circle {
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fde68a 0%, #d97706 75%);
+  border: 2.5px solid #fef08a;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.monk-speech-content h3 {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--gold-bright);
+  margin-bottom: 4px;
+}
+
+.monk-speech-content p {
+  font-size: 21px;
+  line-height: 1.35;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.leaderboard-card { width: 285px; }
+
+.leader-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  font-size: 19px;
+  font-weight: 700;
+  border-top: 1px solid rgba(245, 194, 66, 0.16);
+}
+
+.leader-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 175px;
+  color: #fff;
+}
+
+.leader-score {
+  color: var(--gold-bright);
+  font-weight: 800;
+}
+
+.bowing-worship-stage {
+  position: absolute;
+  top: 950px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
+  height: 210px;
+  z-index: 26;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.bowing-worship-stage.active { opacity: 1; }
+
+.bowing-character-rig {
+  transform-origin: center bottom;
+  animation: bowToBuddha 1.15s ease-in-out infinite;
+}
+
+@keyframes bowToBuddha {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  45%, 55% { transform: translateY(14px) scaleY(0.76); }
+}
+
+.bowing-banner-toast {
+  position: absolute;
+  top: -36px;
+  background: linear-gradient(90deg, rgba(180, 83, 9, 0.95), rgba(234, 179, 8, 0.98), rgba(180, 83, 9, 0.95));
+  color: #1c0a02;
+  border: 2px solid #fffbeb;
+  border-radius: 999px;
+  padding: 5px 22px;
+  font-size: 20px;
+  font-weight: 900;
+  white-space: nowrap;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.85);
+}
+
+.courtyard-meditators-stage {
+  position: absolute;
+  top: 905px;
+  left: 0;
+  width: 1080px;
+  height: 945px;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.courtyard-seat-node {
+  position: absolute;
+  transform: translate(-50%, -50%) scale(var(--node-scale, 1));
+  transform-origin: center bottom;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  transition: left 0.45s ease, top 0.45s ease;
+}
+
+.person-head-badge {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: -6px;
+  z-index: 5;
+}
+
+.head-incense-glow {
+  width: 4px;
+  height: 22px;
+  background: linear-gradient(180deg, #fde047 0%, #ef4444 40%, #a16207 100%);
+  border-radius: 2px;
+  margin-bottom: 2px;
+  box-shadow: 0 -4px 10px #fde047, 0 0 8px #f97316;
+}
+
+.person-name-pill {
+  padding: 2px 10px;
+  background: rgba(15, 23, 42, 0.86);
+  border: 1.5px solid rgba(245, 194, 66, 0.72);
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #ffffff;
+  white-space: nowrap;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.person-name-pill.vip-gold {
+  background: linear-gradient(90deg, #78350f, #b45309);
+  border-color: #fde047;
+  color: #fef08a;
+}
+
+.courtyard-speech-bubble {
+  position: absolute;
+  bottom: 108%;
+  background: #fffbeb;
+  color: #1e293b;
+  border: 2px solid #f59e0b;
+  border-radius: 12px;
+  padding: 4px 12px;
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+  max-width: 210px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: 40;
+}
+
+/* =========================================================================
+   ẨN HOÀN TOÀN THANH DOCK ĐIỀU KHIỂN DƯỚI ĐÁY KHI LIVE
+   (Mọi thao tác điều khiển thực hiện bên trang /control.html)
+   ========================================================================= */
+.bottom-control-dock {
+  display: none !important;
+}
+
+.dock-btn {
+  height: 42px;
+  padding: 0 15px;
+  background: rgba(24, 16, 12, 0.92);
+  border: 1.8px solid rgba(245, 194, 66, 0.55);
+  border-radius: 999px;
+  color: #fde68a;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.dock-btn:hover {
+  border-color: var(--gold);
+  background: rgba(58, 34, 18, 0.95);
+}
+
+.dock-btn.active {
+  background: linear-gradient(180deg, #f5c242 0%, #c4831d 100%);
+  color: #1e1204;
+  border-color: #fff3b0;
+}
+
+#fx-canvas {
+  position: absolute;
+  inset: 0;
+  width: 1080px;
+  height: 1920px;
+  pointer-events: none;
+  z-index: 38;
+}
+
+/* =========================================================================
+   BỘ SPRITE NHÂN VẬT TỪ TIKTOK-LIVE-TEMPLE-RPC
+   (100% ĐẶC, KHÔNG BAO GIỜ BỊ BÓNG MỜ TRONG SUỐT HAY CHỒNG 2 HÌNH)
+   ========================================================================= */
+.devotee-sprite {
+  display: block;
+  object-fit: contain;
+  transform-origin: 50% 88%;
+  pointer-events: none;
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+.standing-pilgrim-node .devotee-sprite.standing-img {
+  width: 68px;
+  height: 122px;
+}
+
+.standing-pilgrim-node .devotee-sprite.kneeling-img {
+  width: 90px;
+  height: 122px;
+}
+
+.standing-pilgrim-node .devotee-sprite.vip-kneeling-img {
+  width: 96px;
+  height: 132px;
+}
+
+.runner-pilgrim-actor .devotee-sprite.walker-img {
+  width: 96px;
+  height: 176px;
+}
+
+.runner-pilgrim-actor .devotee-sprite.runner-kneel-img {
+  width: 112px;
+  height: 148px;
+}
+
+/* Chuyển động Cúi Lạy Phật 60FPS mượt mà trên 1 Sprite đặc (Không bao giờ bị bóng ma trong suốt) */
+.bowing-smooth-loop {
+  transform-origin: 50% 88%;
+  animation: smoothKneelBow 3.6s cubic-bezier(0.42, 0, 0.25, 1) infinite;
+  will-change: transform;
+}
+
+@keyframes smoothKneelBow {
+  0%, 100% {
+    transform: translateY(0px) scaleY(1) scaleX(1);
+  }
+  18% {
+    transform: translateY(-2px) scaleY(1.02) scaleX(0.99);
+  }
+  48%, 64% {
+    transform: translateY(14px) scaleY(0.76) scaleX(1.06);
+  }
+  85% {
+    transform: translateY(0px) scaleY(1) scaleX(1);
+  }
+}
+
+/* Bước đi bộ êm ái dọc thảm khi lên dâng hương */
+.walking-stride-loop {
+  transform-origin: 50% 92%;
+  animation: smoothWalkBob 0.36s ease-in-out infinite alternate;
+}
+
+@keyframes smoothWalkBob {
+  0% {
+    transform: translateY(0px) rotate(-1.2deg);
+  }
+  100% {
+    transform: translateY(-5px) rotate(1.2deg);
+  }
+}
+
+/* Đài Hoa Sen Hồng đặt dưới chân sprite devotee.png trong chế độ Sân Chùa Đêm Trăng */
+.lotus-seat-wrapper {
+  position: relative;
+  width: 112px;
+  height: 128px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.lotus-seat-wrapper .devotee-sprite {
+  width: 92px;
+  height: 118px;
+  position: relative;
+  z-index: 2;
+}
+
+.lotus-base-svg {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 108px;
+  height: 44px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* =========================================================================
+   CHẾ ĐỘ PHẬT TỬ TỰ DO DI CHUYỂN & HÀNH LỄ (FREE ROAM ENGINE 60FPS)
+   ========================================================================= */
+.standing-pilgrim-node.free-roam-actor,
+.courtyard-seat-node.free-roam-actor {
+  transition: none !important;
+  will-change: left, top, transform;
+}
+
+.standing-pilgrim-node .devotee-sprite.roam-walker-img {
+  width: 82px;
+  height: 146px;
+}
+
+.standing-pilgrim-node .devotee-sprite.roam-stand-img {
+  width: 78px;
+  height: 138px;
+}
+
+.standing-pilgrim-node .devotee-sprite.roam-meditate-img {
+  width: 92px;
+  height: 120px;
+  filter: drop-shadow(0 0 10px rgba(250, 204, 21, 0.35)) !important;
+}
+
+.roam-flip-x {
+  transform: scaleX(-1);
+}
+
+.roam-action-mini-tag {
+  position: absolute;
+  bottom: 98%;
+  margin-bottom: 2px;
+  padding: 2px 9px;
+  background: rgba(68, 22, 8, 0.92);
+  border: 1.2px solid #facc15;
+  border-radius: 999px;
+  color: #fef08a;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+  z-index: 36;
+  animation: popInChat 0.22s ease-out;
+}
+
+/* =========================================================================
+   CHẾ ĐỘ ĐẠI PHÁP HỘI ĐÔNG NGƯỜI (500 - 10.000+ PHẬT TỬ CHỐNG LAG 60FPS)
+   ========================================================================= */
+#crowd-lod-canvas {
+  position: absolute;
+  inset: 0;
+  width: 1080px;
+  height: 1920px;
+  pointer-events: none;
+  z-index: 16;
+}
+
+.crowd-lod-summary-pill {
+  position: absolute;
+  top: 86px;
+  left: 28px;
+  z-index: 62;
+  padding: 6px 14px;
+  background: linear-gradient(90deg, rgba(68, 18, 8, 0.94), rgba(114, 46, 12, 0.92));
+  border: 1.6px solid #facc15;
+  border-radius: 999px;
+  color: #fef08a;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.85);
+  pointer-events: none;
+}
+

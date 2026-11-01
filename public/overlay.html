@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chùa Online & Đại Điện Quỳ Bái (9:16 TikTok LIVE Overlay)</title>
+  <link rel="stylesheet" href="/css/overlay.css?v=live13" />
+</head>
+<body>
+  <div id="stage-wrapper" class="mode-quybai theme-1">
+    <!-- NỀN ĐẠI ĐIỆN QUỲ BÁI (MẪU 1) HOẶC SÂN CHÙA ĐÊM TRĂNG (MẪU 2) -->
+    <div class="courtyard-backdrop-wrap">
+      <img
+        src="/assets/dai_dien_quy_bai_bg.jpg"
+        alt="Không Gian Chùa 9:16"
+        class="courtyard-backdrop-img"
+        id="backdrop-img"
+      />
+      <div class="buddha-center-glow"></div>
+    </div>
+
+    <!-- BADGE LIVE & TỔNG SỐ PHẬT TỬ (KHÔNG GIỚI HẠN) -->
+    <div class="live-counter-pill">
+      <span class="live-red-dot"></span>
+      <span>LIVE</span>
+      <span>👥 <strong id="seat-counter">48</strong></span>
+    </div>
+    <div class="crowd-lod-summary-pill" id="crowd-lod-summary-pill" style="display: none;">
+      🪷 Đại Pháp Hội 5.000 Phật Tử • Chế Độ Chống Lag 60FPS
+    </div>
+
+    <!-- CANVAS ẢO HÓA BIỂN NGƯỜI HẬU CẢNH (CHỐNG LAG 60FPS KHI ĐÔNG 500 - 10.000+ NGƯỜI) -->
+    <canvas id="crowd-lod-canvas" width="1080" height="1920"></canvas>
+
+    <!-- =======================================================================
+         GIAO DIỆN OPTION 1: ĐẠI ĐIỆN QUỲ BÁI (CHẠY LÊN THẢM XANH QUỲ LẠY PHẬT)
+         ======================================================================= -->
+    <div class="mode-quybai-ui">
+      <!-- Bảng TẤM LÒNG THÀNH góc trên bên phải -->
+      <aside class="tam-long-thanh-card">
+        <div class="tam-long-lotus-crown">🪷</div>
+        <h2 class="tam-long-title">TẤM LÒNG THÀNH</h2>
+        <div id="tam-long-list"></div>
+      </aside>
+
+      <!-- Băng rôn đỏ viền vàng dưới đài sen Phật -->
+      <div class="tam-bao-dedication-banner" id="tam-bao-banner">
+        NQ HUY đã dâng 5 nén hương lên Tam Bảo. Chúc tâm như hoa sen, thanh tịnh giữa đời.
+      </div>
+
+      <!-- Lớp nhân vật đứng 2 bên sàn đá cẩm thạch & VIP quỳ trên bục -->
+      <section class="quybai-characters-layer" id="quybai-characters-layer"></section>
+
+      <!-- Lớp diễn hoạt người tặng quà CHẠY DỌC THẢM XANH LÊN BỤC QUỲ BÁI -->
+      <section class="quybai-characters-layer" id="quybai-runners-layer" style="z-index: 48;"></section>
+
+      <!-- 3 Bảng Đỏ Viền Vàng Dưới Đáy: Tự động đổi nội dung giữa Dâng Hương (Mẫu 1/3) & Phóng Sanh (Mẫu 6) -->
+      <section class="bottom-three-plaques">
+        <div class="crimson-gold-plaque">
+          <h4 id="plaque-1-title">1 xu</h4>
+          <p id="plaque-1-desc">dâng hương</p>
+        </div>
+        <div class="crimson-gold-plaque">
+          <h4 id="plaque-2-title">5 xu</h4>
+          <p id="plaque-2-desc">lên bục</p>
+        </div>
+        <div class="crimson-gold-plaque">
+          <h4 id="plaque-3-title">10+ xu</h4>
+          <p id="plaque-3-desc">tăng công đức</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- =======================================================================
+         GIAO DIỆN OPTION 2: CHÙA ONLINE - SÂN CHÙA ĐÊM TRĂNG (NGỒI ĐÀI SEN)
+         ======================================================================= -->
+    <div class="mode-chuaonline-ui">
+      <header class="top-header-center">
+        <h1 class="chua-online-title" id="hall-title">🙏 CHÙA ONLINE 🙏</h1>
+        <p class="chua-online-subtitle" id="hall-subtitle">
+          Comment để vào chùa • Tặng quà để ngồi gần Phật
+        </p>
+
+        <div class="wooden-fish-bar-wrap">
+          <div class="floating-wooden-fish-widget" id="wooden-fish-widget" title="Nhấn để gõ mõ tích công đức">
+            <span class="wooden-fish-plus-popup" id="fish-plus-popup">+15</span>
+            <svg viewBox="0 0 100 90" width="84" height="76">
+              <defs>
+                <radialGradient id="fishWoodGrad" cx="45%" cy="35%" r="60%">
+                  <stop offset="0%" stop-color="#f59e0b" />
+                  <stop offset="55%" stop-color="#b45309" />
+                  <stop offset="100%" stop-color="#451a03" />
+                </radialGradient>
+              </defs>
+              <ellipse cx="50" cy="52" rx="38" ry="30" fill="url(#fishWoodGrad)" stroke="#fde68a" stroke-width="2" />
+              <path d="M22 54 Q50 44 78 54" fill="none" stroke="#1c0a02" stroke-width="6" stroke-linecap="round" />
+              <circle cx="50" cy="18" r="8" fill="#d97706" stroke="#fde68a" stroke-width="1.5" />
+            </svg>
+          </div>
+
+          <div class="like-progress-track">
+            <div class="like-progress-fill" id="like-progress-fill" style="width: 33%;"></div>
+            <div class="like-progress-label">
+              ❤️ Thả tim = gõ mõ <span id="like-progress-text" style="margin: 0 6px;">100/300</span> → mưa hoa sen
+            </div>
+          </div>
+        </div>
+
+        <div class="custom-red-banner" id="custom-red-banner">Chúc các em thi tốt!</div>
+      </header>
+
+      <section class="top-cards-row">
+        <div class="glass-card upgrade-tier-card">
+          <div class="card-heading">🎁 TẶNG QUÀ ĐỂ LÊN CẤP</div>
+          <div class="tier-item">
+            <div class="tier-mini-preview" id="preview-tier-1"></div>
+            <div class="tier-desc">
+              <h4>🕯️ Dâng hương</h4>
+              <p>1–9 xu</p>
+            </div>
+          </div>
+          <div class="tier-item">
+            <div class="tier-mini-preview" id="preview-tier-2"></div>
+            <div class="tier-desc">
+              <h4>🪷 Hoa sen</h4>
+              <p>10–98 xu</p>
+            </div>
+          </div>
+          <div class="tier-item">
+            <div class="tier-mini-preview" id="preview-tier-3"></div>
+            <div class="tier-desc">
+              <h4>👑 Hộ pháp</h4>
+              <p>99+ xu</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card monk-greeting-card" id="monk-greeting-card">
+          <div class="monk-avatar-circle">
+            <svg viewBox="0 0 100 100" width="88" height="88">
+              <circle cx="50" cy="44" r="24" fill="#f3c69f" />
+              <path d="M38 42 Q43 38 47 42" fill="none" stroke="#451a03" stroke-width="2.6" stroke-linecap="round" />
+              <path d="M53 42 Q57 38 62 42" fill="none" stroke="#451a03" stroke-width="2.6" stroke-linecap="round" />
+              <path d="M44 52 Q50 57 56 52" fill="none" stroke="#7c2d12" stroke-width="2.5" stroke-linecap="round" />
+              <path d="M20 96 C22 68, 36 62, 50 62 C64 62, 78 68, 80 96 Z" fill="#b45309" />
+              <path d="M36 64 L50 82 L64 64" fill="#fde047" />
+            </svg>
+          </div>
+          <div class="monk-speech-content">
+            <h3>Sư thầy</h3>
+            <p id="monk-speech-text">Mèng méng đến rồi, chúc con một buổi tối an lành 🙏</p>
+          </div>
+        </div>
+
+        <div class="glass-card leaderboard-card">
+          <div class="card-heading">🏆 BẢNG CÔNG ĐỨC</div>
+          <div id="merit-list"></div>
+        </div>
+      </section>
+
+      <div class="bowing-worship-stage" id="bowing-worship-stage">
+        <div class="bowing-banner-toast" id="bowing-banner-toast">LÊN DÂNG HƯƠNG +10 công đức</div>
+        <div class="bowing-character-rig" id="bowing-character-rig"></div>
+      </div>
+
+      <section class="courtyard-meditators-stage" id="courtyard-meditators-stage"></section>
+    </div>
+
+    <!-- THANH CÔNG CỤ DƯỚI ĐÁY (ÂM THANH, NHẠC CHÙA, CHỌN MẪU 1/2/3, CHUÔNG, ĐỌC KINH) -->
+    <footer class="bottom-control-dock">
+      <button class="dock-btn" id="dock-btn-audio">🔊 Âm Thanh: BẬT</button>
+      <button class="dock-btn" id="dock-btn-music">🎵 Nhạc Chùa: BẬT</button>
+      <button class="dock-btn active" data-theme="1" title="Đại Điện Thảm Xanh - Tặng quà chạy lên quỳ bái">Mẫu 1: Chạy Lên Quỳ Bái</button>
+      <button class="dock-btn" data-theme="2" title="Chùa Online Sân Chùa Đêm Trăng - Ngồi Đài Sen">Mẫu 2: Sân Chùa Đêm</button>
+      <button class="dock-btn" data-theme="3" title="Chánh Điện Cổ Tự">Mẫu 3: Chánh Điện</button>
+      <button class="dock-btn" data-theme="6" title="Hồ Sen Phóng Sanh - Phật tử bước ra thả Cá Chép, Cá Koi, Rùa Vàng">Mẫu 6: 🐟 Phóng Sanh</button>
+      <button class="dock-btn" id="dock-btn-bell">🔔 Chuông</button>
+      <button class="dock-btn" id="dock-btn-chant">📿 Đọc Kinh</button>
+    </footer>
+
+    <!-- CANVAS KHÓI HƯƠNG MỎNG NHẸ & MƯA HOA SEN -->
+    <canvas id="fx-canvas" width="1080" height="1920"></canvas>
+  </div>
+
+  <script src="/js/audio.js?v=live13"></script>
+  <script src="/js/overlay.js?v=live13"></script>
+</body>
+</html>
